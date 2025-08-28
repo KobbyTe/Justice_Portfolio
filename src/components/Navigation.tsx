@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Phone } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,54 +18,71 @@ const Navigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(sectionId);
-    }
-  };
-
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About' },
-    { id: 'resume', label: 'Résumé' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'blog', label: 'Blog' },
-    { id: 'wall', label: 'Wall' },
+    { path: '/', label: 'Home' },
+    { path: '/about', label: 'About' },
+    { path: '/resume', label: 'Resume' },
+    { path: '/projects', label: 'Projects' },
+    { path: '/blog', label: 'Blog' },
+    { path: '/wall', label: 'Wall' },
   ];
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isScrolled ? 'bg-background/95 backdrop-blur-md shadow-soft' : 'bg-transparent'
     }`}>
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Navigation Links */}
-          <div className="flex items-center space-x-8">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className={`text-sm font-medium transition-all duration-300 relative hover:text-primary ${
-                  activeSection === item.id ? 'text-primary' : 'text-foreground'
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`text-sm font-medium transition-all duration-300 relative hover:text-primary px-2 py-1 ${
+                  isActive(item.path) ? 'text-primary' : 'text-foreground'
                 }`}
               >
                 {item.label}
-                {activeSection === item.id && (
+                {isActive(item.path) && (
                   <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full" />
                 )}
-              </button>
+              </Link>
             ))}
           </div>
 
-          {/* Contact Chip */}
-          <div className="flex items-center space-x-2 px-4 py-2 bg-card/50 backdrop-blur-sm rounded-full border border-border">
-            <Phone className="w-4 h-4 text-primary" />
-            <a href="tel:+233-000-0000" className="text-sm font-medium hover:text-primary transition-colors">
-              +233-000-0000
-            </a>
-          </div>
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? (
+              <X className="w-6 h-6 text-foreground" />
+            ) : (
+              <Menu className="w-6 h-6 text-foreground" />
+            )}
+          </button>
+
+          {/* Mobile Menu */}
+          {isMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
+              <div className="flex flex-col space-y-4 p-6">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`text-left transition-colors py-2 ${
+                      isActive(item.path) ? 'text-primary font-medium' : 'text-muted-foreground hover:text-primary'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </nav>
