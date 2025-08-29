@@ -1,11 +1,29 @@
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import heroWorkspace from '@/assets/hero-workspace.jpg';
+import heroWorkspace1 from '@/assets/hero-workspace.jpg';
+import heroWorkspace2 from '@/assets/hero-workspace-2.jpg';
+import heroWorkspace3 from '@/assets/hero-workspace-3.jpg';
+import heroWorkspace4 from '@/assets/hero-workspace-4.jpg';
 import { Download, Github, Linkedin, Twitter, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const Home = () => {
+  const heroImages = [heroWorkspace1, heroWorkspace2, heroWorkspace3, heroWorkspace4];
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    // Set random image on initial load
+    setCurrentImageIndex(Math.floor(Math.random() * heroImages.length));
+    
+    // Change image every 10 seconds
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <Navigation />
@@ -15,9 +33,9 @@ const Home = () => {
         {/* Background Image - Full Screen */}
         <div className="absolute inset-0 z-0">
           <img 
-            src={heroWorkspace} 
+            src={heroImages[currentImageIndex]} 
             alt="Developer workspace with vivid screen wallpaper" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-opacity duration-1000"
             style={{
               maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
               WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)'
