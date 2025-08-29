@@ -1,0 +1,863 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Plus, Edit2, Trash2, Upload, Eye, EyeOff } from 'lucide-react';
+
+const Admin = () => {
+  // State for all content types
+  const [heroImages, setHeroImages] = useState([]);
+  const [aboutContent, setAboutContent] = useState(null);
+  const [techStack, setTechStack] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [socialLinks, setSocialLinks] = useState([]);
+  const [resumeFiles, setResumeFiles] = useState([]);
+
+  // Form states
+  const [formData, setFormData] = useState<any>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('hero');
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  const loadAllData = async () => {
+    try {
+      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes] = await Promise.all([
+        supabase.from('hero_images').select('*').eq('is_active', true),
+        supabase.from('about_content').select('*').single(),
+        supabase.from('tech_stack').select('*').eq('is_active', true),
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
+        supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('resume_files').select('*').order('created_at', { ascending: false })
+      ]);
+
+      setHeroImages(heroRes.data || []);
+      setAboutContent(aboutRes.data);
+      setTechStack(techRes.data || []);
+      setProjects(projectsRes.data || []);
+      setBlogPosts(blogRes.data || []);
+      setSocialLinks(socialRes.data || []);
+      setResumeFiles(resumeRes.data || []);
+    } catch (error) {
+      toast.error('Failed to load data');
+      console.error(error);
+    }
+  };
+
+  const handleFileUpload = async (file, bucket = 'portfolio-assets') => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  // Hero Images Management
+  const handleAddHeroImage = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const file = formData.get('image') as File;
+    const alt_text = formData.get('alt_text') as string;
+
+    if (!file) return;
+
+    try {
+      const imageUrl = await handleFileUpload(file);
+      
+      const { error } = await supabase
+        .from('hero_images')
+        .insert([{ image_url: imageUrl, alt_text }]);
+
+      if (error) throw error;
+      
+      toast.success('Hero image added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add hero image');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteHeroImage = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('hero_images')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Hero image deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete hero image');
+    }
+  };
+
+  // About Content Management
+  const handleUpdateAbout = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const profile_image = formData.get('profile_image') as File;
+    const description = formData.get('description') as string;
+    const location = formData.get('location') as string;
+
+    try {
+      let profile_image_url = aboutContent?.profile_image_url;
+      
+      if (profile_image && profile_image.size > 0) {
+        profile_image_url = await handleFileUpload(profile_image);
+      }
+
+      const updateData = { description, location, profile_image_url };
+
+      const { error } = aboutContent 
+        ? await supabase.from('about_content').update(updateData).eq('id', aboutContent.id)
+        : await supabase.from('about_content').insert([updateData]);
+
+      if (error) throw error;
+      
+      toast.success('About content updated successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to update about content');
+      console.error(error);
+    }
+  };
+
+  // Tech Stack Management
+  const handleAddTechStack = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get('name') as string;
+    const category = formData.get('category') as string;
+
+    try {
+      // Generate icon URL based on name (simplified approach)
+      const icon_url = `https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${name.toLowerCase()}/${name.toLowerCase()}-original.svg`;
+      
+      const { error } = await supabase
+        .from('tech_stack')
+        .insert([{ name, category, icon_url }]);
+
+      if (error) throw error;
+      
+      toast.success('Tech stack item added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add tech stack item');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteTechStack = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('tech_stack')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Tech stack item deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete tech stack item');
+    }
+  };
+
+  // Projects Management
+  const handleAddProject = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const category = formData.get('category') as 'Robotics' | 'Web app' | 'Mobile app' | 'AI';
+    const project_url = formData.get('project_url') as string;
+    const github_url = formData.get('github_url') as string;
+    const technologies = (formData.get('technologies') as string).split(',').map(t => t.trim());
+    const image = formData.get('image') as File;
+
+    try {
+      let image_url = null;
+      if (image && image.size > 0) {
+        image_url = await handleFileUpload(image);
+      }
+
+      const projectData = {
+        title, description, category, project_url, github_url, technologies, image_url
+      };
+
+      const { error } = isEditing
+        ? await supabase.from('projects').update(projectData).eq('id', editingId)
+        : await supabase.from('projects').insert([projectData]);
+
+      if (error) throw error;
+      
+      toast.success(`Project ${isEditing ? 'updated' : 'added'} successfully`);
+      loadAllData();
+      e.target.reset();
+      setIsEditing(false);
+      setEditingId(null);
+    } catch (error) {
+      toast.error(`Failed to ${isEditing ? 'update' : 'add'} project`);
+      console.error(error);
+    }
+  };
+
+  const handleEditProject = (project) => {
+    setFormData(project);
+    setIsEditing(true);
+    setEditingId(project.id);
+  };
+
+  const handleDeleteProject = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Project deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
+  };
+
+  // Blog Posts Management
+  const handleAddBlogPost = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const title = formData.get('title') as string;
+    const content = formData.get('content') as string;
+    const excerpt = formData.get('excerpt') as string;
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    const is_published = formData.get('is_published') === 'on';
+    const featured_image = formData.get('featured_image') as File;
+
+    try {
+      let featured_image_url = null;
+      if (featured_image && featured_image.size > 0) {
+        featured_image_url = await handleFileUpload(featured_image);
+      }
+
+      const blogData = {
+        title, content, excerpt, slug, is_published, featured_image_url,
+        published_at: is_published ? new Date().toISOString() : null
+      };
+
+      const { error } = await supabase
+        .from('blog_posts')
+        .insert([blogData]);
+
+      if (error) throw error;
+      
+      toast.success('Blog post added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add blog post');
+      console.error(error);
+    }
+  };
+
+  const handleTogglePublish = async (id, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({ 
+          is_published: !currentStatus,
+          published_at: !currentStatus ? new Date().toISOString() : null
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success(`Blog post ${!currentStatus ? 'published' : 'unpublished'}`);
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to update blog post');
+    }
+  };
+
+  const handleDeleteBlogPost = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Blog post deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete blog post');
+    }
+  };
+
+  // Social Links Management
+  const handleAddSocialLink = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const platform = formData.get('platform') as string;
+    const url = formData.get('url') as string;
+    const icon_name = formData.get('icon_name') as string;
+
+    try {
+      const { error } = await supabase
+        .from('social_links')
+        .insert([{ platform, url, icon_name, sort_order: socialLinks.length }]);
+
+      if (error) throw error;
+      
+      toast.success('Social link added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add social link');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteSocialLink = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('social_links')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Social link deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete social link');
+    }
+  };
+
+  // Resume Files Management
+  const handleAddResume = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const file = formData.get('resume_file') as File;
+    const file_name = formData.get('file_name') as string;
+    const is_current = formData.get('is_current') === 'on';
+
+    if (!file) return;
+
+    try {
+      const file_url = await handleFileUpload(file);
+      
+      // If this is set as current, update all others to not be current
+      if (is_current) {
+        await supabase.from('resume_files').update({ is_current: false });
+      }
+
+      const { error } = await supabase
+        .from('resume_files')
+        .insert([{ file_url, file_name, is_current }]);
+
+      if (error) throw error;
+      
+      toast.success('Resume file added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add resume file');
+      console.error(error);
+    }
+  };
+
+  const handleSetCurrentResume = async (id) => {
+    try {
+      // Set all to not current
+      await supabase.from('resume_files').update({ is_current: false });
+      
+      // Set selected as current
+      const { error } = await supabase
+        .from('resume_files')
+        .update({ is_current: true })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Resume set as current');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to set current resume');
+    }
+  };
+
+  const handleDeleteResume = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('resume_files')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Resume file deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete resume file');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center">Portfolio Admin Dashboard</h1>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="hero">Hero Images</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="tech">Tech Stack</TabsTrigger>
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="blog">Blog</TabsTrigger>
+            <TabsTrigger value="social">Social</TabsTrigger>
+            <TabsTrigger value="resume">Resume</TabsTrigger>
+          </TabsList>
+
+          {/* Hero Images Tab */}
+          <TabsContent value="hero" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Hero Image</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddHeroImage} className="space-y-4">
+                  <Input type="file" name="image" accept="image/*" required />
+                  <Input name="alt_text" placeholder="Alt text for image" />
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Image
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Hero Images</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {heroImages.map((image) => (
+                    <div key={image.id} className="space-y-2">
+                      <img src={image.image_url} alt={image.alt_text} className="w-full h-32 object-cover rounded" />
+                      <p className="text-sm text-muted-foreground">{image.alt_text}</p>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteHeroImage(image.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* About Tab */}
+          <TabsContent value="about">
+            <Card>
+              <CardHeader>
+                <CardTitle>About Content</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdateAbout} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Profile Image</label>
+                    <Input type="file" name="profile_image" accept="image/*" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <Textarea 
+                      name="description" 
+                      defaultValue={aboutContent?.description} 
+                      rows={6}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Location</label>
+                    <Input 
+                      name="location" 
+                      defaultValue={aboutContent?.location} 
+                      required
+                    />
+                  </div>
+                  <Button type="submit">Update About Content</Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tech Stack Tab */}
+          <TabsContent value="tech" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Technology</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddTechStack} className="space-y-4">
+                  <Input name="name" placeholder="Technology name (e.g., React)" required />
+                  <Input name="category" placeholder="Category (e.g., Frontend)" />
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Technology
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Tech Stack</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {techStack.map((tech) => (
+                    <div key={tech.id} className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center space-x-3">
+                        <img src={tech.icon_url} alt={tech.name} className="w-8 h-8" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                        <div>
+                          <p className="font-medium">{tech.name}</p>
+                          <p className="text-sm text-muted-foreground">{tech.category}</p>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteTechStack(tech.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Projects Tab */}
+          <TabsContent value="projects" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{isEditing ? 'Edit Project' : 'Add Project'}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddProject} className="space-y-4">
+                  <Input 
+                    name="title" 
+                    placeholder="Project title" 
+                    defaultValue={isEditing ? formData.title : ''}
+                    required 
+                  />
+                  <Textarea 
+                    name="description" 
+                    placeholder="Project description" 
+                    defaultValue={isEditing ? formData.description : ''}
+                    rows={3}
+                  />
+                  <Select name="category" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Robotics">Robotics</SelectItem>
+                      <SelectItem value="Web app">Web app</SelectItem>
+                      <SelectItem value="Mobile app">Mobile app</SelectItem>
+                      <SelectItem value="AI">AI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    name="project_url" 
+                    placeholder="Project URL" 
+                    defaultValue={isEditing ? formData.project_url : ''}
+                  />
+                  <Input 
+                    name="github_url" 
+                    placeholder="GitHub URL" 
+                    defaultValue={isEditing ? formData.github_url : ''}
+                  />
+                  <Input 
+                    name="technologies" 
+                    placeholder="Technologies (comma separated)" 
+                    defaultValue={isEditing ? formData.technologies?.join(', ') : ''}
+                  />
+                  <Input type="file" name="image" accept="image/*" />
+                  <div className="flex space-x-2">
+                    <Button type="submit">
+                      {isEditing ? 'Update Project' : 'Add Project'}
+                    </Button>
+                    {isEditing && (
+                      <Button type="button" variant="outline" onClick={() => {
+                        setIsEditing(false);
+                        setEditingId(null);
+                        setFormData({});
+                      }}>
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Projects</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {projects.map((project) => (
+                    <div key={project.id} className="flex items-center justify-between p-4 border rounded">
+                      <div className="flex items-center space-x-4">
+                        {project.image_url && (
+                          <img src={project.image_url} alt={project.title} className="w-16 h-16 object-cover rounded" />
+                        )}
+                        <div>
+                          <h3 className="font-medium">{project.title}</h3>
+                          <Badge variant="secondary">{project.category}</Badge>
+                          <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEditProject(project)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteProject(project.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Blog Tab */}
+          <TabsContent value="blog" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Blog Post</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddBlogPost} className="space-y-4">
+                  <Input name="title" placeholder="Blog post title" required />
+                  <Textarea name="excerpt" placeholder="Short excerpt" rows={2} />
+                  <Textarea name="content" placeholder="Full content" rows={6} />
+                  <Input type="file" name="featured_image" accept="image/*" />
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" name="is_published" id="is_published" />
+                    <label htmlFor="is_published">Publish immediately</label>
+                  </div>
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Blog Post
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Blog Posts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {blogPosts.map((post) => (
+                    <div key={post.id} className="flex items-center justify-between p-4 border rounded">
+                      <div className="flex items-center space-x-4">
+                        {post.featured_image_url && (
+                          <img src={post.featured_image_url} alt={post.title} className="w-16 h-16 object-cover rounded" />
+                        )}
+                        <div>
+                          <h3 className="font-medium">{post.title}</h3>
+                          <Badge variant={post.is_published ? "default" : "secondary"}>
+                            {post.is_published ? "Published" : "Draft"}
+                          </Badge>
+                          <p className="text-sm text-muted-foreground mt-1">{post.excerpt}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleTogglePublish(post.id, post.is_published)}
+                        >
+                          {post.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteBlogPost(post.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Social Links Tab */}
+          <TabsContent value="social" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Social Link</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddSocialLink} className="space-y-4">
+                  <Input name="platform" placeholder="Platform name (e.g., GitHub)" required />
+                  <Input name="url" placeholder="Profile URL" type="url" required />
+                  <Input name="icon_name" placeholder="Icon name (e.g., github)" />
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Social Link
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Social Links</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {socialLinks.map((link) => (
+                    <div key={link.id} className="flex items-center justify-between p-4 border rounded">
+                      <div>
+                        <h3 className="font-medium">{link.platform}</h3>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                          {link.url}
+                        </a>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteSocialLink(link.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Resume Tab */}
+          <TabsContent value="resume" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Resume File</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddResume} className="space-y-4">
+                  <Input name="file_name" placeholder="File name (e.g., Resume_2024)" required />
+                  <Input type="file" name="resume_file" accept=".pdf,.doc,.docx" required />
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" name="is_current" id="is_current" />
+                    <label htmlFor="is_current">Set as current resume</label>
+                  </div>
+                  <Button type="submit">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Resume
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resume Files</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resumeFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-4 border rounded">
+                      <div>
+                        <h3 className="font-medium">{file.file_name}</h3>
+                        {file.is_current && (
+                          <Badge variant="default">Current</Badge>
+                        )}
+                        <a href={file.file_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline block mt-1">
+                          Download File
+                        </a>
+                      </div>
+                      <div className="flex space-x-2">
+                        {!file.is_current && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleSetCurrentResume(file.id)}
+                          >
+                            Set Current
+                          </Button>
+                        )}
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteResume(file.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Admin;
