@@ -109,23 +109,6 @@ const Resume = () => {
 
             {/* Skills */}
             <div className="space-y-8">
-              <div>
-                <h2 className="text-xl font-heading font-semibold mb-6 text-primary">🛠️ Programming Skills</h2>
-                <Card className="glass-card">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="space-y-4">
-                      {skills.map((skill, index) => (
-                        <SkillBar 
-                          key={skill.name}
-                          skill={skill.name}
-                          percentage={skill.percentage}
-                          delay={index * 100}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
               <div className="mt-8">
                 <Button 
