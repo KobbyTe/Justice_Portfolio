@@ -36,7 +36,7 @@ const About = () => {
               </a>
               
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                {aboutContent?.description || 'STEM Educator and Robotics Engineer with expertise in educational technology, robotics engineering, and innovative learning solutions. Passionate about empowering the next generation through hands-on learning experiences and cutting-edge technology implementations in STEM education.'}
+                {aboutContent?.about_description || 'Experienced STEM educator and robotics engineer dedicated to transforming education through innovative technology integration. I specialize in developing comprehensive robotics curricula, implementing cutting-edge educational technologies, and creating engaging hands-on learning experiences that inspire students to pursue careers in science, technology, engineering, and mathematics.'}
               </p>
 
               <div className="pt-4 border-t border-border">
@@ -44,16 +44,22 @@ const About = () => {
                   <MapPin className="w-4 h-4" />
                   <span>{aboutContent?.location || 'Accra, Ghana'}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">East Legon, Greater Accra Region</p>
               </div>
             </div>
 
             <div className="relative order-1 lg:order-2">
-              <img 
-                src={aboutContent?.profile_image_url || portrait} 
-                alt="Justice Ansah - STEM Educator & Robotics Engineer" 
-                className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
-              />
+              <div className="relative">
+                <img 
+                  src={aboutContent?.profile_image_url || portrait} 
+                  alt="Justice Ansah - STEM Educator & Robotics Engineer" 
+                  className="w-full max-w-md mx-auto transition-all duration-500"
+                  style={{
+                    maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-background/20 via-transparent to-background/20 pointer-events-none"></div>
+              </div>
             </div>
           </div>
         </div>
