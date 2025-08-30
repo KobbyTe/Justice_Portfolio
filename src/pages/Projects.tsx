@@ -1,20 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ProjectCard from '@/components/ProjectCard';
+import { supabase } from '@/integrations/supabase/client';
 
 const Projects = () => {
   const [activeFilter, setActiveFilter] = useState('All');
+  const [projects, setProjects] = useState([]);
+  const [categories, setCategories] = useState(['All']);
 
-  const projects = [
-    { title: 'Birth Reg Mobile', category: 'Mobile App', image: '/api/placeholder/400/300', description: 'Smart birth registration mobile application' },
-    { title: 'Birth Reg Deck', category: 'Robotics', image: '/api/placeholder/400/300', description: 'Smart birth registration hardware deck' },
-    { title: 'Birth Reg Web', category: 'Web App', image: '/api/placeholder/400/300', description: 'Scheduling platform for birth registration' },
-    { title: 'AI Assistant', category: 'AI', image: '/api/placeholder/400/300', description: 'Intelligent educational assistant' },
-    { title: 'STEM Learning Hub', category: 'Web App', image: '/api/placeholder/400/300', description: 'Interactive learning platform' },
-    { title: 'Robotics Controller', category: 'Robotics', image: '/api/placeholder/400/300', description: 'Advanced robotics control system' },
-  ];
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+      setProjects(data || []);
+      
+      // Extract unique categories
+      const uniqueCategories = ['All', ...new Set(data?.map(project => project.category) || [])];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    }
+  };
 
   const filteredProjects = activeFilter === 'All' 
     ? projects 
@@ -31,7 +42,7 @@ const Projects = () => {
           
           {/* Filter Buttons */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12">
-            {['All', 'Web App', 'Mobile App', 'Robotics', 'AI'].map((filter) => (
+            {categories.map((filter) => (
               <Button
                 key={filter}
                 variant={activeFilter === filter ? 'default' : 'outline'}
@@ -46,13 +57,16 @@ const Projects = () => {
 
           {/* Project Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredProjects.map((project, index) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
-                key={index}
+                key={project.id}
                 title={project.title}
                 category={project.category}
-                image={project.image}
+                image={project.image_url}
                 description={project.description}
+                projectUrl={project.project_url}
+                githubUrl={project.github_url}
+                technologies={project.technologies}
               />
             ))}
           </div>

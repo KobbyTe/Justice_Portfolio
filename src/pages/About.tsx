@@ -2,8 +2,25 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import portrait from '@/assets/portrait.jpg';
 import { MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const About = () => {
+  const [aboutContent, setAboutContent] = useState(null);
+
+  useEffect(() => {
+    loadAboutContent();
+  }, []);
+
+  const loadAboutContent = async () => {
+    try {
+      const { data } = await supabase.from('about_content').select('*').single();
+      setAboutContent(data);
+    } catch (error) {
+      console.error('Error loading about content:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -19,16 +36,13 @@ const About = () => {
               </a>
               
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                STEM Educator and Robotics Engineer with expertise in educational technology, 
-                robotics engineering, and innovative learning solutions. Passionate about empowering 
-                the next generation through hands-on learning experiences and cutting-edge technology 
-                implementations in STEM education.
+                {aboutContent?.description || 'STEM Educator and Robotics Engineer with expertise in educational technology, robotics engineering, and innovative learning solutions. Passionate about empowering the next generation through hands-on learning experiences and cutting-edge technology implementations in STEM education.'}
               </p>
 
               <div className="pt-4 border-t border-border">
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>Accra, Ghana</span>
+                  <span>{aboutContent?.location || 'Accra, Ghana'}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">East Legon, Greater Accra Region</p>
               </div>
@@ -36,7 +50,7 @@ const About = () => {
 
             <div className="relative order-1 lg:order-2">
               <img 
-                src={portrait} 
+                src={aboutContent?.profile_image_url || portrait} 
                 alt="Justice Ansah - STEM Educator & Robotics Engineer" 
                 className="w-full max-w-md mx-auto rounded-2xl shadow-2xl"
               />

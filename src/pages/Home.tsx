@@ -8,10 +8,36 @@ import heroWorkspace4 from '@/assets/hero-workspace-4.jpg';
 import { Download, Github, Linkedin, Twitter, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Home = () => {
-  const heroImages = [heroWorkspace1, heroWorkspace2, heroWorkspace3, heroWorkspace4];
+  const fallbackImages = [heroWorkspace1, heroWorkspace2, heroWorkspace3, heroWorkspace4];
+  const [heroImages, setHeroImages] = useState(fallbackImages);
+  const [socialLinks, setSocialLinks] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [aboutContent, setAboutContent] = useState(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [heroRes, socialRes, aboutRes] = await Promise.all([
+        supabase.from('hero_images').select('*').eq('is_active', true),
+        supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('about_content').select('*').single()
+      ]);
+
+      if (heroRes.data && heroRes.data.length > 0) {
+        setHeroImages(heroRes.data.map(img => img.image_url));
+      }
+      setSocialLinks(socialRes.data || []);
+      setAboutContent(aboutRes.data);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
 
   useEffect(() => {
     // Set random image on initial load
@@ -53,7 +79,9 @@ const Home = () => {
                 <h1 className="hero-text text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
                   Justice <span className="font-black">ANSAH</span>
                 </h1>
-                <p className="hero-subtitle text-lg sm:text-xl md:text-2xl">STEM Educator & Robotics Engineer</p>
+                <p className="hero-subtitle text-lg sm:text-xl md:text-2xl">
+                  {aboutContent?.description || 'STEM Educator & Robotics Engineer'}
+                </p>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
@@ -67,18 +95,29 @@ const Home = () => {
 
               {/* Social Links */}
               <div className="flex items-center space-x-4 pt-4">
-                <a href="https://github.com/KobbyTe" target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Github className="w-5 h-5" />
-                </a>
-                <a href="https://www.linkedin.com/in/justice-ansah-85917529a/" target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Linkedin className="w-5 h-5" />
-                </a>
-                <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Twitter className="w-5 h-5" />
-                </a>
-                <a href="#" className="p-2 text-muted-foreground hover:text-primary transition-colors">
-                  <Instagram className="w-5 h-5" />
-                </a>
+                {socialLinks.map((link) => {
+                  const getIcon = (platform) => {
+                    switch (platform.toLowerCase()) {
+                      case 'github': return <Github className="w-5 h-5" />;
+                      case 'linkedin': return <Linkedin className="w-5 h-5" />;
+                      case 'twitter': return <Twitter className="w-5 h-5" />;
+                      case 'instagram': return <Instagram className="w-5 h-5" />;
+                      default: return <Github className="w-5 h-5" />;
+                    }
+                  };
+                  
+                  return (
+                    <a 
+                      key={link.id}
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {getIcon(link.platform)}
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>

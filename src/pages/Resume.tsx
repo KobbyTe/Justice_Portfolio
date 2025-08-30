@@ -5,8 +5,12 @@ import Footer from '@/components/Footer';
 import SkillBar from '@/components/SkillBar';
 import TechStack from '@/components/TechStack';
 import { Download } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Resume = () => {
+  const [resumeFile, setResumeFile] = useState(null);
+  
   const skills = [
     { name: 'Python', percentage: 95 },
     { name: 'JavaScript', percentage: 90 },
@@ -15,6 +19,29 @@ const Resume = () => {
     { name: 'Arduino Programming', percentage: 88 },
     { name: 'Robotics Engineering', percentage: 92 },
   ];
+
+  useEffect(() => {
+    loadResumeFile();
+  }, []);
+
+  const loadResumeFile = async () => {
+    try {
+      const { data } = await supabase
+        .from('resume_files')
+        .select('*')
+        .eq('is_current', true)
+        .single();
+      setResumeFile(data);
+    } catch (error) {
+      console.error('Error loading resume file:', error);
+    }
+  };
+
+  const handleDownload = () => {
+    if (resumeFile?.file_url) {
+      window.open(resumeFile.file_url, '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,9 +128,13 @@ const Resume = () => {
               </div>
 
               <div className="mt-8">
-                <Button className="w-full bg-primary hover:bg-primary/90">
+                <Button 
+                  className="w-full bg-primary hover:bg-primary/90"
+                  onClick={handleDownload}
+                  disabled={!resumeFile}
+                >
                   <Download className="w-4 h-4 mr-2" />
-                  Download Resume
+                  {resumeFile ? `Download ${resumeFile.file_name}` : 'No Resume Available'}
                 </Button>
               </div>
             </div>
