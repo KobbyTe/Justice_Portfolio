@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import Recommendations from '@/components/Recommendations';
+import TechStack from '@/components/TechStack';
 import heroWorkspace1 from '@/assets/hero-workspace.jpg';
 import heroWorkspace2 from '@/assets/hero-workspace-2.jpg';
 import heroWorkspace3 from '@/assets/hero-workspace-3.jpg';
@@ -80,7 +82,7 @@ const Home = () => {
                   Justice <span className="font-black">ANSAH</span>
                 </h1>
                 <p className="hero-subtitle text-lg sm:text-xl md:text-2xl">
-                  {aboutContent?.description || 'STEM Educator & Robotics Engineer'}
+                  {aboutContent?.hero_description || 'Self-Taught Robotics Engineer & IoT Developer | STE(A)M & STEM Instructor | Innovator | Agriculture Enthusiast | Aspiring Estate Developer'}
                 </p>
               </div>
               
@@ -123,6 +125,12 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Tech Stack Section */}
+      <TechStack />
+
+      {/* Recommendations Section */}
+      <Recommendations />
 
       <Footer />
     </div>

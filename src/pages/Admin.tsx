@@ -19,6 +19,9 @@ const Admin = () => {
   const [blogPosts, setBlogPosts] = useState([]);
   const [socialLinks, setSocialLinks] = useState([]);
   const [resumeFiles, setResumeFiles] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [wallMessages, setWallMessages] = useState([]);
 
   // Form states
   const [formData, setFormData] = useState<any>({});
@@ -32,14 +35,17 @@ const Admin = () => {
 
   const loadAllData = async () => {
     try {
-      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes] = await Promise.all([
+      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes] = await Promise.all([
         supabase.from('hero_images').select('*').eq('is_active', true),
         supabase.from('about_content').select('*').single(),
         supabase.from('tech_stack').select('*').eq('is_active', true),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
         supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
-        supabase.from('resume_files').select('*').order('created_at', { ascending: false })
+        supabase.from('resume_files').select('*').order('created_at', { ascending: false }),
+        supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('gallery').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('wall_messages').select('*').order('created_at', { ascending: false })
       ]);
 
       setHeroImages(heroRes.data || []);
@@ -49,6 +55,9 @@ const Admin = () => {
       setBlogPosts(blogRes.data || []);
       setSocialLinks(socialRes.data || []);
       setResumeFiles(resumeRes.data || []);
+      setRecommendations(recommendationsRes.data || []);
+      setGalleryItems(galleryRes.data || []);
+      setWallMessages(wallRes.data || []);
     } catch (error) {
       toast.error('Failed to load data');
       console.error(error);
@@ -120,7 +129,8 @@ const Admin = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const profile_image = formData.get('profile_image') as File;
-    const description = formData.get('description') as string;
+    const hero_description = formData.get('hero_description') as string;
+    const about_description = formData.get('about_description') as string;
     const location = formData.get('location') as string;
 
     try {
@@ -130,7 +140,7 @@ const Admin = () => {
         profile_image_url = await handleFileUpload(profile_image);
       }
 
-      const updateData = { description, location, profile_image_url };
+      const updateData = { hero_description, about_description, location, profile_image_url };
 
       const { error } = aboutContent 
         ? await supabase.from('about_content').update(updateData).eq('id', aboutContent.id)
@@ -430,20 +440,149 @@ const Admin = () => {
     }
   };
 
+  // Recommendations Management
+  const handleAddRecommendation = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const name = formData.get('name') as string;
+    const position = formData.get('position') as string;
+    const company = formData.get('company') as string;
+    const message = formData.get('message') as string;
+    const linkedin_url = formData.get('linkedin_url') as string;
+    const twitter_url = formData.get('twitter_url') as string;
+    const image = formData.get('image') as File;
+
+    try {
+      let recommender_image_url = null;
+      if (image && image.size > 0) {
+        recommender_image_url = await handleFileUpload(image);
+      }
+
+      const { error } = await supabase
+        .from('recommendations')
+        .insert([{ 
+          name, 
+          position, 
+          company, 
+          message, 
+          linkedin_url, 
+          twitter_url, 
+          recommender_image_url,
+          sort_order: recommendations.length 
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Recommendation added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add recommendation');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteRecommendation = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('recommendations')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Recommendation deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete recommendation');
+    }
+  };
+
+  // Gallery Management
+  const handleAddGalleryItem = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const category = formData.get('category') as string;
+    const image = formData.get('image') as File;
+
+    if (!image) return;
+
+    try {
+      const image_url = await handleFileUpload(image);
+      
+      const { error } = await supabase
+        .from('gallery')
+        .insert([{ 
+          title, 
+          description, 
+          category, 
+          image_url,
+          sort_order: galleryItems.length 
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Gallery item added successfully');
+      loadAllData();
+      e.target.reset();
+    } catch (error) {
+      toast.error('Failed to add gallery item');
+      console.error(error);
+    }
+  };
+
+  const handleDeleteGalleryItem = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('gallery')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Gallery item deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete gallery item');
+    }
+  };
+
+  // Wall Management
+  const handleDeleteWallMessage = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('wall_messages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Wall message deleted successfully');
+      loadAllData();
+    } catch (error) {
+      toast.error('Failed to delete wall message');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-center">Portfolio Admin Dashboard</h1>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="hero">Hero Images</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-10">
+            <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="tech">Tech Stack</TabsTrigger>
+            <TabsTrigger value="tech">Tech</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="social">Social</TabsTrigger>
             <TabsTrigger value="resume">Resume</TabsTrigger>
+            <TabsTrigger value="recommendations">Testimonials</TabsTrigger>
+            <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            <TabsTrigger value="wall">Wall</TabsTrigger>
           </TabsList>
 
           {/* Hero Images Tab */}
@@ -502,10 +641,21 @@ const Admin = () => {
                     <Input type="file" name="profile_image" accept="image/*" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <label className="block text-sm font-medium mb-2">Hero Description (Homepage)</label>
                     <Textarea 
-                      name="description" 
-                      defaultValue={aboutContent?.description} 
+                      name="hero_description" 
+                      defaultValue={aboutContent?.hero_description} 
+                      placeholder="Self-Taught Robotics Engineer & IoT Developer | STE(A)M & STEM Instructor | Innovator | Agriculture Enthusiast | Aspiring Estate Developer"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">About Description (About Page)</label>
+                    <Textarea 
+                      name="about_description" 
+                      defaultValue={aboutContent?.about_description} 
+                      placeholder="I am Justice Ansah, a young innovator who grew up in a farming community with no background in technology..."
                       rows={6}
                       required
                     />
@@ -515,6 +665,7 @@ const Admin = () => {
                     <Input 
                       name="location" 
                       defaultValue={aboutContent?.location} 
+                      placeholder="Accra, Ghana"
                       required
                     />
                   </div>
@@ -850,6 +1001,186 @@ const Admin = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Recommendations Tab */}
+          <TabsContent value="recommendations" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Recommendation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddRecommendation} className="space-y-4">
+                  <Input name="name" placeholder="Recommender name" required />
+                  <Input name="position" placeholder="Position/Title" />
+                  <Input name="company" placeholder="Company/Organization" />
+                  <Textarea name="message" placeholder="Recommendation message" rows={4} required />
+                  <Input name="linkedin_url" placeholder="LinkedIn URL" type="url" />
+                  <Input name="twitter_url" placeholder="Twitter URL" type="url" />
+                  <Input type="file" name="image" accept="image/*" />
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Recommendation
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Current Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recommendations.map((rec) => (
+                    <div key={rec.id} className="flex items-start justify-between p-4 border rounded">
+                      <div className="flex items-start space-x-4">
+                        {rec.recommender_image_url && (
+                          <img src={rec.recommender_image_url} alt={rec.name} className="w-12 h-12 object-cover rounded-full" />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-medium">{rec.name}</h3>
+                          {rec.position && (
+                            <p className="text-sm text-muted-foreground">
+                              {rec.position}{rec.company && ` at ${rec.company}`}
+                            </p>
+                          )}
+                          <p className="text-sm mt-2">{rec.message}</p>
+                          <div className="flex space-x-2 mt-2">
+                            {rec.linkedin_url && (
+                              <a href={rec.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                                LinkedIn
+                              </a>
+                            )}
+                            {rec.twitter_url && (
+                              <a href={rec.twitter_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                                Twitter
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteRecommendation(rec.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Gallery Tab */}
+          <TabsContent value="gallery" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Gallery Image</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddGalleryItem} className="space-y-4">
+                  <Input name="title" placeholder="Image title" required />
+                  <Textarea name="description" placeholder="Image description/story" rows={3} />
+                  <Select name="category" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="Robotics">Robotics</SelectItem>
+                      <SelectItem value="STEM Education">STEM Education</SelectItem>
+                      <SelectItem value="Agriculture">Agriculture</SelectItem>
+                      <SelectItem value="Events">Events</SelectItem>
+                      <SelectItem value="Personal Journey">Personal Journey</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input type="file" name="image" accept="image/*" required />
+                  <Button type="submit">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Gallery Image
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Gallery Images</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {galleryItems.map((item) => (
+                    <div key={item.id} className="space-y-2">
+                      <img src={item.image_url} alt={item.title} className="w-full h-32 object-cover rounded" />
+                      <h4 className="font-medium text-sm">{item.title}</h4>
+                      <Badge variant="secondary" className="text-xs">{item.category}</Badge>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      )}
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteGalleryItem(item.id)}
+                        className="w-full"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Wall Tab */}
+          <TabsContent value="wall" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Wall Messages</CardTitle>
+                <p className="text-sm text-muted-foreground">Moderate and delete inappropriate messages from the wall</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {wallMessages.map((message) => (
+                    <div key={message.id} className="flex items-start justify-between p-4 border rounded">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold">@{message.name}</h4>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(message.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{message.message}</p>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteWallMessage(message.id)}
+                        className="ml-4"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  
+                  {wallMessages.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No wall messages yet.</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

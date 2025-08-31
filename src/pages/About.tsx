@@ -36,14 +36,11 @@ const About = () => {
               </a>
               
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                {aboutContent?.about_description || 'Experienced STEM educator and robotics engineer dedicated to transforming education through innovative technology integration. I specialize in developing comprehensive robotics curricula, implementing cutting-edge educational technologies, and creating engaging hands-on learning experiences that inspire students to pursue careers in science, technology, engineering, and mathematics.'}
+                {aboutContent?.about_description || 'I am Justice Ansah, a young innovator who grew up in a farming community with no background in technology. From those simple beginnings, curiosity led me to robotics, IoT development, and teaching STEM education. My work now bridges technology, agriculture, and sustainable development, with a vision to reimagine how communities grow and thrive. My journey has never been a straight line, but each step has been driven by a belief that innovation can rise from any soil. The story is still unfolding.'}
               </p>
 
               <div className="pt-4 border-t border-border">
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{aboutContent?.location || 'Accra, Ghana'}</span>
-                </div>
+                {/* Removed location display */}
               </div>
             </div>
 

@@ -24,6 +24,7 @@ const Navigation = () => {
     { path: '/resume', label: 'Resume' },
     { path: '/projects', label: 'Projects' },
     { path: '/blog', label: 'Blog' },
+    { path: '/gallery', label: 'Frames of Action' },
     { path: '/wall', label: 'Wall' },
   ];
 
@@ -32,7 +33,7 @@ const Navigation = () => {
       isScrolled ? 'bg-background/95 backdrop-blur-md shadow-soft' : 'bg-transparent'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center">
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (

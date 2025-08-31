@@ -16,24 +16,30 @@ export type Database = {
     Tables: {
       about_content: {
         Row: {
+          about_description: string | null
           created_at: string | null
           description: string | null
+          hero_description: string | null
           id: string
           location: string | null
           profile_image_url: string | null
           updated_at: string | null
         }
         Insert: {
+          about_description?: string | null
           created_at?: string | null
           description?: string | null
+          hero_description?: string | null
           id?: string
           location?: string | null
           profile_image_url?: string | null
           updated_at?: string | null
         }
         Update: {
+          about_description?: string | null
           created_at?: string | null
           description?: string | null
+          hero_description?: string | null
           id?: string
           location?: string | null
           profile_image_url?: string | null
@@ -77,6 +83,42 @@ export type Database = {
           slug?: string
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gallery: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          sort_order: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -146,6 +188,51 @@ export type Database = {
           technologies?: string[] | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          company: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          linkedin_url: string | null
+          message: string
+          name: string
+          position: string | null
+          recommender_image_url: string | null
+          sort_order: number | null
+          twitter_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          linkedin_url?: string | null
+          message: string
+          name: string
+          position?: string | null
+          recommender_image_url?: string | null
+          sort_order?: number | null
+          twitter_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          linkedin_url?: string | null
+          message?: string
+          name?: string
+          position?: string | null
+          recommender_image_url?: string | null
+          sort_order?: number | null
+          twitter_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -236,6 +323,30 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      wall_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
