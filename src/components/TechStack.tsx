@@ -63,16 +63,24 @@ const TechStack = () => {
                 <div className="p-2 sm:p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   {tech.icon_url ? (
                     <img 
-                      src={tech.icon_url} 
+                      src={tech.icon_url.replace(/\s+/g, '')} 
                       alt={tech.name}
-                      className="w-6 h-6 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform" 
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain group-hover:scale-110 transition-transform" 
+                      onError={(e) => {
+                        console.error(`Failed to load icon for ${tech.name}:`, tech.icon_url);
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const fallbackElement = parent.querySelector('.fallback-icon') as HTMLElement;
+                          if (fallbackElement) fallbackElement.style.display = 'block';
+                        }
+                      }}
                     />
-                  ) : (
-                    <Icon 
-                      className="w-6 h-6 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform" 
-                      aria-hidden="true"
-                    />
-                  )}
+                  ) : null}
+                  <Icon 
+                    className={`fallback-icon w-6 h-6 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform ${tech.icon_url ? 'hidden' : 'block'}`}
+                    aria-hidden="true"
+                  />
                 </div>
                 <div>
                   <h3 className="font-medium text-xs sm:text-sm text-foreground leading-tight">

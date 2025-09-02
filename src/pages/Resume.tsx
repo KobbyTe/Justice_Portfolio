@@ -107,10 +107,25 @@ const Resume = () => {
               </div>
             </div>
 
-            {/* Skills */}
+            {/* Skills & Download */}
             <div className="space-y-8">
+              {/* Skills Section */}
+              <div>
+                <h2 className="text-xl font-heading font-semibold mb-6 text-primary">🚀 Skills</h2>
+                <div className="space-y-4">
+                  {skills.map((skill, index) => (
+                    <SkillBar 
+                      key={skill.name}
+                      skill={skill.name}
+                      percentage={skill.percentage}
+                      delay={index * 100}
+                    />
+                  ))}
+                </div>
+              </div>
 
-              <div className="mt-8">
+              {/* Download Button */}
+              <div>
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90"
                   onClick={handleDownload}
