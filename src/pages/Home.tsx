@@ -126,8 +126,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Tech Stack Section */}
-      <TechStack />
 
       {/* Recommendations Section */}
       <Recommendations />
