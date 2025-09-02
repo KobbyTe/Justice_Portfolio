@@ -114,26 +114,6 @@ const Resume = () => {
 
             {/* Right Column - Skills & Download */}
             <div className="space-y-8">
-              {/* Skills Section */}
-              <div>
-                <h2 className="text-2xl font-heading font-semibold mb-8 text-primary flex items-center gap-3">
-                  🚀 Skills
-                </h2>
-                <Card className="glass-card">
-                  <CardContent className="p-6">
-                    <div className="space-y-6">
-                      {skills.map((skill, index) => (
-                        <SkillBar 
-                          key={skill.name}
-                          skill={skill.name}
-                          percentage={skill.percentage}
-                          delay={index * 100}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
               {/* Download Section */}
               <div>
