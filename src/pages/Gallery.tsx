@@ -4,12 +4,14 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface GalleryItem {
   id: string;
   title: string;
   description: string | null;
   image_url: string;
+  webp_url?: string;
   category: string;
   is_active: boolean;
 }
@@ -90,7 +92,7 @@ const Gallery = () => {
         </div>
 
         {/* Gallery Grid */}
-        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
           {filteredItems.map((item, index) => (
             <div
               key={item.id}
@@ -99,8 +101,9 @@ const Gallery = () => {
               onClick={() => setSelectedImage(item)}
             >
               <div className="relative overflow-hidden rounded-lg glass-card hover-scale transition-all duration-500">
-                <img
+                <OptimizedImage
                   src={item.image_url}
+                  webpSrc={item.webp_url}
                   alt={item.title}
                   className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
@@ -149,8 +152,9 @@ const Gallery = () => {
             </Button>
             
             <div className="bg-background rounded-lg overflow-hidden">
-              <img
+              <OptimizedImage
                 src={selectedImage.image_url}
+                webpSrc={selectedImage.webp_url}
                 alt={selectedImage.title}
                 className="w-full h-auto max-h-[70vh] object-contain"
               />

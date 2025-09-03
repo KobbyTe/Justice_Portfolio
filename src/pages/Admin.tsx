@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { Plus, Trash2, Edit2, Upload, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { Plus, Edit2, Trash2, Upload, Eye, EyeOff } from 'lucide-react';
+import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
+import OptimizedImage from '@/components/OptimizedImage';
 
 const Admin = () => {
   // State for all content types
@@ -499,6 +501,32 @@ const Admin = () => {
   };
 
   // Gallery Management
+  const handleGalleryFileUpload = async (file: File): Promise<ConvertedImages> => {
+    let processedFile = file;
+    
+    // Convert HEIF/HEIC to PNG first
+    if (isHEIFFile(file)) {
+      processedFile = await convertHEIFToPNG(file);
+      toast.info('HEIF/HEIC file converted to PNG');
+    }
+    
+    // Generate WebP version
+    const webpFile = await convertToWebP(processedFile);
+    
+    // Upload both PNG and WebP versions
+    const [pngUrl, webpUrl] = await Promise.all([
+      handleFileUpload(processedFile),
+      handleFileUpload(webpFile)
+    ]);
+    
+    return {
+      png: processedFile,
+      webp: webpFile,
+      pngUrl,
+      webpUrl
+    };
+  };
+
   const handleAddGalleryItem = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -510,7 +538,7 @@ const Admin = () => {
     if (!image) return;
 
     try {
-      const image_url = await handleFileUpload(image);
+      const { pngUrl, webpUrl } = await handleGalleryFileUpload(image);
       
       const { error } = await supabase
         .from('gallery')
@@ -518,13 +546,14 @@ const Admin = () => {
           title, 
           description, 
           category, 
-          image_url,
+          image_url: pngUrl,
+          webp_url: webpUrl,
           sort_order: galleryItems.length 
         }]);
 
       if (error) throw error;
       
-      toast.success('Gallery item added successfully');
+      toast.success('Gallery item added successfully with optimized formats');
       loadAllData();
       e.target.reset();
     } catch (error) {
@@ -1100,7 +1129,7 @@ const Admin = () => {
                       <SelectItem value="Personal Journey">Personal Journey</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="file" name="image" accept="image/*" required />
+                  <Input type="file" name="image" accept="image/*,.heic,.heif" required />
                   <Button type="submit">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Gallery Image
@@ -1117,7 +1146,12 @@ const Admin = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {galleryItems.map((item) => (
                     <div key={item.id} className="space-y-2">
-                      <img src={item.image_url} alt={item.title} className="w-full h-32 object-cover rounded" />
+                      <OptimizedImage 
+                        src={item.image_url} 
+                        webpSrc={item.webp_url}
+                        alt={item.title} 
+                        className="w-full h-32 object-cover rounded" 
+                      />
                       <h4 className="font-medium text-sm">{item.title}</h4>
                       <Badge variant="secondary" className="text-xs">{item.category}</Badge>
                       {item.description && (
