@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search } from 'lucide-react';
-import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Menu, X } from 'lucide-react';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -35,23 +33,9 @@ const Navigation = () => {
       isScrolled ? 'bg-background/95 backdrop-blur-md shadow-soft' : 'bg-transparent'
     }`}>
       <div className="container mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full flex items-center space-x-2 bg-background/50 border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-background/80 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-              <span>Search...</span>
-              <kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </button>
-          </div>
-
+        <div className="flex items-center justify-center">
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 flex-1 justify-center">
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -100,27 +84,6 @@ const Navigation = () => {
               </div>
             </div>
           )}
-
-          {/* Search Command Dialog */}
-          <CommandDialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-            <CommandInput placeholder="Search pages and content..." />
-            <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup heading="Pages">
-                {navItems.map((item) => (
-                  <CommandItem
-                    key={item.path}
-                    onSelect={() => {
-                      setIsSearchOpen(false);
-                      window.location.href = item.path;
-                    }}
-                  >
-                    <span>{item.label}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </CommandDialog>
         </div>
       </div>
     </nav>
