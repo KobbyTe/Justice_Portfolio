@@ -129,28 +129,24 @@ const Gallery = () => {
 
       {/* Enhanced Lightbox Modal */}
       {selectedImage && (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-6xl max-h-[95vh] flex flex-col">
-            {/* Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -top-12 right-0 z-10 text-white hover:bg-white/20 hover:text-white"
-              onClick={() => setSelectedImage(null)}
-            >
-              <X className="w-8 h-8" />
-            </Button>
-            
+        <div 
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="relative w-full max-w-6xl max-h-[95vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-background rounded-lg overflow-hidden flex flex-col max-h-full">
               {/* Media Container */}
               <div className="flex-shrink-0">
                 {selectedImage.media_type === 'video' && selectedImage.video_url ? (
                   <video
                     className="w-full h-auto max-h-[60vh] object-contain"
-                    controls
                     autoPlay
                     loop
                     muted
+                    playsInline
                   >
                     {selectedImage.video_webm_url && (
                       <source src={selectedImage.video_webm_url} type="video/webm" />
@@ -173,7 +169,7 @@ const Gallery = () => {
                   {selectedImage.title}
                 </h3>
                 {selectedImage.description && (
-                  <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                  <div className="max-h-96 overflow-y-scroll scrollbar-none">
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                       {selectedImage.description}
                     </p>
