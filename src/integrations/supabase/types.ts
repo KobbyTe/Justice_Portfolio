@@ -94,9 +94,12 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean | null
+          media_type: string | null
           sort_order: number | null
           title: string
           updated_at: string
+          video_url: string | null
+          video_webm_url: string | null
           webp_url: string | null
         }
         Insert: {
@@ -106,9 +109,12 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean | null
+          media_type?: string | null
           sort_order?: number | null
           title: string
           updated_at?: string
+          video_url?: string | null
+          video_webm_url?: string | null
           webp_url?: string | null
         }
         Update: {
@@ -118,9 +124,12 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean | null
+          media_type?: string | null
           sort_order?: number | null
           title?: string
           updated_at?: string
+          video_url?: string | null
+          video_webm_url?: string | null
           webp_url?: string | null
         }
         Relationships: []

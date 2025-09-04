@@ -4,7 +4,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import OptimizedImage from '@/components/OptimizedImage';
+import MediaItem from '@/components/MediaItem';
 
 interface GalleryItem {
   id: string;
@@ -12,6 +12,9 @@ interface GalleryItem {
   description: string | null;
   image_url: string;
   webp_url?: string;
+  video_url?: string;
+  video_webm_url?: string;
+  media_type: 'image' | 'video';
   category: string;
   is_active: boolean;
 }
@@ -37,7 +40,10 @@ const Gallery = () => {
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setGalleryItems(data || []);
+      setGalleryItems((data || []).map(item => ({
+        ...item,
+        media_type: item.media_type as 'image' | 'video'
+      })));
     } catch (error) {
       console.error('Error loading gallery:', error);
     } finally {
@@ -92,38 +98,21 @@ const Gallery = () => {
         </div>
 
         {/* Gallery Grid */}
-                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
           {filteredItems.map((item, index) => (
-            <div
+            <MediaItem
               key={item.id}
-              className="break-inside-avoid group cursor-pointer"
-              style={{ animationDelay: `${index * 100}ms` }}
+              item={item}
               onClick={() => setSelectedImage(item)}
-            >
-              <div className="relative overflow-hidden rounded-lg glass-card hover-scale transition-all duration-500">
-                <OptimizedImage
-                  src={item.image_url}
-                  webpSrc={item.webp_url}
-                  alt={item.title}
-                  className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white font-semibold text-sm mb-1">{item.title}</h3>
-                    <Button size="sm" variant="secondary" className="text-xs">
-                      View Story
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            />
           ))}
         </div>
 
         {filteredItems.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No images found in this category.</p>
+            <p className="text-muted-foreground">No media found in this category.</p>
           </div>
         )}
 
@@ -138,32 +127,57 @@ const Gallery = () => {
         </div>
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Enhanced Lightbox Modal */}
       {selectedImage && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-4xl w-full">
+        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-6xl max-h-[95vh] flex flex-col">
+            {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="absolute -top-12 right-0 text-white hover:bg-white/20"
+              className="absolute -top-12 right-0 z-10 text-white hover:bg-white/20 hover:text-white"
               onClick={() => setSelectedImage(null)}
             >
-              <X className="w-6 h-6" />
+              <X className="w-8 h-8" />
             </Button>
             
-            <div className="bg-background rounded-lg overflow-hidden">
-              <OptimizedImage
-                src={selectedImage.image_url}
-                webpSrc={selectedImage.webp_url}
-                alt={selectedImage.title}
-                className="w-full h-auto max-h-[70vh] object-contain"
-              />
-              <div className="p-6">
-                <h3 className="text-2xl font-heading font-bold text-primary mb-2">
+            <div className="bg-background rounded-lg overflow-hidden flex flex-col max-h-full">
+              {/* Media Container */}
+              <div className="flex-shrink-0">
+                {selectedImage.media_type === 'video' && selectedImage.video_url ? (
+                  <video
+                    className="w-full h-auto max-h-[60vh] object-contain"
+                    controls
+                    autoPlay
+                    loop
+                    muted
+                  >
+                    {selectedImage.video_webm_url && (
+                      <source src={selectedImage.video_webm_url} type="video/webm" />
+                    )}
+                    <source src={selectedImage.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <img
+                    src={selectedImage.image_url}
+                    alt={selectedImage.title}
+                    className="w-full h-auto max-h-[60vh] object-contain"
+                  />
+                )}
+              </div>
+              
+              {/* Scrollable Description Container */}
+              <div className="p-6 overflow-y-auto flex-1 min-h-0">
+                <h3 className="text-2xl md:text-3xl font-heading font-bold text-primary mb-4">
                   {selectedImage.title}
                 </h3>
                 {selectedImage.description && (
-                  <p className="text-muted-foreground">{selectedImage.description}</p>
+                  <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {selectedImage.description}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
