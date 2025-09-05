@@ -164,7 +164,7 @@ const Gallery = () => {
               </div>
               
               {/* Scrollable Description Container */}
-              <div className="p-6 overflow-y-auto flex-1 min-h-0">
+              <div className="p-6 overflow-y-scroll scrollbar-none flex-1 min-h-0">
                 <h3 className="text-2xl md:text-3xl font-heading font-bold text-primary mb-4">
                   {selectedImage.title}
                 </h3>
