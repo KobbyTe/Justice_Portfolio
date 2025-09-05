@@ -86,14 +86,6 @@ const Home = () => {
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
-                  <Link to="/resume">
-                    <Download className="w-4 h-4 mr-2" />
-                    Résumé
-                  </Link>
-                </Button>
-              </div>
 
               {/* Social Links */}
               <div className="flex items-center space-x-4 pt-4">
