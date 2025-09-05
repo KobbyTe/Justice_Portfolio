@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const About = () => {
   const [aboutContent, setAboutContent] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadAboutContent();
@@ -18,6 +19,8 @@ const About = () => {
       setAboutContent(data);
     } catch (error) {
       console.error('Error loading about content:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,15 +49,20 @@ const About = () => {
 
             <div className="relative order-1 lg:order-2">
               <div className="relative">
-                <img 
-                  src={aboutContent?.profile_image_url || portrait} 
-                  alt="Justice Ansah - STEM Educator & Robotics Engineer" 
-                  className="w-full max-w-md mx-auto transition-all duration-500"
-                  style={{
-                    maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)',
-                    WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)'
-                  }}
-                />
+                {!isLoading && (
+                  <img 
+                    src={aboutContent?.profile_image_url || portrait} 
+                    alt="Justice Ansah - STEM Educator & Robotics Engineer" 
+                    className="w-full max-w-md mx-auto transition-all duration-500"
+                    style={{
+                      maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)',
+                      WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 70%, rgba(0,0,0,0.8) 85%, rgba(0,0,0,0.2) 100%)'
+                    }}
+                  />
+                )}
+                {isLoading && (
+                  <div className="w-full max-w-md mx-auto h-96 bg-muted animate-pulse rounded-lg"></div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-r from-background/20 via-transparent to-background/20 pointer-events-none"></div>
               </div>
             </div>

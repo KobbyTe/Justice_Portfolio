@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
 import MediaItem from '@/components/MediaItem';
 
 interface GalleryItem {
