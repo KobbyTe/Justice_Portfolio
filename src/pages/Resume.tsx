@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Resume = () => {
   const [resumeFile, setResumeFile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadResumeFile();
@@ -16,14 +17,22 @@ const Resume = () => {
 
   const loadResumeFile = async () => {
     try {
-      const { data } = await supabase
+      setLoading(true);
+      const { data, error } = await supabase
         .from('resume_files')
         .select('*')
         .eq('is_current', true)
-        .single();
-      setResumeFile(data);
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error loading resume file:', error);
+      } else {
+        setResumeFile(data);
+      }
     } catch (error) {
       console.error('Error loading resume file:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,10 +116,15 @@ const Resume = () => {
                   <Button 
                     className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-semibold"
                     onClick={handleDownload}
-                    disabled={!resumeFile}
+                    disabled={loading || !resumeFile}
                   >
                     <Download className="w-5 h-5 mr-3" />
-                    {resumeFile ? `Download ${resumeFile.file_name}` : 'No Resume Available'}
+                    {loading 
+                      ? 'Loading...' 
+                      : resumeFile 
+                        ? `Download ${resumeFile.file_name}` 
+                        : 'No Resume Available'
+                    }
                   </Button>
                 </CardContent>
               </Card>
