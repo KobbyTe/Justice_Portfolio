@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OptimizedImageProps {
   src: string;
@@ -16,36 +17,45 @@ const OptimizedImage = ({
   webpSrc 
 }: OptimizedImageProps) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleError = () => {
     setHasError(true);
+    setIsLoading(false);
   };
 
-  // If we have both WebP and fallback sources, use picture element
-  if (webpSrc && !hasError) {
-    return (
-      <picture>
-        <source srcSet={webpSrc} type="image/webp" />
+  const handleLoad = () => {
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="relative">
+      {isLoading && (
+        <Skeleton className="absolute inset-0 w-full h-full rounded-lg" />
+      )}
+      {webpSrc && !hasError ? (
+        <picture>
+          <source srcSet={webpSrc} type="image/webp" />
+          <img 
+            src={src} 
+            alt={alt} 
+            className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+            loading={loading}
+            onError={handleError}
+            onLoad={handleLoad}
+          />
+        </picture>
+      ) : (
         <img 
           src={src} 
           alt={alt} 
-          className={className}
+          className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           loading={loading}
           onError={handleError}
+          onLoad={handleLoad}
         />
-      </picture>
-    );
-  }
-
-  // Fallback to regular img element
-  return (
-    <img 
-      src={src} 
-      alt={alt} 
-      className={className}
-      loading={loading}
-      onError={handleError}
-    />
+      )}
+    </div>
   );
 };
 

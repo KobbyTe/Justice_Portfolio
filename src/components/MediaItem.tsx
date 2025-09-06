@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import OptimizedImage from './OptimizedImage';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MediaItemProps {
   item: {
@@ -19,6 +20,7 @@ interface MediaItemProps {
 
 const MediaItem = ({ item, onClick, className = "", style }: MediaItemProps) => {
   const [isInView, setIsInView] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,13 +55,17 @@ const MediaItem = ({ item, onClick, className = "", style }: MediaItemProps) => 
         onClick={onClick}
       >
         <div className="relative overflow-hidden rounded-lg glass-card hover-scale transition-all duration-500">
+          {!videoLoaded && (
+            <Skeleton className="w-full h-48 rounded-lg" />
+          )}
           <video
             ref={videoRef}
-            className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`w-full h-auto object-cover transition-all duration-500 group-hover:scale-105 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             muted
             loop
             playsInline
             preload="metadata"
+            onLoadedData={() => setVideoLoaded(true)}
           >
             {item.video_webm_url && (
               <source src={item.video_webm_url} type="video/webm" />
