@@ -49,6 +49,7 @@ export type Database = {
       }
       blog_posts: {
         Row: {
+          category: string | null
           content: string | null
           created_at: string | null
           excerpt: string | null
@@ -56,11 +57,13 @@ export type Database = {
           id: string
           is_published: boolean | null
           published_at: string | null
+          read_time_minutes: number | null
           slug: string
           title: string
           updated_at: string | null
         }
         Insert: {
+          category?: string | null
           content?: string | null
           created_at?: string | null
           excerpt?: string | null
@@ -68,11 +71,13 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           published_at?: string | null
+          read_time_minutes?: number | null
           slug: string
           title: string
           updated_at?: string | null
         }
         Update: {
+          category?: string | null
           content?: string | null
           created_at?: string | null
           excerpt?: string | null
@@ -80,6 +85,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           published_at?: string | null
+          read_time_minutes?: number | null
           slug?: string
           title?: string
           updated_at?: string | null
