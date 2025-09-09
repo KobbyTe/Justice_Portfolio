@@ -456,7 +456,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_blog_post_with_stats: {
+        Args: { post_slug: string }
+        Returns: {
+          category: string
+          content: string
+          excerpt: string
+          featured_image_url: string
+          id: string
+          like_count: number
+          published_at: string
+          read_time_minutes: number
+          slug: string
+          title: string
+        }[]
+      }
     }
     Enums: {
       project_category: "Robotics" | "Web app" | "Mobile app" | "AI"
