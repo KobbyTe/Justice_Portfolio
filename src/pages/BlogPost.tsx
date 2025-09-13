@@ -21,8 +21,10 @@ interface BlogPost {
   content: string;
   excerpt: string;
   featured_image_url?: string;
+  featured_video_url?: string;
   slug: string;
   category: string;
+  tags?: string[];
   read_time_minutes: number;
   published_at: string;
   like_count: number;
@@ -61,7 +63,17 @@ const BlogPost = () => {
       setPost(data[0]);
       
       // Load related posts
-      await loadRelatedPosts(data[0].category, data[0].id);
+      const { data: relatedData, error: relatedError } = await supabase
+        .from('blog_posts')
+        .select('id, title, excerpt, featured_image_url, featured_video_url, slug, category, tags, read_time_minutes, published_at')
+        .eq('is_published', true)
+        .eq('category', data[0].category)
+        .neq('id', data[0].id)
+        .order('published_at', { ascending: false })
+        .limit(3);
+
+      if (relatedError) throw relatedError;
+      setRelatedPosts(relatedData || []);
     } catch (error) {
       console.error('Error loading blog post:', error);
       setError('Failed to load blog post');
@@ -183,6 +195,17 @@ const BlogPost = () => {
                 </div>
               </div>
 
+              {/* Tags */}
+              {post.tags && post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="hover:bg-primary/10">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-4 pt-4">
                 <LikeButton postId={post.id} initialLikeCount={post.like_count} />
                 <SocialShare 
@@ -193,8 +216,8 @@ const BlogPost = () => {
               </div>
             </div>
 
-            {/* Featured Image */}
-            {post.featured_image_url && (
+            {/* Featured Image or Video */}
+            {post.featured_image_url ? (
               <div className="relative aspect-[16/9] rounded-lg overflow-hidden">
                 <OptimizedImage
                   src={post.featured_image_url}
@@ -202,7 +225,32 @@ const BlogPost = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            )}
+            ) : post.featured_video_url ? (
+              <div className="relative aspect-[16/9] rounded-lg overflow-hidden bg-black">
+                {post.featured_video_url.includes('youtube.com') || post.featured_video_url.includes('youtu.be') ? (
+                  <iframe
+                    src={post.featured_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title={post.title}
+                  />
+                ) : post.featured_video_url.includes('vimeo.com') ? (
+                  <iframe
+                    src={post.featured_video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title={post.title}
+                  />
+                ) : (
+                  <video
+                    src={post.featured_video_url}
+                    controls
+                    className="w-full h-full object-cover"
+                    poster=""
+                  />
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Content */}

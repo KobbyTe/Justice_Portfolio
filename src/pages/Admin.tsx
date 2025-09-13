@@ -11,6 +11,7 @@ import { Plus, Trash2, Edit2, Upload, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
 import OptimizedImage from '@/components/OptimizedImage';
+import BlogManagement from '@/components/admin/BlogManagement';
 
 const Admin = () => {
   // State for all content types
@@ -258,78 +259,6 @@ const Admin = () => {
       loadAllData();
     } catch (error) {
       toast.error('Failed to delete project');
-    }
-  };
-
-  // Blog Posts Management
-  const handleAddBlogPost = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const title = formData.get('title') as string;
-    const content = formData.get('content') as string;
-    const excerpt = formData.get('excerpt') as string;
-    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-    const is_published = formData.get('is_published') === 'on';
-    const featured_image = formData.get('featured_image') as File;
-
-    try {
-      let featured_image_url = null;
-      if (featured_image && featured_image.size > 0) {
-        featured_image_url = await handleFileUpload(featured_image);
-      }
-
-      const blogData = {
-        title, content, excerpt, slug, is_published, featured_image_url,
-        published_at: is_published ? new Date().toISOString() : null
-      };
-
-      const { error } = await supabase
-        .from('blog_posts')
-        .insert([blogData]);
-
-      if (error) throw error;
-      
-      toast.success('Blog post added successfully');
-      loadAllData();
-      e.target.reset();
-    } catch (error) {
-      toast.error('Failed to add blog post');
-      console.error(error);
-    }
-  };
-
-  const handleTogglePublish = async (id, currentStatus) => {
-    try {
-      const { error } = await supabase
-        .from('blog_posts')
-        .update({ 
-          is_published: !currentStatus,
-          published_at: !currentStatus ? new Date().toISOString() : null
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast.success(`Blog post ${!currentStatus ? 'published' : 'unpublished'}`);
-      loadAllData();
-    } catch (error) {
-      toast.error('Failed to update blog post');
-    }
-  };
-
-  const handleDeleteBlogPost = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('blog_posts')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast.success('Blog post deleted successfully');
-      loadAllData();
-    } catch (error) {
-      toast.error('Failed to delete blog post');
     }
   };
 
@@ -858,70 +787,8 @@ const Admin = () => {
           </TabsContent>
 
           {/* Blog Tab */}
-          <TabsContent value="blog" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add Blog Post</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleAddBlogPost} className="space-y-4">
-                  <Input name="title" placeholder="Blog post title" required />
-                  <Textarea name="excerpt" placeholder="Short excerpt" rows={2} />
-                  <Textarea name="content" placeholder="Full content" rows={6} />
-                  <Input type="file" name="featured_image" accept="image/*" />
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" name="is_published" id="is_published" />
-                    <label htmlFor="is_published">Publish immediately</label>
-                  </div>
-                  <Button type="submit">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Blog Post
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Blog Posts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {blogPosts.map((post) => (
-                    <div key={post.id} className="flex items-center justify-between p-4 border rounded">
-                      <div className="flex items-center space-x-4">
-                        {post.featured_image_url && (
-                          <img src={post.featured_image_url} alt={post.title} className="w-16 h-16 object-cover rounded" />
-                        )}
-                        <div>
-                          <h3 className="font-medium">{post.title}</h3>
-                          <Badge variant={post.is_published ? "default" : "secondary"}>
-                            {post.is_published ? "Published" : "Draft"}
-                          </Badge>
-                          <p className="text-sm text-muted-foreground mt-1">{post.excerpt}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleTogglePublish(post.id, post.is_published)}
-                        >
-                          {post.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleDeleteBlogPost(post.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="blog">
+            <BlogManagement onFileUpload={handleFileUpload} />
           </TabsContent>
 
           {/* Social Links Tab */}

@@ -8,7 +8,9 @@ interface BlogPost {
   title: string;
   excerpt: string;
   featured_image_url?: string;
+  featured_video_url?: string;
   category: string;
+  tags?: string[];
   read_time_minutes: number;
   published_at: string;
   slug: string;
@@ -38,6 +40,14 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
               alt={post.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
+          </div>
+        ) : post.featured_video_url ? (
+          <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="text-4xl text-white/80 z-10">▶</div>
+            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+              Video
+            </div>
           </div>
         ) : (
           <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -70,6 +80,22 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
         <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
           {post.excerpt}
         </p>
+        
+        {/* Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {post.tags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {post.tags.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{post.tags.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
         
         <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
           <span>Read More</span>

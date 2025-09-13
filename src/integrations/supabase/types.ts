@@ -137,11 +137,13 @@ export type Database = {
           created_at: string | null
           excerpt: string | null
           featured_image_url: string | null
+          featured_video_url: string | null
           id: string
           is_published: boolean | null
           published_at: string | null
           read_time_minutes: number | null
           slug: string
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
@@ -151,11 +153,13 @@ export type Database = {
           created_at?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
+          featured_video_url?: string | null
           id?: string
           is_published?: boolean | null
           published_at?: string | null
           read_time_minutes?: number | null
           slug: string
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
@@ -165,11 +169,13 @@ export type Database = {
           created_at?: string | null
           excerpt?: string | null
           featured_image_url?: string | null
+          featured_video_url?: string | null
           id?: string
           is_published?: boolean | null
           published_at?: string | null
           read_time_minutes?: number | null
           slug?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }

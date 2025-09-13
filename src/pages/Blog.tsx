@@ -52,7 +52,8 @@ const Blog = () => {
       const matchesSearch = searchQuery === '' || 
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content?.toLowerCase().includes(searchQuery.toLowerCase());
+        post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesCategory = selectedCategory === '' || post.category === selectedCategory;
       
