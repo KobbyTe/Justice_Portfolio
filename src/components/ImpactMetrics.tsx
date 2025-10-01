@@ -144,7 +144,7 @@ const ImpactMetrics = () => {
       <div className="container mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <h2 className="section-heading text-3xl sm:text-4xl lg:text-5xl mb-4">
-            Impact Metrics
+            Impact Chronicles
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Making a difference through education and mentorship
