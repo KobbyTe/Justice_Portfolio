@@ -146,6 +146,7 @@ const Gallery = () => {
                     loop
                     muted
                     playsInline
+                    preload="metadata"
                   >
                     {selectedImage.video_webm_url && (
                       <source src={selectedImage.video_webm_url} type="video/webm" />
@@ -158,6 +159,8 @@ const Gallery = () => {
                     src={selectedImage.image_url}
                     alt={selectedImage.title}
                     className="w-full h-auto max-h-[60vh] object-contain"
+                    loading="lazy"
+                    decoding="async"
                   />
                 )}
               </div>

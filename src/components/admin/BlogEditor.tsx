@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar, X, Upload, Video, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { lazy, Suspense } from 'react';
+import { compressImage } from '@/utils/imageOptimizer';
 
 // Dynamically import ReactQuill
 const ReactQuill = lazy(() => import('react-quill'));
@@ -53,17 +54,59 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const quillRef = useRef<any>(null);
 
-  // Rich text editor configuration
+  // Image handler for ReactQuill - uploads images instead of base64
+  const imageHandler = async () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try {
+        toast.info('Uploading image...');
+        
+        // Compress image before upload
+        const compressedFile = await compressImage(file, 1920, 0.85);
+        
+        // Upload to storage
+        const imageUrl = await onFileUpload(compressedFile);
+        
+        // Insert image URL into editor
+        const quill = quillRef.current?.getEditor();
+        if (quill) {
+          const range = quill.getSelection(true);
+          quill.insertEmbed(range.index, 'image', imageUrl);
+          quill.setSelection(range.index + 1);
+        }
+        
+        toast.success('Image uploaded successfully');
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image');
+      }
+    };
+  };
+
+  // Rich text editor configuration with custom image handler
   const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'indent': '-1'}, { 'indent': '+1' }],
-      ['link', 'image', 'code-block'],
-      ['clean']
-    ],
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        ['link', 'image', 'code-block'],
+        ['clean']
+      ],
+      handlers: {
+        image: imageHandler
+      }
+    },
   };
 
   const quillFormats = [
@@ -115,7 +158,13 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
 
     setIsUploading(true);
     try {
-      const url = await onFileUpload(file);
+      // Compress image before upload
+      let fileToUpload = file;
+      if (file.type.startsWith('image/')) {
+        fileToUpload = await compressImage(file, 1920, 0.85);
+      }
+      
+      const url = await onFileUpload(fileToUpload);
       if (mediaType === 'image') {
         handleInputChange('featured_image_url', url);
         handleInputChange('featured_video_url', '');
@@ -315,6 +364,7 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
             <div className="mt-2">
               <Suspense fallback={<div>Loading editor...</div>}>
                 <ReactQuill
+                  ref={quillRef}
                   theme="snow"
                   value={formData.content || ''}
                   onChange={(content) => handleInputChange('content', content)}

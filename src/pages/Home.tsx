@@ -65,6 +65,9 @@ const Home = () => {
             src={heroImages[currentImageIndex]} 
             alt="Developer workspace with vivid screen wallpaper" 
             className="w-full h-full object-cover transition-opacity duration-1000"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             style={{
               maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
               WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)'

@@ -43,6 +43,7 @@ const OptimizedImage = ({
             loading={loading}
             onError={handleError}
             onLoad={handleLoad}
+            decoding="async"
           />
         </picture>
       ) : (
@@ -53,6 +54,7 @@ const OptimizedImage = ({
           loading={loading}
           onError={handleError}
           onLoad={handleLoad}
+          decoding="async"
         />
       )}
     </div>
