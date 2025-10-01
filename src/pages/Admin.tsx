@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
 import OptimizedImage from '@/components/OptimizedImage';
 import BlogManagement from '@/components/admin/BlogManagement';
+import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 
 const Admin = () => {
   // State for all content types
@@ -530,9 +531,10 @@ const Admin = () => {
         <h1 className="text-3xl font-bold mb-8 text-center">Portfolio Admin Dashboard</h1>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="impact">Impact</TabsTrigger>
             <TabsTrigger value="tech">Tech</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
@@ -631,6 +633,11 @@ const Admin = () => {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Impact Metrics Tab */}
+          <TabsContent value="impact">
+            <ImpactMetricsEditor />
           </TabsContent>
 
           {/* Tech Stack Tab */}

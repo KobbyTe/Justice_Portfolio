@@ -3,6 +3,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Recommendations from '@/components/Recommendations';
 import TechStack from '@/components/TechStack';
+import ImpactMetrics from '@/components/ImpactMetrics';
 import heroWorkspace1 from '@/assets/hero-workspace.jpg';
 import heroWorkspace2 from '@/assets/hero-workspace-2.jpg';
 import heroWorkspace3 from '@/assets/hero-workspace-3.jpg';
@@ -118,6 +119,8 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Impact Metrics Section */}
+      <ImpactMetrics />
 
       {/* Recommendations Section */}
       <Recommendations />

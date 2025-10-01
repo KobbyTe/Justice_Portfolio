@@ -16,6 +16,26 @@ const Blog = () => {
 
   useEffect(() => {
     loadBlogPosts();
+    
+    // Set up realtime subscription for blog posts
+    const channel = supabase
+      .channel('blog-posts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'blog_posts'
+        },
+        () => {
+          loadBlogPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadBlogPosts = async () => {

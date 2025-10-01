@@ -256,6 +256,36 @@ export type Database = {
         }
         Relationships: []
       }
+      impact_metrics: {
+        Row: {
+          created_at: string
+          girls_mentored: number
+          id: string
+          schools_taught: number
+          students_impacted: number
+          teachers_trained: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          girls_mentored?: number
+          id?: string
+          schools_taught?: number
+          students_impacted?: number
+          teachers_trained?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          girls_mentored?: number
+          id?: string
+          schools_taught?: number
+          students_impacted?: number
+          teachers_trained?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           category: Database["public"]["Enums"]["project_category"]
