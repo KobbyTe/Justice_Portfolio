@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,32 +54,45 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [editorLoaded, setEditorLoaded] = useState(false);
   const quillRef = useRef<any>(null);
+  const initialLoadRef = useRef(false);
 
   // Update form data when post prop changes (for editing)
   useEffect(() => {
-    if (post) {
-      setFormData({
-        title: '',
-        content: '',
-        excerpt: '',
-        category: 'General',
-        tags: [],
-        is_published: false,
-        read_time_minutes: 5,
-        ...post
-      });
-    } else {
-      // Reset form for new post
-      setFormData({
-        title: '',
-        content: '',
-        excerpt: '',
-        category: 'General',
-        tags: [],
-        is_published: false,
-        read_time_minutes: 5,
-      });
+    // Prevent infinite loops by checking if this is a genuine post change
+    const postId = post?.id;
+    
+    if (!initialLoadRef.current || (initialLoadRef.current && postId !== formData.id)) {
+      initialLoadRef.current = true;
+      
+      if (post) {
+        setFormData({
+          title: '',
+          content: '',
+          excerpt: '',
+          category: 'General',
+          tags: [],
+          is_published: false,
+          read_time_minutes: 5,
+          ...post
+        });
+      } else {
+        // Reset form for new post
+        setFormData({
+          title: '',
+          content: '',
+          excerpt: '',
+          category: 'General',
+          tags: [],
+          is_published: false,
+          read_time_minutes: 5,
+        });
+      }
+      
+      // Reset editor loaded state to allow re-initialization
+      setEditorLoaded(false);
+      setTimeout(() => setEditorLoaded(true), 100);
     }
   }, [post?.id]);
 
@@ -119,8 +132,8 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
     };
   };
 
-  // Rich text editor configuration with custom image handler
-  const quillModules = {
+  // Rich text editor configuration with custom image handler - memoized to prevent re-renders
+  const quillModules = useMemo(() => ({
     toolbar: {
       container: [
         [{ 'header': [1, 2, 3, false] }],
@@ -134,12 +147,12 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
         image: imageHandler
       }
     },
-  };
+  }), []);
 
-  const quillFormats = [
+  const quillFormats = useMemo(() => [
     'header', 'bold', 'italic', 'underline', 'strike',
     'list', 'bullet', 'indent', 'link', 'image', 'code-block'
-  ];
+  ], []);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -390,15 +403,22 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
             <Label htmlFor="content">Content *</Label>
             <div className="mt-2">
               <Suspense fallback={<div>Loading editor...</div>}>
-                <ReactQuill
-                  ref={quillRef}
-                  theme="snow"
-                  value={formData.content || ''}
-                  onChange={(content) => handleInputChange('content', content)}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  style={{ height: '300px', marginBottom: '50px' }}
-                />
+                {editorLoaded && (
+                  <ReactQuill
+                    ref={quillRef}
+                    theme="snow"
+                    value={formData.content || ''}
+                    onChange={(content) => handleInputChange('content', content)}
+                    modules={quillModules}
+                    formats={quillFormats}
+                    style={{ height: '300px', marginBottom: '50px' }}
+                  />
+                )}
+                {!editorLoaded && (
+                  <div className="h-[300px] flex items-center justify-center bg-muted rounded">
+                    <p className="text-muted-foreground">Initializing editor...</p>
+                  </div>
+                )}
               </Suspense>
             </div>
           </div>
