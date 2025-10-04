@@ -56,6 +56,33 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
   const [isUploading, setIsUploading] = useState(false);
   const quillRef = useRef<any>(null);
 
+  // Update form data when post prop changes (for editing)
+  useEffect(() => {
+    if (post) {
+      setFormData({
+        title: '',
+        content: '',
+        excerpt: '',
+        category: 'General',
+        tags: [],
+        is_published: false,
+        read_time_minutes: 5,
+        ...post
+      });
+    } else {
+      // Reset form for new post
+      setFormData({
+        title: '',
+        content: '',
+        excerpt: '',
+        category: 'General',
+        tags: [],
+        is_published: false,
+        read_time_minutes: 5,
+      });
+    }
+  }, [post?.id]);
+
   // Image handler for ReactQuill - uploads images instead of base64
   const imageHandler = async () => {
     const input = document.createElement('input');
