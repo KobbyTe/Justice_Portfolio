@@ -431,6 +431,10 @@ const Admin = () => {
   };
 
   // Gallery Management
+  const isVideoFile = (file: File): boolean => {
+    return file.type.startsWith('video/');
+  };
+
   const handleGalleryFileUpload = async (file: File): Promise<ConvertedImages> => {
     let processedFile = file;
     
@@ -463,27 +467,59 @@ const Admin = () => {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
-    const image = formData.get('image') as File;
+    const mediaFile = formData.get('image') as File;
 
-    if (!image) return;
+    if (!mediaFile) return;
 
     try {
-      const { pngUrl, webpUrl } = await handleGalleryFileUpload(image);
+      // Check if it's a video file
+      const isVideo = isVideoFile(mediaFile);
       
-      const { error } = await supabase
-        .from('gallery')
-        .insert([{ 
-          title, 
-          description, 
-          category, 
-          image_url: pngUrl,
-          webp_url: webpUrl,
-          sort_order: galleryItems.length 
-        }]);
+      if (isVideo) {
+        // Validate video file size (limit to ~100MB for short clips)
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (mediaFile.size > maxSize) {
+          toast.error('Video file is too large. Please keep videos under 100MB (approximately 30-60 seconds).');
+          return;
+        }
 
-      if (error) throw error;
+        // Upload video directly
+        const videoUrl = await handleFileUpload(mediaFile);
+        
+        const { error } = await supabase
+          .from('gallery')
+          .insert([{ 
+            title, 
+            description, 
+            category, 
+            image_url: videoUrl, // Use as fallback
+            video_url: videoUrl,
+            media_type: 'video',
+            sort_order: galleryItems.length 
+          }]);
+
+        if (error) throw error;
+        toast.success('Video added successfully to gallery');
+      } else {
+        // Handle image upload with optimization
+        const { pngUrl, webpUrl } = await handleGalleryFileUpload(mediaFile);
+        
+        const { error } = await supabase
+          .from('gallery')
+          .insert([{ 
+            title, 
+            description, 
+            category, 
+            image_url: pngUrl,
+            webp_url: webpUrl,
+            media_type: 'image',
+            sort_order: galleryItems.length 
+          }]);
+
+        if (error) throw error;
+        toast.success('Image added successfully with optimized formats');
+      }
       
-      toast.success('Gallery item added successfully with optimized formats');
       loadAllData();
       e.target.reset();
     } catch (error) {
@@ -984,12 +1020,13 @@ const Admin = () => {
           <TabsContent value="gallery" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Add Gallery Image</CardTitle>
+                <CardTitle>Add Gallery Media</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">Upload images or short videos (MP4, max 100MB)</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddGalleryItem} className="space-y-4">
-                  <Input name="title" placeholder="Image title" required />
-                  <Textarea name="description" placeholder="Image description/story" rows={3} />
+                  <Input name="title" placeholder="Media title" required />
+                  <Textarea name="description" placeholder="Media description/story" rows={3} />
                   <Select name="category" required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -1003,10 +1040,20 @@ const Admin = () => {
                       <SelectItem value="Personal Journey">Personal Journey</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="file" name="image" accept="image/*,.heic,.heif" required />
+                  <div>
+                    <Input 
+                      type="file" 
+                      name="image" 
+                      accept="image/*,.heic,.heif,video/mp4,video/webm,.mp4,.webm" 
+                      required 
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Supported: Images (JPG, PNG, WEBP, HEIC) or Videos (MP4, WebM)
+                    </p>
+                  </div>
                   <Button type="submit">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Gallery Image
+                    Add Media
                   </Button>
                 </form>
               </CardContent>
@@ -1014,22 +1061,38 @@ const Admin = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Gallery Images</CardTitle>
+                <CardTitle>Gallery Media</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {galleryItems.map((item) => (
                     <div key={item.id} className="space-y-2">
-                      <OptimizedImage 
-                        src={item.image_url} 
-                        webpSrc={item.webp_url}
-                        alt={item.title} 
-                        className="w-full h-32 object-cover rounded" 
-                      />
-                      <h4 className="font-medium text-sm">{item.title}</h4>
+                      {item.media_type === 'video' && item.video_url ? (
+                        <video
+                          src={item.video_url}
+                          className="w-full h-32 object-cover rounded"
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                        />
+                      ) : (
+                        <OptimizedImage 
+                          src={item.image_url} 
+                          webpSrc={item.webp_url}
+                          alt={item.title} 
+                          className="w-full h-32 object-cover rounded" 
+                        />
+                      )}
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm">{item.title}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {item.media_type === 'video' ? '🎥 Video' : '🖼️ Image'}
+                        </Badge>
+                      </div>
                       <Badge variant="secondary" className="text-xs">{item.category}</Badge>
                       {item.description && (
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
                       )}
                       <Button 
                         variant="destructive" 
