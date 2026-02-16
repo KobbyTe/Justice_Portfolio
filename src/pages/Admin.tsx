@@ -13,6 +13,7 @@ import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/
 import OptimizedImage from '@/components/OptimizedImage';
 import BlogManagement from '@/components/admin/BlogManagement';
 import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
+import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 const Admin = () => {
   // State for all content types
@@ -567,7 +568,7 @@ const Admin = () => {
         <h1 className="text-3xl font-bold mb-8 text-center">Portfolio Admin Dashboard</h1>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="impact">Impact</TabsTrigger>
@@ -579,6 +580,7 @@ const Admin = () => {
             <TabsTrigger value="recommendations">Testimonials</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="wall">Wall</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           {/* Hero Images Tab */}
@@ -1155,6 +1157,11 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
           </TabsContent>
         </Tabs>
       </div>
