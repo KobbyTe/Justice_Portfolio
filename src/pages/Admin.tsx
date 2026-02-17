@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit2, Upload, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Edit2, Upload, Eye, EyeOff, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -16,6 +17,9 @@ import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 
 const Admin = () => {
+  const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   // State for all content types
   const [heroImages, setHeroImages] = useState([]);
   const [aboutContent, setAboutContent] = useState(null);
@@ -35,8 +39,55 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('hero');
 
   useEffect(() => {
-    loadAllData();
-  }, []);
+    const checkAuth = async () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+        // Check admin role
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin');
+        
+        if (!roles || roles.length === 0) {
+          toast.error('Access denied. Admin role required.');
+          await supabase.auth.signOut();
+          navigate('/auth');
+          return;
+        }
+        setIsAdmin(true);
+        setAuthChecked(true);
+        loadAllData();
+      });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin');
+      
+      if (!roles || roles.length === 0) {
+        toast.error('Access denied. Admin role required.');
+        await supabase.auth.signOut();
+        navigate('/auth');
+        return;
+      }
+      setIsAdmin(true);
+      setAuthChecked(true);
+      loadAllData();
+
+      return () => subscription.unsubscribe();
+    };
+    checkAuth();
+  }, [navigate]);
 
   const loadAllData = async () => {
     try {
@@ -562,10 +613,29 @@ const Admin = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  if (!authChecked || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Checking access...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">Portfolio Admin Dashboard</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Portfolio Admin Dashboard</h1>
+          <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-12">
