@@ -39,42 +39,21 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('hero');
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!session) {
-          navigate('/auth');
-          return;
-        }
-        // Check admin role
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin');
-        
-        if (!roles || roles.length === 0) {
-          toast.error('Access denied. Admin role required.');
-          await supabase.auth.signOut();
-          navigate('/auth');
-          return;
-        }
-        setIsAdmin(true);
-        setAuthChecked(true);
-        loadAllData();
+    const checkAdminRole = async (userId: string): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: userId,
+        _role: 'admin',
       });
+      return !error && data === true;
+    };
 
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         navigate('/auth');
         return;
       }
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .eq('role', 'admin');
-      
-      if (!roles || roles.length === 0) {
+      const admin = await checkAdminRole(session.user.id);
+      if (!admin) {
         toast.error('Access denied. Admin role required.');
         await supabase.auth.signOut();
         navigate('/auth');
@@ -83,10 +62,26 @@ const Admin = () => {
       setIsAdmin(true);
       setAuthChecked(true);
       loadAllData();
+    });
 
-      return () => subscription.unsubscribe();
-    };
-    checkAuth();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      const admin = await checkAdminRole(session.user.id);
+      if (!admin) {
+        toast.error('Access denied. Admin role required.');
+        await supabase.auth.signOut();
+        navigate('/auth');
+        return;
+      }
+      setIsAdmin(true);
+      setAuthChecked(true);
+      loadAllData();
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const loadAllData = async () => {
