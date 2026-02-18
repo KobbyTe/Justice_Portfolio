@@ -39,6 +39,8 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('hero');
 
   useEffect(() => {
+    let initialCheckDone = false;
+
     const checkAdminRole = async (userId: string): Promise<boolean> => {
       const { data, error } = await supabase.rpc('has_role', {
         _user_id: userId,
@@ -47,8 +49,9 @@ const Admin = () => {
       return !error && data === true;
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const handleSession = async (session: any) => {
       if (!session) {
+        setAuthChecked(true);
         navigate('/auth');
         return;
       }
@@ -62,23 +65,28 @@ const Admin = () => {
       setIsAdmin(true);
       setAuthChecked(true);
       loadAllData();
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip INITIAL_SESSION since getSession handles it
+      if (event === 'INITIAL_SESSION') return;
+      // Handle sign out, sign in, token refresh
+      if (event === 'SIGNED_OUT') {
+        setIsAdmin(false);
+        setAuthChecked(true);
+        navigate('/auth');
+        return;
+      }
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (!initialCheckDone) return; // Let getSession handle first check
+        await handleSession(session);
+      }
     });
 
+    // Initial session check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        navigate('/auth');
-        return;
-      }
-      const admin = await checkAdminRole(session.user.id);
-      if (!admin) {
-        toast.error('Access denied. Admin role required.');
-        await supabase.auth.signOut();
-        navigate('/auth');
-        return;
-      }
-      setIsAdmin(true);
-      setAuthChecked(true);
-      loadAllData();
+      initialCheckDone = true;
+      await handleSession(session);
     });
 
     return () => subscription.unsubscribe();
