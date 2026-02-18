@@ -123,6 +123,44 @@ const Admin = () => {
     }
   };
 
+  // Targeted reload functions for performance
+  const reloadHeroImages = async () => {
+    const { data } = await supabase.from('hero_images').select('*').eq('is_active', true);
+    setHeroImages(data || []);
+  };
+  const reloadAbout = async () => {
+    const { data } = await supabase.from('about_content').select('*').single();
+    setAboutContent(data);
+  };
+  const reloadTechStack = async () => {
+    const { data } = await supabase.from('tech_stack').select('*').eq('is_active', true);
+    setTechStack(data || []);
+  };
+  const reloadProjects = async () => {
+    const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+    setProjects(data || []);
+  };
+  const reloadSocialLinks = async () => {
+    const { data } = await supabase.from('social_links').select('*').eq('is_active', true).order('sort_order');
+    setSocialLinks(data || []);
+  };
+  const reloadResumes = async () => {
+    const { data } = await supabase.from('resume_files').select('*').order('created_at', { ascending: false });
+    setResumeFiles(data || []);
+  };
+  const reloadRecommendations = async () => {
+    const { data } = await supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order');
+    setRecommendations(data || []);
+  };
+  const reloadGallery = async () => {
+    const { data } = await supabase.from('gallery').select('*').eq('is_active', true).order('sort_order');
+    setGalleryItems(data || []);
+  };
+  const reloadWallMessages = async () => {
+    const { data } = await supabase.from('wall_messages').select('*').order('created_at', { ascending: false });
+    setWallMessages(data || []);
+  };
+
   const handleFileUpload = async (file, bucket = 'portfolio-assets') => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
@@ -159,7 +197,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Hero image added successfully');
-      loadAllData();
+      reloadHeroImages();
       e.target.reset();
     } catch (error) {
       toast.error('Failed to add hero image');
@@ -177,7 +215,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Hero image deleted successfully');
-      loadAllData();
+      reloadHeroImages();
     } catch (error) {
       toast.error('Failed to delete hero image');
     }
@@ -208,7 +246,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('About content updated successfully');
-      loadAllData();
+      reloadAbout();
     } catch (error) {
       toast.error('Failed to update about content');
       console.error(error);
@@ -233,7 +271,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Tech stack item added successfully');
-      loadAllData();
+      reloadTechStack();
       e.target.reset();
     } catch (error) {
       toast.error('Failed to add tech stack item');
@@ -251,7 +289,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Tech stack item deleted successfully');
-      loadAllData();
+      reloadTechStack();
     } catch (error) {
       toast.error('Failed to delete tech stack item');
     }
@@ -286,7 +324,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success(`Project ${isEditing ? 'updated' : 'added'} successfully`);
-      loadAllData();
+      reloadProjects();
       e.target.reset();
       setIsEditing(false);
       setEditingId(null);
@@ -312,7 +350,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Project deleted successfully');
-      loadAllData();
+      reloadProjects();
     } catch (error) {
       toast.error('Failed to delete project');
     }
@@ -334,7 +372,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Social link added successfully');
-      loadAllData();
+      reloadSocialLinks();
       e.target.reset();
     } catch (error) {
       toast.error('Failed to add social link');
@@ -352,7 +390,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Social link deleted successfully');
-      loadAllData();
+      reloadSocialLinks();
     } catch (error) {
       toast.error('Failed to delete social link');
     }
@@ -383,7 +421,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Resume file added successfully');
-      loadAllData();
+      reloadResumes();
       e.target.reset();
     } catch (error) {
       toast.error('Failed to add resume file');
@@ -405,7 +443,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Resume set as current');
-      loadAllData();
+      reloadResumes();
     } catch (error) {
       toast.error('Failed to set current resume');
     }
@@ -421,7 +459,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Resume file deleted successfully');
-      loadAllData();
+      reloadResumes();
     } catch (error) {
       toast.error('Failed to delete resume file');
     }
@@ -461,7 +499,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Recommendation added successfully');
-      loadAllData();
+      reloadRecommendations();
       e.target.reset();
     } catch (error) {
       toast.error('Failed to add recommendation');
@@ -479,7 +517,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Recommendation deleted successfully');
-      loadAllData();
+      reloadRecommendations();
     } catch (error) {
       toast.error('Failed to delete recommendation');
     }
@@ -524,9 +562,14 @@ const Admin = () => {
     const category = formData.get('category') as string;
     const mediaFile = formData.get('image') as File;
 
-    if (!mediaFile) return;
+    if (!mediaFile || mediaFile.size === 0) {
+      toast.error('Please select a file to upload');
+      return;
+    }
 
     try {
+      toast.info('Uploading... please wait');
+      
       // Check if it's a video file
       const isVideo = isVideoFile(mediaFile);
       
@@ -534,11 +577,10 @@ const Admin = () => {
         // Validate video file size (limit to ~100MB for short clips)
         const maxSize = 100 * 1024 * 1024; // 100MB
         if (mediaFile.size > maxSize) {
-          toast.error('Video file is too large. Please keep videos under 100MB (approximately 30-60 seconds).');
+          toast.error('Video file is too large. Please keep videos under 100MB.');
           return;
         }
 
-        // Upload video directly
         const videoUrl = await handleFileUpload(mediaFile);
         
         const { error } = await supabase
@@ -547,7 +589,7 @@ const Admin = () => {
             title, 
             description, 
             category, 
-            image_url: videoUrl, // Use as fallback
+            image_url: videoUrl,
             video_url: videoUrl,
             media_type: 'video',
             sort_order: galleryItems.length 
@@ -556,8 +598,14 @@ const Admin = () => {
         if (error) throw error;
         toast.success('Video added successfully to gallery');
       } else {
-        // Handle image upload with optimization
-        const { pngUrl, webpUrl } = await handleGalleryFileUpload(mediaFile);
+        // Upload the image directly (skip heavy WebP conversion for speed)
+        let processedFile = mediaFile;
+        if (isHEIFFile(mediaFile)) {
+          processedFile = await convertHEIFToPNG(mediaFile);
+          toast.info('HEIF/HEIC file converted to PNG');
+        }
+        
+        const imageUrl = await handleFileUpload(processedFile);
         
         const { error } = await supabase
           .from('gallery')
@@ -565,20 +613,19 @@ const Admin = () => {
             title, 
             description, 
             category, 
-            image_url: pngUrl,
-            webp_url: webpUrl,
+            image_url: imageUrl,
             media_type: 'image',
             sort_order: galleryItems.length 
           }]);
 
         if (error) throw error;
-        toast.success('Image added successfully with optimized formats');
+        toast.success('Image added successfully to gallery');
       }
       
-      loadAllData();
+      reloadGallery();
       e.target.reset();
     } catch (error) {
-      toast.error('Failed to add gallery item');
+      toast.error('Failed to add gallery item: ' + (error as Error).message);
       console.error(error);
     }
   };
@@ -593,7 +640,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Gallery item deleted successfully');
-      loadAllData();
+      reloadGallery();
     } catch (error) {
       toast.error('Failed to delete gallery item');
     }
@@ -610,7 +657,7 @@ const Admin = () => {
       if (error) throw error;
       
       toast.success('Wall message deleted successfully');
-      loadAllData();
+      reloadWallMessages();
     } catch (error) {
       toast.error('Failed to delete wall message');
     }
