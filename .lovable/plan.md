@@ -1,44 +1,44 @@
 
 
-# Fix Admin Login Race Condition and Home Page Display
+# Fix Admin Upload Failures
 
-## Issues Found
+## Root Cause
 
-After thorough testing, I identified the following:
+The Radix UI `<Select>` component (used for category selection in both **Gallery** and **Projects** forms) does NOT work with native HTML `FormData`. Unlike a native `<select>` element, Radix Select does not create a hidden form input, so `formData.get('category')` returns `null`. Since `category` is a required database column, the Supabase insert fails silently.
 
-1. **Admin page race condition**: The auth check in `Admin.tsx` has both `onAuthStateChange` and `getSession` running simultaneously, which can cause a race condition where the page redirects back to `/auth` before the role check completes. The `INITIAL_SESSION` event from `onAuthStateChange` fires at the same time as `getSession`, leading to duplicate role checks that can conflict.
+This affects:
+- **Gallery uploads**: category is required (defaults to 'All' in DB, but the form sends `null`)
+- **Project uploads**: category is a non-nullable USER-DEFINED enum column (`Robotics`, `Web app`, `Mobile app`, `AI`) -- sending `null` causes a hard database error
 
-2. **Home page "nothing showing"**: The Recommendations section is empty because there are no records in the database. The section still renders but shows nothing visible, which may appear broken.
+## Fix
 
-## Plan
+Replace the `FormData`-based category extraction with React state management for the Select components.
 
-### 1. Fix Admin.tsx Auth Flow
+### Changes to `src/pages/Admin.tsx`
 
-Refactor the auth check to prevent race conditions:
+1. **Add state variables** for category selections:
+   - `galleryCategory` (string, default `'All'`)
+   - `projectCategory` (string, default `''`)
 
-- Use a flag to prevent duplicate processing from both `onAuthStateChange` and `getSession`
-- Skip the `INITIAL_SESSION` event in `onAuthStateChange` since `getSession` handles it
-- Add proper loading state to prevent flash of redirect
+2. **Update `handleAddProject`** (line ~299): Use `projectCategory` state instead of `formData.get('category')`
 
-**File: `src/pages/Admin.tsx` (lines 41-85)**
+3. **Update `handleAddGalleryItem`** (line ~557): Use `galleryCategory` state instead of `formData.get('category')`
 
-The `useEffect` will be updated to:
-- Only process `SIGNED_IN`, `SIGNED_OUT`, and `TOKEN_REFRESHED` events in `onAuthStateChange` (skip `INITIAL_SESSION`)
-- Let `getSession` handle the initial session check
-- Use a ref to track if auth has already been processed to prevent double execution
+4. **Update the Select components in JSX** (lines ~868 and ~1152): Add `value` and `onValueChange` props to bind to the new state variables, and reset them after successful submission
 
-### 2. Fix Home Page Empty State
+### Technical Detail
 
-Update `src/components/Recommendations.tsx` to hide the section entirely when there are no recommendations, so the page doesn't look broken.
+```text
+Before (broken):
+  <Select name="category" required>  // Radix Select ignores "name"
+  ...
+  const category = formData.get('category');  // returns null
 
-**File: `src/components/Recommendations.tsx`**
+After (fixed):
+  <Select value={projectCategory} onValueChange={setProjectCategory}>
+  ...
+  // Use projectCategory state directly in the insert
+```
 
-- Add a check: if recommendations array is empty, return `null` instead of rendering an empty section
-
-### Files to Change
-
-| File | Change |
-|------|--------|
-| `src/pages/Admin.tsx` | Fix auth race condition in useEffect |
-| `src/components/Recommendations.tsx` | Hide section when no data |
+No database or storage changes needed -- the RLS policies and storage bucket are correctly configured.
 
