@@ -37,6 +37,8 @@ const Admin = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('hero');
+  const [projectCategory, setProjectCategory] = useState<string>('');
+  const [galleryCategory, setGalleryCategory] = useState<string>('All');
 
   useEffect(() => {
     let initialCheckDone = false;
@@ -301,7 +303,11 @@ const Admin = () => {
     const formData = new FormData(e.target);
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const category = formData.get('category') as 'Robotics' | 'Web app' | 'Mobile app' | 'AI';
+    const category = projectCategory as 'Robotics' | 'Web app' | 'Mobile app' | 'AI';
+    if (!category) {
+      toast.error('Please select a project category');
+      return;
+    }
     const project_url = formData.get('project_url') as string;
     const github_url = formData.get('github_url') as string;
     const technologies = (formData.get('technologies') as string).split(',').map(t => t.trim());
@@ -328,6 +334,7 @@ const Admin = () => {
       e.target.reset();
       setIsEditing(false);
       setEditingId(null);
+      setProjectCategory('');
     } catch (error) {
       toast.error(`Failed to ${isEditing ? 'update' : 'add'} project`);
       console.error(error);
@@ -559,7 +566,7 @@ const Admin = () => {
     const formData = new FormData(e.target);
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const category = formData.get('category') as string;
+    const category = galleryCategory;
     const mediaFile = formData.get('image') as File;
 
     if (!mediaFile || mediaFile.size === 0) {
@@ -624,6 +631,7 @@ const Admin = () => {
       
       reloadGallery();
       e.target.reset();
+      setGalleryCategory('All');
     } catch (error) {
       toast.error('Failed to add gallery item: ' + (error as Error).message);
       console.error(error);
@@ -865,7 +873,7 @@ const Admin = () => {
                     defaultValue={isEditing ? formData.description : ''}
                     rows={3}
                   />
-                  <Select name="category" required>
+                  <Select value={projectCategory} onValueChange={setProjectCategory}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -1149,7 +1157,7 @@ const Admin = () => {
                 <form onSubmit={handleAddGalleryItem} className="space-y-4">
                   <Input name="title" placeholder="Media title" required />
                   <Textarea name="description" placeholder="Media description/story" rows={3} />
-                  <Select name="category" required>
+                  <Select value={galleryCategory} onValueChange={setGalleryCategory}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
