@@ -39,6 +39,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState('hero');
   const [projectCategory, setProjectCategory] = useState<string>('');
   const [galleryCategory, setGalleryCategory] = useState<string>('All');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     let initialCheckDone = false;
@@ -313,6 +314,7 @@ const Admin = () => {
     const technologies = (formData.get('technologies') as string).split(',').map(t => t.trim());
     const image = formData.get('image') as File;
 
+    setIsUploading(true);
     try {
       let image_url = null;
       if (image && image.size > 0) {
@@ -336,8 +338,10 @@ const Admin = () => {
       setEditingId(null);
       setProjectCategory('');
     } catch (error) {
-      toast.error(`Failed to ${isEditing ? 'update' : 'add'} project`);
-      console.error(error);
+      toast.error(`Failed to ${isEditing ? 'update' : 'add'} project: ${(error as Error).message}`);
+      console.error('Project upload error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -574,9 +578,8 @@ const Admin = () => {
       return;
     }
 
+    setIsUploading(true);
     try {
-      toast.info('Uploading... please wait');
-      
       // Check if it's a video file
       const isVideo = isVideoFile(mediaFile);
       
@@ -634,7 +637,9 @@ const Admin = () => {
       setGalleryCategory('All');
     } catch (error) {
       toast.error('Failed to add gallery item: ' + (error as Error).message);
-      console.error(error);
+      console.error('Gallery upload error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -901,8 +906,8 @@ const Admin = () => {
                   />
                   <Input type="file" name="image" accept="image/*" />
                   <div className="flex space-x-2">
-                    <Button type="submit">
-                      {isEditing ? 'Update Project' : 'Add Project'}
+                    <Button type="submit" disabled={isUploading}>
+                      {isUploading ? 'Uploading...' : (isEditing ? 'Update Project' : 'Add Project')}
                     </Button>
                     {isEditing && (
                       <Button type="button" variant="outline" onClick={() => {
@@ -1181,9 +1186,9 @@ const Admin = () => {
                       Supported: Images (JPG, PNG, WEBP, HEIC) or Videos (MP4, WebM)
                     </p>
                   </div>
-                  <Button type="submit">
+                  <Button type="submit" disabled={isUploading}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Media
+                    {isUploading ? 'Uploading...' : 'Add Media'}
                   </Button>
                 </form>
               </CardContent>
