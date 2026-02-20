@@ -66,28 +66,53 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
+		keyframes: {
+			'accordion-down': {
+				from: { height: '0' },
+				to: { height: 'var(--radix-accordion-content-height)' }
 			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+			'accordion-up': {
+				from: { height: 'var(--radix-accordion-content-height)' },
+				to: { height: '0' }
+			},
+			'fade-up': {
+				'0%': { opacity: '0', transform: 'translateY(24px)' },
+				'100%': { opacity: '1', transform: 'translateY(0)' }
+			},
+			'fade-in': {
+				'0%': { opacity: '0' },
+				'100%': { opacity: '1' }
+			},
+			'float': {
+				'0%, 100%': { transform: 'translateY(0px)' },
+				'50%': { transform: 'translateY(-10px)' }
+			},
+			'blink': {
+				'0%, 100%': { opacity: '1' },
+				'50%': { opacity: '0' }
+			},
+			'pulse-ring': {
+				'0%': { strokeDashoffset: '100' },
+				'100%': { strokeDashoffset: '0' }
+			},
+			'slide-down': {
+				'0%': { opacity: '0', height: '0', transform: 'translateY(-8px)' },
+				'100%': { opacity: '1', height: 'auto', transform: 'translateY(0)' }
+			},
+			'bounce-y': {
+				'0%, 100%': { transform: 'translateY(0)' },
+				'50%': { transform: 'translateY(6px)' }
 			}
+		},
+		animation: {
+			'accordion-down': 'accordion-down 0.2s ease-out',
+			'accordion-up': 'accordion-up 0.2s ease-out',
+			'fade-up': 'fade-up 0.6s ease-out both',
+			'fade-in': 'fade-in 0.5s ease-out both',
+			'float': 'float 3s ease-in-out infinite',
+			'blink': 'blink 1s step-end infinite',
+			'bounce-y': 'bounce-y 1.2s ease-in-out infinite',
+		}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
