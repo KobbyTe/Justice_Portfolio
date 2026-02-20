@@ -169,14 +169,18 @@ const Admin = () => {
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    console.log('Uploading file:', filePath, 'size:', file.size, 'type:', file.type);
+
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from(bucket)
-      .upload(filePath, file);
+      .upload(filePath, file, { upsert: false });
 
     if (uploadError) {
-      throw uploadError;
+      console.error('Storage upload error:', uploadError);
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
+    console.log('Upload successful:', uploadData);
     const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
     return data.publicUrl;
   };
@@ -301,20 +305,32 @@ const Admin = () => {
   // Projects Management
   const handleAddProject = async (e) => {
     e.preventDefault();
+
+    if (isUploading) return;
+
     const formData = new FormData(e.target);
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
+    const title = (formData.get('title') as string)?.trim();
+    const description = (formData.get('description') as string)?.trim() || null;
     const category = projectCategory as 'Robotics' | 'Web app' | 'Mobile app' | 'AI';
+
+    if (!title) {
+      toast.error('Please enter a project title');
+      return;
+    }
     if (!category) {
       toast.error('Please select a project category');
       return;
     }
-    const project_url = formData.get('project_url') as string;
-    const github_url = formData.get('github_url') as string;
-    const technologies = (formData.get('technologies') as string).split(',').map(t => t.trim());
+
+    const project_url = (formData.get('project_url') as string)?.trim() || null;
+    const github_url = (formData.get('github_url') as string)?.trim() || null;
+    const techRaw = (formData.get('technologies') as string)?.trim();
+    const technologies = techRaw ? techRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
     const image = formData.get('image') as File;
 
     setIsUploading(true);
+    toast.info(image && image.size > 0 ? 'Uploading image and saving project...' : 'Saving project...');
+
     try {
       let image_url = null;
       if (image && image.size > 0) {
@@ -322,7 +338,13 @@ const Admin = () => {
       }
 
       const projectData = {
-        title, description, category, project_url, github_url, technologies, image_url
+        title,
+        description,
+        category,
+        project_url,
+        github_url,
+        technologies,
+        image_url,
       };
 
       const { error } = isEditing
@@ -330,15 +352,16 @@ const Admin = () => {
         : await supabase.from('projects').insert([projectData]);
 
       if (error) throw error;
-      
-      toast.success(`Project ${isEditing ? 'updated' : 'added'} successfully`);
+
+      toast.success(`Project ${isEditing ? 'updated' : 'added'} successfully!`);
       reloadProjects();
       e.target.reset();
       setIsEditing(false);
       setEditingId(null);
       setProjectCategory('');
     } catch (error) {
-      toast.error(`Failed to ${isEditing ? 'update' : 'add'} project: ${(error as Error).message}`);
+      const msg = (error as Error).message || 'Unknown error';
+      toast.error(`Failed to ${isEditing ? 'update' : 'add'} project: ${msg}`);
       console.error('Project upload error:', error);
     } finally {
       setIsUploading(false);
@@ -567,18 +590,26 @@ const Admin = () => {
 
   const handleAddGalleryItem = async (e) => {
     e.preventDefault();
+
+    if (isUploading) return;
+
     const formData = new FormData(e.target);
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
+    const title = (formData.get('title') as string)?.trim();
+    const description = (formData.get('description') as string)?.trim() || null;
     const category = galleryCategory;
     const mediaFile = formData.get('image') as File;
 
+    if (!title) {
+      toast.error('Please enter a media title');
+      return;
+    }
     if (!mediaFile || mediaFile.size === 0) {
       toast.error('Please select a file to upload');
       return;
     }
 
     setIsUploading(true);
+    toast.info('Uploading media, please wait...');
     try {
       // Check if it's a video file
       const isVideo = isVideoFile(mediaFile);
@@ -588,6 +619,7 @@ const Admin = () => {
         const maxSize = 100 * 1024 * 1024; // 100MB
         if (mediaFile.size > maxSize) {
           toast.error('Video file is too large. Please keep videos under 100MB.');
+          setIsUploading(false);
           return;
         }
 
