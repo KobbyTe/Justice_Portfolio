@@ -60,13 +60,6 @@ const ImpactMetrics = () => {
 
   useEffect(() => {
     loadMetrics();
-    const channel = supabase
-      .channel('impact-metrics-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'impact_metrics' }, () => {
-        loadMetrics();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const loadMetrics = async () => {

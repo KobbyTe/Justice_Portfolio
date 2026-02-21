@@ -104,23 +104,28 @@ const Home = () => {
       <section className="relative min-h-screen flex items-center">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          {heroImages.map((img, idx) => (
-            <img
-              key={idx}
-              src={img}
-              alt="Developer workspace"
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                idx === currentImageIndex ? 'opacity-100' : 'opacity-0'
-              }`}
-              loading={idx === 0 ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={idx === 0 ? 'high' : 'auto'}
-              style={{
-                maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
-                WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)'
-              }}
-            />
-          ))}
+          {heroImages.map((img, idx) => {
+            // Only render the current and adjacent images to reduce DOM nodes
+            const isNear = idx === currentImageIndex || idx === (currentImageIndex + 1) % heroImages.length || idx === (currentImageIndex - 1 + heroImages.length) % heroImages.length;
+            if (!isNear) return null;
+            return (
+              <img
+                key={idx}
+                src={img}
+                alt="Developer workspace"
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 will-change-[opacity] ${
+                  idx === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+                loading={idx === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={idx === currentImageIndex ? 'high' : 'auto'}
+                style={{
+                  maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
+                  WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)'
+                }}
+              />
+            );
+          })}
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
           {/* Glow overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
