@@ -20,12 +20,20 @@ const Footer = () => {
         <p className="text-muted-foreground max-w-md mx-auto text-sm mb-8">
           Whether it's a robotics project, STEM collaboration, or just a conversation about innovation — I'm open.
         </p>
-        <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)] transition-all duration-300">
-          <a href="mailto:justiceansah@gmail.com">
-            <Mail className="w-4 h-4 mr-2" />
-            Get In Touch
-          </a>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)] transition-all duration-300">
+            <a href="mailto:kwabenatekyi19@gmail.com">
+              <Mail className="w-4 h-4 mr-2" />
+              Email Me
+            </a>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10 font-semibold transition-all duration-300">
+            <a href="https://wa.me/233536987839" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              WhatsApp Me
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Bottom bar */}
@@ -41,7 +49,7 @@ const Footer = () => {
                 { href: 'https://github.com/KobbyTe', icon: Github, label: 'GitHub', tooltip: 'GitHub' },
                 { href: 'https://www.linkedin.com/in/justice-ansah-85917529a/', icon: Linkedin, label: 'LinkedIn', tooltip: 'LinkedIn' },
                 { href: '#', icon: Twitter, label: 'Twitter', tooltip: 'Twitter' },
-                { href: 'mailto:justiceansah@gmail.com', icon: Mail, label: 'Email', tooltip: 'Email' },
+                { href: 'mailto:kwabenatekyi19@gmail.com', icon: Mail, label: 'Email', tooltip: 'Email' },
               ].map(({ href, icon: Icon, label, tooltip }) => (
                 <a
                   key={label}
