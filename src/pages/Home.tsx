@@ -155,14 +155,14 @@ const Home = () => {
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow transition-all duration-300 hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)]">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow transition-all duration-300 hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)]">
                   <Link to="/projects">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     View My Projects
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-primary/40 text-primary hover:bg-primary/10 hover:border-primary font-semibold transition-all duration-300">
+                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10 hover:border-primary font-semibold transition-all duration-300">
                   <Link to="/resume">
                     <Download className="w-4 h-4 mr-2" />
                     Download Resume
@@ -188,24 +188,24 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Image indicator dots */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {/* Image indicator dots - hide on very small screens if too many */}
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10 max-w-[80vw] overflow-hidden">
           {heroImages.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentImageIndex(idx)}
               aria-label={`Go to image ${idx + 1}`}
-              className={`rounded-full transition-all duration-300 ${
+              className={`rounded-full transition-all duration-300 min-w-[8px] ${
                 idx === currentImageIndex
-                  ? 'w-6 h-2 bg-primary'
+                  ? 'w-5 sm:w-6 h-2 bg-primary'
                   : 'w-2 h-2 bg-muted-foreground/40 hover:bg-muted-foreground/70'
               }`}
             />
           ))}
         </div>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 right-8 flex flex-col items-center gap-2 z-10 text-muted-foreground/60">
+        {/* Scroll indicator - hide on mobile */}
+        <div className="absolute bottom-8 right-8 hidden sm:flex flex-col items-center gap-2 z-10 text-muted-foreground/60">
           <span className="text-xs tracking-widest uppercase rotate-90 origin-center mb-2">Scroll</span>
           <ArrowDown className="w-4 h-4 animate-bounce-y" />
         </div>

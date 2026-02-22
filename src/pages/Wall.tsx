@@ -156,7 +156,7 @@ const Wall = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <section className="pt-24 pb-16 sm:pt-32 sm:pb-20 relative overflow-hidden">
+      <section className="pt-20 pb-12 sm:pt-32 sm:pb-20 relative overflow-hidden">
         {/* Background ambient effects */}
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-3xl pointer-events-none" />
@@ -168,7 +168,7 @@ const Wall = () => {
               <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-medium text-primary tracking-wide uppercase">Community Wall</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-4">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-heading font-bold text-foreground mb-3 sm:mb-4">
               Leave Your <span className="text-primary">Mark</span>
             </h1>
             <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base">

@@ -12,15 +12,15 @@ const Footer = () => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-primary/5 blur-3xl pointer-events-none" />
 
       {/* Contact CTA */}
-      <div className="py-14 sm:py-16 text-center border-b border-border relative z-10">
+      <div className="py-10 sm:py-16 text-center border-b border-border relative z-10 px-4">
         <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">Let's Connect</p>
-        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-foreground mb-4">
+        <h2 className="text-xl sm:text-3xl font-heading font-bold text-foreground mb-3 sm:mb-4">
           Let's Build Something Together
         </h2>
-        <p className="text-muted-foreground max-w-md mx-auto text-sm mb-8">
+        <p className="text-muted-foreground max-w-md mx-auto text-sm mb-6 sm:mb-8">
           Whether it's a robotics project, STEM collaboration, or just a conversation about innovation — I'm open.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-sm sm:max-w-none mx-auto">
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)] transition-all duration-300">
             <a href="mailto:kwabenatekyi19@gmail.com">
               <Mail className="w-4 h-4 mr-2" />
@@ -37,14 +37,14 @@ const Footer = () => {
       </div>
 
       {/* Bottom bar */}
-      <div className="py-8 sm:py-10 relative z-10">
+      <div className="py-6 sm:py-10 relative z-10">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
+          <div className="flex flex-col items-center gap-4 sm:gap-6 md:flex-row md:justify-between">
             <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">
               © {year} Justice Ansah. All rights reserved.
             </p>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {[
                 { href: 'https://github.com/KobbyTe', icon: Github, label: 'GitHub', tooltip: 'GitHub' },
                 { href: 'https://www.linkedin.com/in/justice-ansah-85917529a/', icon: Linkedin, label: 'LinkedIn', tooltip: 'LinkedIn' },
@@ -56,10 +56,10 @@ const Footer = () => {
                   href={href}
                   target={href.startsWith('http') ? '_blank' : undefined}
                   rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="group relative p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                  className="group relative p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
                   aria-label={label}
                 >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Icon className="w-5 h-5" />
                   {/* Tooltip */}
                   <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-card text-foreground text-xs rounded border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                     {tooltip}
