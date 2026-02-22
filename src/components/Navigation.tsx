@@ -77,9 +77,9 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - 44px min touch target */}
           <button
-            className="md:hidden p-2 rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -102,9 +102,9 @@ const Navigation = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-left px-3 py-2.5 rounded-md transition-all duration-200 text-sm font-medium ${
+                className={`text-left px-4 py-3 min-h-[44px] flex items-center rounded-md transition-all duration-200 text-base font-medium ${
                   isActive(item.path)
-                    ? 'text-primary bg-primary/10 border-l-2 border-primary pl-4'
+                    ? 'text-primary bg-primary/10 border-l-2 border-primary pl-5'
                     : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
                 }`}
                 style={{ transitionDelay: isMenuOpen ? `${i * 30}ms` : '0ms' }}

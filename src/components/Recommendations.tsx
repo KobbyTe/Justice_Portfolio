@@ -57,10 +57,10 @@ const Recommendations = () => {
   const currentRec = recommendations[currentIndex];
 
   return (
-    <section className="py-16 bg-gradient-to-br from-background via-background/95 to-accent/10">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary mb-4">
+    <section className="py-12 sm:py-16 bg-gradient-to-br from-background via-background/95 to-accent/10">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-primary mb-3 sm:mb-4">
             What People Say
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -70,8 +70,8 @@ const Recommendations = () => {
 
         <div className="max-w-4xl mx-auto">
           <Card className="glass-card border-primary/20">
-            <CardContent className="p-8 md:p-12">
-              <div className="flex flex-col md:flex-row items-center gap-8">
+            <CardContent className="p-5 sm:p-8 md:p-12">
+              <div className="flex flex-col md:flex-row items-center gap-5 sm:gap-8">
                 {/* Profile Section */}
                 <div className="flex-shrink-0 text-center">
                   <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-4 mx-auto border-2 border-primary/30">
@@ -135,7 +135,7 @@ const Recommendations = () => {
 
                 {/* Testimonial Content */}
                 <div className="flex-1">
-                  <blockquote className="text-lg md:text-xl leading-relaxed text-center md:text-left">
+                  <blockquote className="text-base sm:text-lg md:text-xl leading-relaxed text-center md:text-left">
                     <span className="text-primary text-4xl leading-none">"</span>
                     <span className="text-foreground italic">
                       {currentRec.message}
@@ -149,12 +149,12 @@ const Recommendations = () => {
 
           {/* Navigation */}
           {recommendations.length > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-8">
+            <div className="flex justify-center items-center gap-4 mt-6 sm:mt-8">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={prevRecommendation}
-                className="hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="min-w-[44px] min-h-[44px] hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -177,7 +177,7 @@ const Recommendations = () => {
                 variant="outline"
                 size="icon"
                 onClick={nextRecommendation}
-                className="hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="min-w-[44px] min-h-[44px] hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>

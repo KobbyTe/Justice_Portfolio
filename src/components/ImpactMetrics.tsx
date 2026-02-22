@@ -123,17 +123,17 @@ const ImpactMetrics = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/3 to-background pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="text-center mb-14">
+        <div className="text-center mb-8 sm:mb-14">
           <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">By The Numbers</p>
-          <h2 className="section-heading text-3xl sm:text-4xl lg:text-5xl mb-4">
+          <h2 className="section-heading text-2xl sm:text-3xl lg:text-5xl mb-3 sm:mb-4">
             Impact Chronicles
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl mx-auto">
             Making a difference through education, mentorship, and innovation.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 max-w-6xl mx-auto">
           {metricsConfig.map((metric, i) => {
             const Icon = metric.icon;
             const animatedPercent = isVisible ? Math.round((metric.maxPercent * ringProgress) / 100) : 0;
@@ -141,7 +141,7 @@ const ImpactMetrics = () => {
             return (
               <div
                 key={metric.key}
-                className="glass-card p-8 text-center hover-lift glow-border-hover group relative"
+                className="glass-card p-4 sm:p-8 text-center hover-lift glow-border-hover group relative"
                 style={{
                   animationDelay: `${i * 100}ms`,
                   opacity: isVisible ? 1 : 0,
@@ -150,17 +150,20 @@ const ImpactMetrics = () => {
                 }}
               >
                 {/* SVG progress ring */}
-                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-5">
-                  <ProgressRing progress={animatedPercent} size={80} stroke={4} />
-                  <div className="relative z-10 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
-                    <Icon className="w-6 h-6" />
+                <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 mb-3 sm:mb-5">
+                  <ProgressRing progress={animatedPercent} size={56} stroke={3} />
+                  <div className="hidden sm:block absolute inset-0">
+                    <ProgressRing progress={animatedPercent} size={80} stroke={4} />
+                  </div>
+                  <div className="relative z-10 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
+                    <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
                   </div>
                 </div>
 
-                <div className="text-4xl font-black mb-2 bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                <div className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
                   {displayMetrics[metric.key].toLocaleString()}+
                 </div>
-                <div className="text-muted-foreground font-medium text-sm">
+                <div className="text-muted-foreground font-medium text-xs sm:text-sm">
                   {metric.label}
                 </div>
               </div>
