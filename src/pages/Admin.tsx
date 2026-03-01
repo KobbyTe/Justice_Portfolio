@@ -372,6 +372,7 @@ const Admin = () => {
     setFormData(project);
     setIsEditing(true);
     setEditingId(project.id);
+    setProjectCategory(project.category);
   };
 
   const handleDeleteProject = async (id) => {
@@ -946,6 +947,7 @@ const Admin = () => {
                         setIsEditing(false);
                         setEditingId(null);
                         setFormData({});
+                        setProjectCategory('');
                       }}>
                         Cancel
                       </Button>
