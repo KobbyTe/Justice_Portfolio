@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_slots: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_available: boolean
+          slot_date: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          slot_date: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          slot_date?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -180,6 +210,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      bookings: {
+        Row: {
+          apple_event_id: string | null
+          created_at: string
+          email: string
+          google_event_id: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          slot_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          apple_event_id?: string | null
+          created_at?: string
+          email: string
+          google_event_id?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          slot_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          apple_event_id?: string | null
+          created_at?: string
+          email?: string
+          google_event_id?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          slot_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_slots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gallery: {
         Row: {

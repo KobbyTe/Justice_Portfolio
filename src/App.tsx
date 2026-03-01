@@ -21,6 +21,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Booking = lazy(() => import("./pages/Booking"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/wall" element={<Wall />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/booking" element={<Booking />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
