@@ -15,6 +15,7 @@ import OptimizedImage from '@/components/OptimizedImage';
 import BlogManagement from '@/components/admin/BlogManagement';
 import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
+import AppointmentManagement from '@/components/admin/AppointmentManagement';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -734,7 +735,7 @@ const Admin = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-12">
+          <TabsList className="grid w-full grid-cols-13">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="impact">Impact</TabsTrigger>
@@ -746,6 +747,7 @@ const Admin = () => {
             <TabsTrigger value="recommendations">Testimonials</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="wall">Wall</TabsTrigger>
+            <TabsTrigger value="appointments">Bookings</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -1324,6 +1326,11 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Appointments Tab */}
+          <TabsContent value="appointments">
+            <AppointmentManagement />
           </TabsContent>
 
           {/* Analytics Tab */}
