@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Users, GraduationCap, Heart, School, Clock, Award } from 'lucide-react';
+import { motion, useInView, useSpring, useTransform } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MetricData {
@@ -11,11 +12,31 @@ interface MetricData {
   years_of_experience: number;
 }
 
-// SVG progress ring
-const ProgressRing = ({ progress, size = 80, stroke = 4 }: { progress: number; size?: number; stroke?: number }) => {
+// Animated counter component
+const AnimatedNumber = ({ value, isInView }: { value: number; isInView: boolean }) => {
+  const spring = useSpring(0, { stiffness: 50, damping: 20, duration: 2.5 });
+  const display = useTransform(spring, (v) => Math.floor(v).toLocaleString());
+
+  useEffect(() => {
+    if (isInView) spring.set(value);
+  }, [isInView, value, spring]);
+
+  return <motion.span>{display}</motion.span>;
+};
+
+// Animated circular progress
+const CircularProgress = ({ progress, isInView }: { progress: number; isInView: boolean }) => {
+  const size = 72;
+  const stroke = 3;
   const radius = (size - stroke * 2) / 2;
   const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (progress / 100) * circumference;
+
+  const spring = useSpring(0, { stiffness: 30, damping: 15, duration: 2.5 });
+  const strokeOffset = useTransform(spring, (v) => circumference - (v / 100) * circumference);
+
+  useEffect(() => {
+    if (isInView) spring.set(progress);
+  }, [isInView, progress, spring]);
 
   return (
     <svg width={size} height={size} className="absolute inset-0 -rotate-90">
@@ -24,10 +45,10 @@ const ProgressRing = ({ progress, size = 80, stroke = 4 }: { progress: number; s
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="hsl(var(--primary) / 0.12)"
+        stroke="hsl(var(--primary) / 0.08)"
         strokeWidth={stroke}
       />
-      <circle
+      <motion.circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
@@ -35,9 +56,8 @@ const ProgressRing = ({ progress, size = 80, stroke = 4 }: { progress: number; s
         stroke="hsl(var(--primary))"
         strokeWidth={stroke}
         strokeDasharray={circumference}
-        strokeDashoffset={offset}
+        style={{ strokeDashoffset: strokeOffset }}
         strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1)' }}
       />
     </svg>
   );
@@ -53,125 +73,118 @@ const ImpactMetrics = () => {
     years_of_experience: 0,
   };
   const [metrics, setMetrics] = useState<MetricData>(defaultMetrics);
-  const [displayMetrics, setDisplayMetrics] = useState<MetricData>(defaultMetrics);
-  const [isVisible, setIsVisible] = useState(false);
-  const [ringProgress, setRingProgress] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.25 });
 
   useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        const { data } = await supabase.from('impact_metrics').select('*').single();
+        if (data) setMetrics(data as unknown as MetricData);
+      } catch (error) {
+        console.error('Error loading impact metrics:', error);
+      }
+    };
     loadMetrics();
   }, []);
 
-  const loadMetrics = async () => {
-    try {
-      const { data } = await supabase.from('impact_metrics').select('*').single();
-      if (data) setMetrics(data as unknown as MetricData);
-    } catch (error) {
-      console.error('Error loading impact metrics:', error);
-    }
-  };
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold: 0.2 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-    const duration = 2000;
-    const steps = 60;
-    const interval = duration / steps;
-    const counters = Object.keys(metrics) as Array<keyof MetricData>;
-    let currentStep = 0;
-
-    const timer = setInterval(() => {
-      currentStep++;
-      const progress = currentStep / steps;
-      setRingProgress(Math.round(progress * 100));
-      setDisplayMetrics(prev => {
-        const updated = { ...prev };
-        counters.forEach(key => { updated[key] = Math.floor(metrics[key] * progress); });
-        return updated;
-      });
-      if (currentStep >= steps) {
-        setDisplayMetrics(metrics);
-        setRingProgress(100);
-        clearInterval(timer);
-      }
-    }, interval);
-
-    return () => clearInterval(timer);
-  }, [isVisible, metrics]);
-
   const metricsConfig = [
-    { key: 'students_impacted' as keyof MetricData, icon: Users, label: 'Students Impacted', maxPercent: 85 },
-    { key: 'teachers_trained' as keyof MetricData, icon: GraduationCap, label: 'Teachers Trained', maxPercent: 70 },
-    { key: 'girls_mentored' as keyof MetricData, icon: Heart, label: 'Girls Mentored', maxPercent: 90 },
-    { key: 'schools_taught' as keyof MetricData, icon: School, label: 'Schools Taught', maxPercent: 75 },
-    { key: 'years_of_mentoring' as keyof MetricData, icon: Clock, label: 'Years of Mentoring', maxPercent: 60 },
-    { key: 'years_of_experience' as keyof MetricData, icon: Award, label: 'Years of Experience', maxPercent: 65 },
+    { key: 'students_impacted' as keyof MetricData, icon: Users, label: 'Students Impacted', ringPercent: 85 },
+    { key: 'teachers_trained' as keyof MetricData, icon: GraduationCap, label: 'Teachers Trained', ringPercent: 70 },
+    { key: 'girls_mentored' as keyof MetricData, icon: Heart, label: 'Girls Mentored', ringPercent: 90 },
+    { key: 'schools_taught' as keyof MetricData, icon: School, label: 'Schools Taught', ringPercent: 75 },
+    { key: 'years_of_mentoring' as keyof MetricData, icon: Clock, label: 'Years of Mentoring', ringPercent: 60 },
+    { key: 'years_of_experience' as keyof MetricData, icon: Award, label: 'Years of Experience', ringPercent: 65 },
   ];
 
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { type: 'spring' as const, stiffness: 80, damping: 18 },
+    },
+  };
+
   return (
-    <section ref={sectionRef} className="py-16 sm:py-24 relative overflow-hidden">
-      {/* Gradient separators */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-      {/* Ambient glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/3 to-background pointer-events-none" />
+    <section ref={sectionRef} className="py-20 sm:py-28 relative overflow-hidden">
+      {/* Subtle top/bottom dividers */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+      {/* Ambient background glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-primary/[0.03] blur-[100px]" />
+      </div>
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="text-center mb-8 sm:mb-14">
-          <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">By The Numbers</p>
-          <h2 className="section-heading text-2xl sm:text-3xl lg:text-5xl mb-3 sm:mb-4">
+        {/* Header */}
+        <motion.div
+          className="text-center mb-12 sm:mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <span className="inline-block text-primary text-xs font-semibold tracking-[0.2em] uppercase mb-4 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5">
+            By The Numbers
+          </span>
+          <h2 className="section-heading text-3xl sm:text-4xl lg:text-5xl font-black mb-4">
             Impact Chronicles
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
             Making a difference through education, mentorship, and innovation.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6 max-w-6xl mx-auto">
-          {metricsConfig.map((metric, i) => {
+        {/* Metrics grid */}
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+        >
+          {metricsConfig.map((metric) => {
             const Icon = metric.icon;
-            const animatedPercent = isVisible ? Math.round((metric.maxPercent * ringProgress) / 100) : 0;
-
             return (
-              <div
+              <motion.div
                 key={metric.key}
-                className="glass-card p-4 sm:p-8 text-center hover-lift glow-border-hover group relative"
-                style={{
-                  animationDelay: `${i * 100}ms`,
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `opacity 0.6s ease ${i * 100}ms, transform 0.6s ease ${i * 100}ms, box-shadow 0.3s ease, border-color 0.3s ease`
-                }}
+                variants={cardVariants}
+                whileHover={{ y: -6, transition: { type: 'spring', stiffness: 300, damping: 20 } }}
+                className="group relative rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-5 sm:p-6 text-center transition-colors duration-300 hover:border-primary/40 hover:bg-card/80"
               >
-                {/* SVG progress ring */}
-                <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 mb-3 sm:mb-5">
-                  <ProgressRing progress={animatedPercent} size={56} stroke={3} />
-                  <div className="hidden sm:block absolute inset-0">
-                    <ProgressRing progress={animatedPercent} size={80} stroke={4} />
-                  </div>
-                  <div className="relative z-10 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
-                    <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
+                {/* Hover glow */}
+                <div className="absolute inset-0 rounded-2xl bg-primary/[0.04] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                {/* Icon with ring */}
+                <div className="relative inline-flex items-center justify-center w-[72px] h-[72px] mb-4 mx-auto">
+                  <CircularProgress progress={metric.ringPercent} isInView={isInView} />
+                  <div className="relative z-10 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-all duration-300 group-hover:bg-primary/15 group-hover:scale-110">
+                    <Icon className="w-5 h-5" strokeWidth={1.8} />
                   </div>
                 </div>
 
-                <div className="text-2xl sm:text-4xl font-black mb-1 sm:mb-2 bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
-                  {displayMetrics[metric.key].toLocaleString()}+
+                {/* Value */}
+                <div className="text-2xl sm:text-3xl font-black mb-1 bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  <AnimatedNumber value={metrics[metric.key]} isInView={isInView} />
+                  <span className="text-primary/80">+</span>
                 </div>
-                <div className="text-muted-foreground font-medium text-xs sm:text-sm">
+
+                {/* Label */}
+                <p className="text-muted-foreground text-xs sm:text-sm font-medium leading-tight">
                   {metric.label}
-                </div>
-              </div>
+                </p>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
