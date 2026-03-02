@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, GraduationCap, Heart, School } from 'lucide-react';
+import { Users, GraduationCap, Heart, School, Clock, Award } from 'lucide-react';
 
 interface MetricData {
   id?: string;
@@ -13,6 +13,8 @@ interface MetricData {
   teachers_trained: number;
   girls_mentored: number;
   schools_taught: number;
+  years_of_mentoring: number;
+  years_of_experience: number;
 }
 
 const ImpactMetricsEditor = () => {
@@ -20,7 +22,9 @@ const ImpactMetricsEditor = () => {
     students_impacted: 0,
     teachers_trained: 0,
     girls_mentored: 0,
-    schools_taught: 0
+    schools_taught: 0,
+    years_of_mentoring: 0,
+    years_of_experience: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +45,7 @@ const ImpactMetricsEditor = () => {
       }
 
       if (data) {
-        setMetrics(data);
+        setMetrics(data as unknown as MetricData);
       }
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -60,23 +64,21 @@ const ImpactMetricsEditor = () => {
         teachers_trained: metrics.teachers_trained,
         girls_mentored: metrics.girls_mentored,
         schools_taught: metrics.schools_taught,
+        years_of_mentoring: metrics.years_of_mentoring,
+        years_of_experience: metrics.years_of_experience,
         updated_at: new Date().toISOString()
       };
 
       if (metrics.id) {
-        // Update existing
         const { error } = await supabase
           .from('impact_metrics')
-          .update(updateData)
+          .update(updateData as any)
           .eq('id', metrics.id);
-
         if (error) throw error;
       } else {
-        // Insert new
         const { error } = await supabase
           .from('impact_metrics')
-          .insert([updateData]);
-
+          .insert([updateData] as any);
         if (error) throw error;
       }
 
@@ -94,30 +96,12 @@ const ImpactMetricsEditor = () => {
   };
 
   const metricsConfig = [
-    {
-      key: 'students_impacted' as keyof MetricData,
-      icon: Users,
-      label: 'Students Impacted',
-      description: 'Total number of students reached through programs'
-    },
-    {
-      key: 'teachers_trained' as keyof MetricData,
-      icon: GraduationCap,
-      label: 'Teachers Trained',
-      description: 'Number of teachers trained in STEM education'
-    },
-    {
-      key: 'girls_mentored' as keyof MetricData,
-      icon: Heart,
-      label: 'Girls Mentored',
-      description: 'Girls mentored in STEM fields'
-    },
-    {
-      key: 'schools_taught' as keyof MetricData,
-      icon: School,
-      label: 'Schools Taught',
-      description: 'Number of schools where programs were conducted'
-    }
+    { key: 'students_impacted' as keyof MetricData, icon: Users, label: 'Students Impacted', description: 'Total number of students reached through programs' },
+    { key: 'teachers_trained' as keyof MetricData, icon: GraduationCap, label: 'Teachers Trained', description: 'Number of teachers trained in STEM education' },
+    { key: 'girls_mentored' as keyof MetricData, icon: Heart, label: 'Girls Mentored', description: 'Girls mentored in STEM fields' },
+    { key: 'schools_taught' as keyof MetricData, icon: School, label: 'Schools Taught', description: 'Number of schools where programs were conducted' },
+    { key: 'years_of_mentoring' as keyof MetricData, icon: Clock, label: 'Years of Mentoring', description: 'Total years spent mentoring students' },
+    { key: 'years_of_experience' as keyof MetricData, icon: Award, label: 'Years of Experience', description: 'Total years of professional experience' },
   ];
 
   if (loading) {
@@ -134,7 +118,7 @@ const ImpactMetricsEditor = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {metricsConfig.map((metric) => {
               const Icon = metric.icon;
               return (
