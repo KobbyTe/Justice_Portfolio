@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Users, GraduationCap, Heart, School } from 'lucide-react';
+import { Users, GraduationCap, Heart, School, Clock, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MetricData {
@@ -7,6 +7,8 @@ interface MetricData {
   teachers_trained: number;
   girls_mentored: number;
   schools_taught: number;
+  years_of_mentoring: number;
+  years_of_experience: number;
 }
 
 // SVG progress ring
@@ -42,18 +44,16 @@ const ProgressRing = ({ progress, size = 80, stroke = 4 }: { progress: number; s
 };
 
 const ImpactMetrics = () => {
-  const [metrics, setMetrics] = useState<MetricData>({
+  const defaultMetrics: MetricData = {
     students_impacted: 0,
     teachers_trained: 0,
     girls_mentored: 0,
-    schools_taught: 0
-  });
-  const [displayMetrics, setDisplayMetrics] = useState<MetricData>({
-    students_impacted: 0,
-    teachers_trained: 0,
-    girls_mentored: 0,
-    schools_taught: 0
-  });
+    schools_taught: 0,
+    years_of_mentoring: 0,
+    years_of_experience: 0,
+  };
+  const [metrics, setMetrics] = useState<MetricData>(defaultMetrics);
+  const [displayMetrics, setDisplayMetrics] = useState<MetricData>(defaultMetrics);
   const [isVisible, setIsVisible] = useState(false);
   const [ringProgress, setRingProgress] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ const ImpactMetrics = () => {
   const loadMetrics = async () => {
     try {
       const { data } = await supabase.from('impact_metrics').select('*').single();
-      if (data) setMetrics(data);
+      if (data) setMetrics(data as unknown as MetricData);
     } catch (error) {
       console.error('Error loading impact metrics:', error);
     }
@@ -112,6 +112,8 @@ const ImpactMetrics = () => {
     { key: 'teachers_trained' as keyof MetricData, icon: GraduationCap, label: 'Teachers Trained', maxPercent: 70 },
     { key: 'girls_mentored' as keyof MetricData, icon: Heart, label: 'Girls Mentored', maxPercent: 90 },
     { key: 'schools_taught' as keyof MetricData, icon: School, label: 'Schools Taught', maxPercent: 75 },
+    { key: 'years_of_mentoring' as keyof MetricData, icon: Clock, label: 'Years of Mentoring', maxPercent: 60 },
+    { key: 'years_of_experience' as keyof MetricData, icon: Award, label: 'Years of Experience', maxPercent: 65 },
   ];
 
   return (
@@ -133,7 +135,7 @@ const ImpactMetrics = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6 max-w-6xl mx-auto">
           {metricsConfig.map((metric, i) => {
             const Icon = metric.icon;
             const animatedPercent = isVisible ? Math.round((metric.maxPercent * ringProgress) / 100) : 0;

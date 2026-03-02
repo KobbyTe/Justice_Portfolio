@@ -735,20 +735,20 @@ const Admin = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-13">
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="impact">Impact</TabsTrigger>
-            <TabsTrigger value="tech">Tech</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="blog">Blog</TabsTrigger>
-            <TabsTrigger value="social">Social</TabsTrigger>
-            <TabsTrigger value="resume">Resume</TabsTrigger>
-            <TabsTrigger value="recommendations">Testimonials</TabsTrigger>
-            <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="wall">Wall</TabsTrigger>
-            <TabsTrigger value="appointments">Bookings</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto gap-1 p-1.5 bg-muted/60 rounded-xl">
+            <TabsTrigger value="hero" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Hero</TabsTrigger>
+            <TabsTrigger value="about" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">About</TabsTrigger>
+            <TabsTrigger value="impact" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Impact</TabsTrigger>
+            <TabsTrigger value="tech" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tech Stack</TabsTrigger>
+            <TabsTrigger value="projects" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Projects</TabsTrigger>
+            <TabsTrigger value="blog" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Blog</TabsTrigger>
+            <TabsTrigger value="social" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Social</TabsTrigger>
+            <TabsTrigger value="resume" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Resume</TabsTrigger>
+            <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Testimonials</TabsTrigger>
+            <TabsTrigger value="gallery" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Gallery</TabsTrigger>
+            <TabsTrigger value="wall" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Wall</TabsTrigger>
+            <TabsTrigger value="appointments" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Bookings</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Analytics</TabsTrigger>
           </TabsList>
 
           {/* Hero Images Tab */}

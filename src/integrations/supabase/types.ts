@@ -345,6 +345,8 @@ export type Database = {
           students_impacted: number
           teachers_trained: number
           updated_at: string
+          years_of_experience: number
+          years_of_mentoring: number
         }
         Insert: {
           created_at?: string
@@ -354,6 +356,8 @@ export type Database = {
           students_impacted?: number
           teachers_trained?: number
           updated_at?: string
+          years_of_experience?: number
+          years_of_mentoring?: number
         }
         Update: {
           created_at?: string
@@ -363,6 +367,8 @@ export type Database = {
           students_impacted?: number
           teachers_trained?: number
           updated_at?: string
+          years_of_experience?: number
+          years_of_mentoring?: number
         }
         Relationships: []
       }
