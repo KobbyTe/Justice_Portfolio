@@ -102,6 +102,7 @@ const Navigation = () => {
               )}
             </button>
           </div>
+        </div>
 
         {/* Mobile Menu - smooth height transition */}
         <div
