@@ -99,6 +99,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <SEO description="Portfolio of Justice Ansah - Full-Stack Developer, STEM Educator, and Robotics Engineer." url="/" />
       <Navigation />
 
       {/* Full-screen Hero Section */}
