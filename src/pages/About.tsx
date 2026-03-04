@@ -67,6 +67,7 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="About" description="Learn about Justice Ansah — a self-taught innovator bridging technology, agriculture, and sustainable development." url="/about" />
       <Navigation />
 
       {/* About Hero */}

@@ -155,6 +155,7 @@ const Wall = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Community Wall" description="Leave a message on Justice Ansah's community wall — share thoughts, encouragement, or connect." url="/wall" />
       <Navigation />
 
       <section className="pt-20 pb-12 sm:pt-32 sm:pb-20 relative overflow-hidden">

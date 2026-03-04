@@ -160,6 +160,18 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={post.title}
+        description={post.excerpt}
+        image={post.featured_image_url}
+        url={`/blog/${post.slug}`}
+        type="article"
+        article={{
+          publishedTime: post.published_at,
+          tags: post.tags,
+          category: post.category,
+        }}
+      />
       <Navigation />
       
       <article className="py-8">

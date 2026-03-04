@@ -139,6 +139,7 @@ const Resume = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Resume" description="Experience, education, and skills of Justice Ansah — Robotics Engineer, STEM Educator, and IoT Developer." url="/resume" />
       <Navigation />
 
       <section className="py-20 sm:py-28">

@@ -105,6 +105,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Gallery" description="A visual journal showcasing Justice Ansah's work in robotics, STEM education, and innovation." url="/gallery" />
       <Navigation />
 
       <div className="container mx-auto px-4 pt-24 pb-12">

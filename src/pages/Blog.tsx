@@ -88,6 +88,7 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Blog" description="Articles and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
       <Navigation />
       
       {/* Blog Section */}

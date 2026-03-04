@@ -77,6 +77,7 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Book an Appointment" description="Schedule a meeting or consultation with Justice Ansah." url="/booking" />
       <Navigation />
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto">

@@ -31,6 +31,7 @@ const Projects = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Projects" description="Explore innovative projects by Justice Ansah in robotics, web development, mobile apps, and AI." url="/projects" />
       <Navigation />
 
       <section className="py-16 sm:py-24">
