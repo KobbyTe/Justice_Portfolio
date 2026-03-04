@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { SearchAndFilters } from '@/components/blog/SearchAndFilters';
@@ -87,6 +88,7 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title="Blog" description="Articles and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
       <Navigation />
       
       {/* Blog Section */}

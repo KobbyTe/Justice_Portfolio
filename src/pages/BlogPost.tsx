@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { LikeButton } from '@/components/blog/LikeButton';
@@ -159,6 +160,18 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={post.title}
+        description={post.excerpt}
+        image={post.featured_image_url}
+        url={`/blog/${post.slug}`}
+        type="article"
+        article={{
+          publishedTime: post.published_at,
+          tags: post.tags,
+          category: post.category,
+        }}
+      />
       <Navigation />
       
       <article className="py-8">
