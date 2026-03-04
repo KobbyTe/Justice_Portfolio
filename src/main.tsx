@@ -5,7 +5,9 @@ import App from './App.tsx'
 import './index.css'
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-    <App />
-  </ThemeProvider>
+  <HelmetProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <App />
+    </ThemeProvider>
+  </HelmetProvider>
 );
