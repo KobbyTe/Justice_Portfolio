@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import TechStack from '@/components/TechStack';

@@ -1,3 +1,4 @@
+import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Recommendations from '@/components/Recommendations';
