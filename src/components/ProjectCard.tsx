@@ -21,14 +21,16 @@ const ProjectCard = ({ title, category, image, description, projectUrl, githubUr
             src={image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full bg-secondary flex items-center justify-center">
             <span className="text-muted-foreground text-sm">No Image</span>
           </div>
         )}
-        {/* Slide-up overlay on hover */}
-        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-400 bg-gradient-to-t from-background/98 via-background/90 to-transparent p-5 flex flex-col justify-end gap-2">
+        {/* Slide-up overlay on hover — hidden on touch devices */}
+        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-400 bg-gradient-to-t from-background/98 via-background/90 to-transparent p-5 flex-col justify-end gap-2 hidden md:flex">
           {description && (
             <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>
           )}
@@ -61,10 +63,15 @@ const ProjectCard = ({ title, category, image, description, projectUrl, githubUr
       </div>
 
       {/* Card Body */}
-      <div className="p-5 space-y-3">
+      <div className="p-4 sm:p-5 space-y-3">
         <h3 className="font-heading font-semibold text-base text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
           {title}
         </h3>
+
+        {/* Description — visible on mobile only */}
+        {description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 md:hidden">{description}</p>
+        )}
 
         {technologies && technologies.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -81,9 +88,31 @@ const ProjectCard = ({ title, category, image, description, projectUrl, githubUr
           </div>
         )}
 
-        {/* Fallback buttons when no image (overlay won't be seen) */}
-        {!image && (
-          <div className="flex gap-2 pt-1">
+        {/* Action buttons — always visible on mobile, fallback for no-image on desktop */}
+        {(projectUrl || githubUrl) && (
+          <div className="flex gap-2 pt-1 md:hidden">
+            {projectUrl && (
+              <Button asChild size="sm" className="flex-1 bg-primary hover:bg-primary/90 text-xs h-10">
+                <a href={projectUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  View Project
+                </a>
+              </Button>
+            )}
+            {githubUrl && (
+              <Button asChild size="sm" variant="outline" className="flex-1 text-xs border-primary/40 hover:bg-primary/10 h-10">
+                <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+                  <Github className="w-3.5 h-3.5 mr-1.5" />
+                  Code
+                </a>
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Fallback buttons for desktop when no image */}
+        {!image && (projectUrl || githubUrl) && (
+          <div className="hidden md:flex gap-2 pt-1">
             {projectUrl && (
               <Button asChild size="sm" variant="outline" className="flex-1 text-xs">
                 <a href={projectUrl} target="_blank" rel="noopener noreferrer">
