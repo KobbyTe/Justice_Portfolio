@@ -103,8 +103,35 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-body;
+    overflow-x: hidden;
+    /* Safe area support for notched devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  @media screen and (max-width: 767px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }
 
@@ -115,7 +142,7 @@ All colors MUST be HSL.
   }
   
   .hero-subtitle {
-    @apply text-lg md:text-xl text-muted-foreground font-medium;
+    @apply text-base sm:text-lg md:text-xl text-muted-foreground font-medium;
   }
   
   .section-heading {
@@ -200,8 +227,17 @@ All colors MUST be HSL.
     }
   }
 
+  /* Touch-friendly minimum sizes */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
     .reveal {
       opacity: 1;
       transform: none;

@@ -12,7 +12,7 @@ import { CommentsSection } from '@/components/blog/CommentsSection';
 import { BlogCard } from '@/components/blog/BlogCard';
 import OptimizedImage from '@/components/OptimizedImage';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Calendar, Clock, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -50,7 +50,6 @@ const BlogPost = () => {
       setLoading(true);
       setError(null);
 
-      // Get the blog post with stats
       const { data, error } = await supabase
         .rpc('get_blog_post_with_stats', { post_slug: postSlug });
 
@@ -63,7 +62,6 @@ const BlogPost = () => {
 
       setPost(data[0]);
       
-      // Load related posts
       const { data: relatedData, error: relatedError } = await supabase
         .from('blog_posts')
         .select('id, title, excerpt, featured_image_url, featured_video_url, slug, category, tags, read_time_minutes, published_at')
@@ -88,24 +86,6 @@ const BlogPost = () => {
     }
   };
 
-  const loadRelatedPosts = async (category: string, currentPostId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('id, title, excerpt, featured_image_url, slug, category, read_time_minutes, published_at')
-        .eq('is_published', true)
-        .eq('category', category)
-        .neq('id', currentPostId)
-        .order('published_at', { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
-      setRelatedPosts(data || []);
-    } catch (error) {
-      console.error('Error loading related posts:', error);
-    }
-  };
-
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -122,10 +102,10 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-20">
           <Skeleton className="h-8 w-32 mb-6" />
-          <Skeleton className="h-64 w-full mb-8 rounded-lg" />
-          <Skeleton className="h-12 w-3/4 mb-4" />
+          <Skeleton className="h-48 sm:h-64 w-full mb-8 rounded-lg" />
+          <Skeleton className="h-10 sm:h-12 w-3/4 mb-4" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-2/3 mb-8" />
@@ -143,9 +123,9 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-3xl font-bold mb-4">Blog Post Not Found</h1>
-          <p className="text-muted-foreground mb-8">
+        <div className="container mx-auto px-4 py-16 text-center pt-24">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4">Blog Post Not Found</h1>
+          <p className="text-muted-foreground mb-8 text-sm sm:text-base">
             {error || "The blog post you're looking for doesn't exist or has been removed."}
           </p>
           <Button onClick={() => navigate('/blog')} className="bg-primary hover:bg-primary/90">
@@ -174,30 +154,30 @@ const BlogPost = () => {
       />
       <Navigation />
       
-      <article className="py-8">
+      <article className="pt-20 sm:pt-8 pb-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Back Button */}
           <Button 
             variant="ghost" 
             onClick={() => navigate('/blog')}
-            className="mb-6 hover:bg-primary/10"
+            className="mb-4 sm:mb-6 hover:bg-primary/10 h-10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Blog
           </Button>
 
           {/* Hero Section */}
-          <div className="space-y-6 mb-8">
-            <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
+            <div className="space-y-3 sm:space-y-4">
               <Badge className="bg-primary text-primary-foreground">
                 {post.category}
               </Badge>
               
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-heading font-bold leading-tight">
                 {post.title}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>{formatDate(post.published_at)}</span>
@@ -212,14 +192,14 @@ const BlogPost = () => {
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="hover:bg-primary/10">
+                    <Badge key={tag} variant="outline" className="hover:bg-primary/10 text-xs">
                       #{tag}
                     </Badge>
                   ))}
                 </div>
               )}
 
-              <div className="flex items-center gap-4 pt-4">
+              <div className="flex items-center gap-4 pt-2 sm:pt-4">
                 <LikeButton postId={post.id} initialLikeCount={post.like_count} />
                 <SocialShare 
                   title={post.title} 
@@ -267,11 +247,11 @@ const BlogPost = () => {
           </div>
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none mb-12">
+          <div className="prose prose-lg max-w-none mb-8 sm:mb-12">
             <Card className="glass-card">
-              <CardContent className="p-8">
+              <CardContent className="p-4 sm:p-6 md:p-8">
                 <div 
-                  className="prose prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80"
+                  className="prose prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-sm sm:prose-base"
                   dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }}
                 />
               </CardContent>
@@ -279,15 +259,15 @@ const BlogPost = () => {
           </div>
 
           {/* Comments Section */}
-          <div className="mb-12">
+          <div className="mb-8 sm:mb-12">
             <CommentsSection postId={post.id} />
           </div>
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (
-            <section className="space-y-6">
-              <h3 className="text-2xl font-heading font-bold">Related Posts</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <section className="space-y-4 sm:space-y-6">
+              <h3 className="text-xl sm:text-2xl font-heading font-bold">Related Posts</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {relatedPosts.map((relatedPost) => (
                   <BlogCard
                     key={relatedPost.id}

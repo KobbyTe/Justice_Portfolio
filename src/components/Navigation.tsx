@@ -15,7 +15,7 @@ const Navigation = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -23,6 +23,16 @@ const Navigation = () => {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMenuOpen]);
 
   const navItems = [
     { path: '/', label: 'Home' },
@@ -46,7 +56,7 @@ const Navigation = () => {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo / Monogram */}
           <Link
@@ -94,6 +104,7 @@ const Navigation = () => {
               className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
+              aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
                 <X className="w-5 h-5 transition-transform duration-200 rotate-0" />
@@ -103,24 +114,37 @@ const Navigation = () => {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu - smooth height transition */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            isMenuOpen ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'
-          }`}
-        >
-          <div className="border-t border-border pt-4 pb-2 flex flex-col space-y-1">
+      {/* Mobile Menu — full-screen overlay for better UX */}
+      <div
+        className={`md:hidden fixed inset-0 top-[56px] z-40 transition-all duration-300 ease-in-out ${
+          isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
+      >
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-background/98 backdrop-blur-lg"
+          onClick={() => setIsMenuOpen(false)}
+        />
+        
+        {/* Menu content */}
+        <div className="relative z-10 flex flex-col px-6 pt-6 pb-8 h-full overflow-y-auto">
+          <div className="flex flex-col space-y-1">
             {navItems.map((item, i) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-left px-4 py-3 min-h-[44px] flex items-center rounded-md transition-all duration-200 text-base font-medium ${
+                className={`text-left px-4 py-3.5 min-h-[48px] flex items-center rounded-xl transition-all duration-200 text-base font-medium ${
                   isActive(item.path)
-                    ? 'text-primary bg-primary/10 border-l-2 border-primary pl-5'
+                    ? 'text-primary bg-primary/10 border-l-3 border-primary pl-5'
                     : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
                 }`}
-                style={{ transitionDelay: isMenuOpen ? `${i * 30}ms` : '0ms' }}
+                style={{ 
+                  transform: isMenuOpen ? 'translateX(0)' : 'translateX(-20px)',
+                  opacity: isMenuOpen ? 1 : 0,
+                  transition: `transform 0.3s ease ${i * 40}ms, opacity 0.3s ease ${i * 40}ms`
+                }}
               >
                 {item.label}
               </Link>

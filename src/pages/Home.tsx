@@ -2,7 +2,6 @@ import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Recommendations from '@/components/Recommendations';
-import TechStack from '@/components/TechStack';
 import ImpactMetrics from '@/components/ImpactMetrics';
 import heroWorkspace1 from '@/assets/hero-workspace.jpg';
 import heroWorkspace2 from '@/assets/hero-workspace-2.jpg';
@@ -103,11 +102,10 @@ const Home = () => {
       <Navigation />
 
       {/* Full-screen Hero Section */}
-      <section className="relative min-h-screen flex items-center">
+      <section className="relative min-h-[100dvh] flex items-center">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           {heroImages.map((img, idx) => {
-            // Only render the current and adjacent images to reduce DOM nodes
             const isNear = idx === currentImageIndex || idx === (currentImageIndex + 1) % heroImages.length || idx === (currentImageIndex - 1 + heroImages.length) % heroImages.length;
             if (!isNear) return null;
             return (
@@ -128,29 +126,29 @@ const Home = () => {
               />
             );
           })}
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
-          {/* Glow overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
-          {/* Animated radial glow */}
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/5 blur-3xl animate-float pointer-events-none" />
+          {/* Stronger overlay on mobile for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/60 sm:from-background sm:via-background/90 sm:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent sm:from-background/60" />
+          {/* Animated radial glow — smaller on mobile */}
+          <div className="absolute top-1/4 left-1/4 w-48 h-48 sm:w-96 sm:h-96 rounded-full bg-primary/5 blur-3xl animate-float pointer-events-none" />
         </div>
 
         {/* Content */}
-        <div ref={heroRef} className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div ref={heroRef} className="container mx-auto px-4 sm:px-6 relative z-10 pt-16 sm:pt-0">
           <div className="max-w-2xl">
-            <div className="space-y-6 sm:space-y-8 animate-fade-up">
+            <div className="space-y-5 sm:space-y-8 animate-fade-up">
               <div className="space-y-3 sm:space-y-4">
                 <p className="text-primary font-medium text-sm sm:text-base tracking-widest uppercase">
                   Hello, I'm
                 </p>
-                <h1 className="hero-text text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
+                <h1 className="hero-text text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl">
                   Justice <span className="font-black">ANSAH</span>
                 </h1>
                 {/* Typewriter */}
-                <div className="text-xl sm:text-2xl md:text-3xl font-heading font-semibold h-10 flex items-center">
+                <div className="text-lg sm:text-2xl md:text-3xl font-heading font-semibold h-8 sm:h-10 flex items-center">
                   <span className="text-primary typewriter-cursor">{displayed}</span>
                 </div>
-                <p className="hero-subtitle text-base sm:text-lg max-w-lg">
+                <p className="hero-subtitle text-sm sm:text-base md:text-lg max-w-lg">
                   {aboutContent?.hero_description?.split('|')[0]?.trim() ||
                     'Self-taught innovator bridging technology, agriculture, and sustainable development.'}
                 </p>
@@ -158,13 +156,13 @@ const Home = () => {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow transition-all duration-300 hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)]">
+                <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow transition-all duration-300 hover:shadow-[0_0_28px_hsl(var(--primary)/0.5)] h-12 sm:h-11">
                   <Link to="/projects">
                     <ExternalLink className="w-4 h-4 mr-2" />
                     View My Projects
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10 hover:border-primary font-semibold transition-all duration-300">
+                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10 hover:border-primary font-semibold transition-all duration-300 h-12 sm:h-11">
                   <Link to="/resume">
                     <Download className="w-4 h-4 mr-2" />
                     Download Resume
@@ -173,14 +171,14 @@ const Home = () => {
               </div>
 
               {/* Social Links */}
-              <div className="flex items-center space-x-3 pt-2">
+              <div className="flex items-center space-x-2 sm:space-x-3 pt-2">
                 {socialLinks.map((link: any) => (
                   <a
                     key={link.id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                    className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
                   >
                     {getIcon(link.platform)}
                   </a>
@@ -190,17 +188,17 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Image indicator dots - hide on very small screens if too many */}
-        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10 max-w-[80vw] overflow-hidden">
+        {/* Image indicator dots */}
+        <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10 max-w-[80vw] overflow-hidden">
           {heroImages.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentImageIndex(idx)}
               aria-label={`Go to image ${idx + 1}`}
-              className={`rounded-full transition-all duration-300 min-w-[8px] ${
+              className={`rounded-full transition-all duration-300 min-w-[10px] min-h-[10px] ${
                 idx === currentImageIndex
-                  ? 'w-5 sm:w-6 h-2 bg-primary'
-                  : 'w-2 h-2 bg-muted-foreground/40 hover:bg-muted-foreground/70'
+                  ? 'w-5 sm:w-6 h-2.5 sm:h-2 bg-primary'
+                  : 'w-2.5 sm:w-2 h-2.5 sm:h-2 bg-muted-foreground/40 hover:bg-muted-foreground/70'
               }`}
             />
           ))}
