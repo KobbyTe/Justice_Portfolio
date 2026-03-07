@@ -1,0 +1,24 @@
+{
+  "name": "Justice Ansah",
+  "short_name": "J. Ansah",
+  "description": "Portfolio of Justice Ansah - Full-Stack Developer, STEM Educator, and Robotics Engineer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/lovable-uploads/a43e9266-b19c-46ea-aec2-17dea84337a9.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/a43e9266-b19c-46ea-aec2-17dea84337a9.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
