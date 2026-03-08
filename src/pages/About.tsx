@@ -92,6 +92,21 @@ const About = () => {
     }
   };
 
+  const loadSkills = async () => {
+    try {
+      const { data } = await supabase
+        .from('skills')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (data && data.length > 0) {
+        setSkills(data.map((s: any) => ({ skill: s.name, percentage: s.percentage })));
+      }
+    } catch (error) {
+      console.error('Error loading skills:', error);
+    }
+  };
+
   const rawBio = (aboutContent as any)?.about_description || 
     'I am Justice Ansah, a young innovator who grew up in a farming community with no background in technology. From those simple beginnings, curiosity led me to robotics, IoT development, and teaching STEM education. My work now bridges technology, agriculture, and sustainable development, with a vision to reimagine how communities grow and thrive. My journey has never been a straight line, but each step has been driven by a belief that innovation can rise from any soil. The story is still unfolding.';
 
