@@ -155,9 +155,7 @@ const AIChatbot = () => {
               {messages.length === 0 && (
                 <div className="space-y-3">
                   <div className="flex gap-2">
-                    <div className="w-7 h-7 rounded-full bg-primary/20 flex-shrink-0 flex items-center justify-center mt-0.5">
-                      <Bot className="w-3.5 h-3.5 text-primary" />
-                    </div>
+                    <img src={logoImg} alt="Kwabena" className="w-7 h-7 rounded-full object-contain flex-shrink-0 mt-0.5" />
                     <div className="bg-secondary rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-foreground max-w-[85%]">
                       Hi! 👋 I'm Kwabena, Justice's AI assistant. Ask me anything about his projects, skills, or how to get in touch!
                     </div>
