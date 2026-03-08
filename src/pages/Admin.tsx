@@ -100,7 +100,7 @@ const Admin = () => {
 
   const loadAllData = async () => {
     try {
-      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes] = await Promise.all([
+      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes, logosRes] = await Promise.all([
         supabase.from('hero_images').select('*').eq('is_active', true),
         supabase.from('about_content').select('*').single(),
         supabase.from('tech_stack').select('*').eq('is_active', true),
@@ -110,7 +110,8 @@ const Admin = () => {
         supabase.from('resume_files').select('*').order('created_at', { ascending: false }),
         supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('gallery').select('*').eq('is_active', true).order('sort_order'),
-        supabase.from('wall_messages').select('*').order('created_at', { ascending: false })
+        supabase.from('wall_messages').select('*').order('created_at', { ascending: false }),
+        supabase.from('partner_logos').select('*').order('sort_order')
       ]);
 
       setHeroImages(heroRes.data || []);
