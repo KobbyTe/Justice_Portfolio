@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { usePageTracking } from "./hooks/usePageTracking";
 import PageTransition from "./components/PageTransition";
+import PullToRefresh from "./components/PullToRefresh";
+import OfflineFallback from "./components/OfflineFallback";
 
 // Eagerly load the home page for fastest initial render
 import Home from "./pages/Home";
