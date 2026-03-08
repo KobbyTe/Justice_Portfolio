@@ -65,7 +65,7 @@ const Navigation = () => {
             className="flex items-center gap-2 group"
             aria-label="Home"
           >
-            <img src={logoImg} alt="Justice Ansah logo" className="w-16 h-16 rounded-lg object-contain" />
+            <img src={logoImg} alt="Justice Ansah logo" className="w-10 h-10 rounded-lg object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}
