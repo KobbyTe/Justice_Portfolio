@@ -1,59 +1,38 @@
 
 
-# Fix Project Upload/Add in Admin Panel
+## Auto-Scrolling Logo Carousel
 
-## Problem Analysis
+### What we're building
+An infinite auto-scrolling horizontal carousel showing logos of companies, organizations, exhibitions, and competitions Justice has volunteered for or exhibited at. Placed on the homepage between the hero section and Impact Metrics.
 
-After reviewing the Admin page code (`src/pages/Admin.tsx` lines 306-369 and 890-955), I found two bugs that cause project creation/editing to fail:
+### Database
+Create a new `partner_logos` table:
+- `id` (uuid, PK)
+- `name` (text) — organization name
+- `logo_url` (text) — image URL
+- `category` (text) — e.g. "company", "organization", "exhibition", "competition"
+- `sort_order` (int, default 0)
+- `is_active` (boolean, default true)
+- RLS: public read, authenticated write
 
-### Bug 1: Edit mode doesn't set category state
-When clicking "Edit" on a project, `handleEditProject` (line 371) sets `formData`, `isEditing`, and `editingId` -- but never calls `setProjectCategory(project.category)`. Since `projectCategory` stays as `''` (empty string), the validation on line 320 fires: "Please select a project category" and blocks submission.
+### New Component: `LogoCarousel.tsx`
+- Fetches active logos from `partner_logos` ordered by `sort_order`
+- Renders a CSS-animation-based infinite scroll (duplicate the logo list for seamless loop)
+- Uses `@keyframes scroll` to translate the strip horizontally
+- Pauses on hover
+- Section heading: "Trusted By & Featured At" or similar
+- Grayscale logos that colorize on hover
 
-### Bug 2: Form reset doesn't clear React state
-After a successful add, `e.target.reset()` clears native inputs but the `projectCategory` Select (controlled by React state) is never reset. This is minor but can cause confusion.
+### Homepage Integration
+Insert `<LogoCarousel />` in `Home.tsx` between the hero `</section>` and `<ImpactMetrics />`.
 
-### Bug 3: Edit form doesn't pre-populate the Select value
-When editing, the category Select doesn't reflect the current project's category because `projectCategory` state is not updated.
+### Admin Management
+Add a simple logo management section in the Admin page to upload/manage partner logos.
 
----
-
-## Fix Plan
-
-### File: `src/pages/Admin.tsx`
-
-**Fix 1** -- Update `handleEditProject` (around line 371) to also set the category state:
-
-```typescript
-const handleEditProject = (project) => {
-  setFormData(project);
-  setIsEditing(true);
-  setEditingId(project.id);
-  setProjectCategory(project.category); // <-- ADD THIS
-};
-```
-
-**Fix 2** -- In `handleAddProject` success path (around line 361), ensure `projectCategory` is reset:
-
-```typescript
-setProjectCategory(''); // already exists, verify it's present
-```
-
-This is already in the code at line 361, so this is correct.
-
-**Fix 3** -- In the Cancel button handler (around line 945-949), also reset `projectCategory`:
-
-```typescript
-<Button type="button" variant="outline" onClick={() => {
-  setIsEditing(false);
-  setEditingId(null);
-  setFormData({});
-  setProjectCategory(''); // <-- ADD THIS
-}}>
-```
-
----
-
-## Summary
-
-The root cause is a single missing line: `setProjectCategory(project.category)` in the edit handler. For new projects, the flow works as long as a category is selected from the dropdown. Both adding and editing will work reliably after these fixes.
+### Files to create/edit
+1. **SQL migration** — create `partner_logos` table with RLS
+2. **`src/components/LogoCarousel.tsx`** — new component
+3. **`src/pages/Home.tsx`** — import and place the carousel
+4. **`src/pages/Admin.tsx`** — add logo management UI
+5. **`tailwind.config.ts`** — add `scroll` keyframe animation if needed
 
