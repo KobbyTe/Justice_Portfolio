@@ -9,6 +9,8 @@ import { usePageTracking } from "./hooks/usePageTracking";
 import PageTransition from "./components/PageTransition";
 import PullToRefresh from "./components/PullToRefresh";
 import OfflineFallback from "./components/OfflineFallback";
+import AIChatbot from "./components/AIChatbot";
+import GamificationWidget from "./components/GamificationWidget";
 
 // Eagerly load the home page for fastest initial render
 import Home from "./pages/Home";
