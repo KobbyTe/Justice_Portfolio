@@ -138,7 +138,7 @@ const AIChatbot = () => {
                   <Sparkles className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Ask Justice's AI</p>
+                  <p className="text-sm font-semibold text-foreground">Kwabena</p>
                   <p className="text-xs text-muted-foreground">Always online</p>
                 </div>
               </div>
