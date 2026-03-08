@@ -6,7 +6,7 @@ import portrait from '@/assets/portrait.jpg';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, useInView } from 'framer-motion';
-import { MapPin, Mail, Briefcase, GraduationCap, Heart, Cpu, Sprout, Lightbulb } from 'lucide-react';
+import { MapPin, Mail, GraduationCap, Cpu, Sprout, Lightbulb } from 'lucide-react';
 
 const defaultSkills = [
   { skill: 'Robotics & Arduino', percentage: 88 },
