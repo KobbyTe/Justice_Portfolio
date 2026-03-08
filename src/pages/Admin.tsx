@@ -16,6 +16,7 @@ import BlogManagement from '@/components/admin/BlogManagement';
 import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
+import SkillsEditor from '@/components/admin/SkillsEditor';
 
 const Admin = () => {
   const navigate = useNavigate();
