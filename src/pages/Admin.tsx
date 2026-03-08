@@ -124,6 +124,7 @@ const Admin = () => {
       setRecommendations(recommendationsRes.data || []);
       setGalleryItems(galleryRes.data || []);
       setWallMessages(wallRes.data || []);
+      setPartnerLogos(logosRes.data || []);
     } catch (error) {
       toast.error('Failed to load data');
       console.error(error);
