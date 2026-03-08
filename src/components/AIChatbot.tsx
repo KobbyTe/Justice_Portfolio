@@ -23,8 +23,6 @@ const AIChatbot = () => {
   const [pulse, setPulse] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  if (location.pathname === '/admin') return null;
-
   useEffect(() => {
     const t = setTimeout(() => setPulse(false), 5000);
     return () => clearTimeout(t);
