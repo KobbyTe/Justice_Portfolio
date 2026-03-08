@@ -168,6 +168,10 @@ const Admin = () => {
     const { data } = await supabase.from('wall_messages').select('*').order('created_at', { ascending: false });
     setWallMessages(data || []);
   };
+  const reloadPartnerLogos = async () => {
+    const { data } = await supabase.from('partner_logos').select('*').order('sort_order');
+    setPartnerLogos(data || []);
+  };
 
   const handleFileUpload = async (file, bucket = 'portfolio-assets') => {
     const fileExt = file.name.split('.').pop();
