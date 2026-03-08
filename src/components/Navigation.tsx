@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import logoImg from '@/assets/logo.png';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
