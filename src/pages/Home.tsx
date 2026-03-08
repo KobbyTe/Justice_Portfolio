@@ -212,6 +212,9 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Logo Carousel */}
+      <LogoCarousel />
+
       {/* Impact Metrics Section */}
       <ImpactMetrics />
 
