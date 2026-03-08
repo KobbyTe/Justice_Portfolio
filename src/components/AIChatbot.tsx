@@ -205,9 +205,7 @@ const AIChatbot = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex gap-2"
                 >
-                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Bot className="w-3.5 h-3.5 text-primary" />
-                  </div>
+                  <img src={logoImg} alt="Kwabena" className="w-7 h-7 rounded-full object-contain" />
                   <div className="bg-secondary rounded-2xl rounded-tl-sm px-4 py-3">
                     <div className="flex gap-1.5 items-center">
                       <motion.span
