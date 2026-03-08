@@ -65,7 +65,7 @@ const Navigation = () => {
             className="flex items-center gap-2 group"
             aria-label="Home"
           >
-            <img src={logoImg} alt="Justice Ansah logo" className="w-20 h-20 rounded-lg object-contain" />
+            <img src={logoImg} alt="Justice Ansah logo" className="h-14 w-auto rounded-lg object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -74,6 +74,7 @@ const Navigation = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive(item.path) ? 'page' : undefined}
                 className={`relative text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md group ${
                   isActive(item.path)
                     ? 'text-primary'
@@ -117,7 +118,7 @@ const Navigation = () => {
 
       {/* Mobile Menu — full-screen overlay for better UX */}
       <div
-        className={`md:hidden fixed inset-0 top-[56px] z-40 transition-all duration-300 ease-in-out ${
+        className={`md:hidden fixed inset-0 top-[80px] z-40 transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
       >
@@ -134,6 +135,7 @@ const Navigation = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive(item.path) ? 'page' : undefined}
                 className={`text-left px-4 py-3.5 min-h-[48px] flex items-center rounded-xl transition-all duration-200 text-base font-medium ${
                   isActive(item.path)
                     ? 'text-primary bg-primary/10 border-l-3 border-primary pl-5'

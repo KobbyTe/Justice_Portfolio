@@ -1,32 +1,59 @@
 
 
-## Checks, Improvements & Suggestions
+# Fix Project Upload/Add in Admin Panel
 
-### Issues Found
+## Problem Analysis
 
-1. **React Warning: `fetchPriority` prop** — The hero image in `Home.tsx` uses `fetchPriority` which React 18 doesn't recognize as a valid DOM attribute (it expects lowercase `fetchpriority`). This generates a console warning on every render.
+After reviewing the Admin page code (`src/pages/Admin.tsx` lines 306-369 and 890-955), I found two bugs that cause project creation/editing to fail:
 
-2. **Logo size (w-20 h-20 = 80px) expanding navbar height** — An 80px logo makes the navbar significantly taller than typical (48-64px). The nav padding is only `py-3 sm:py-4`, so the logo overflows the visual rhythm. Consider constraining the logo with `max-h-12` or `max-h-14` while keeping `w-auto` so it scales proportionally without blowing up the navbar.
+### Bug 1: Edit mode doesn't set category state
+When clicking "Edit" on a project, `handleEditProject` (line 371) sets `formData`, `isEditing`, and `editingId` -- but never calls `setProjectCategory(project.category)`. Since `projectCategory` stays as `''` (empty string), the validation on line 320 fires: "Please select a project category" and blocks submission.
 
-3. **Mobile menu top offset hardcoded** — The mobile overlay uses `top-[56px]` but with an 80px logo, the actual navbar height is much taller. The menu will overlap or leave a gap.
+### Bug 2: Form reset doesn't clear React state
+After a successful add, `e.target.reset()` clears native inputs but the `projectCategory` Select (controlled by React state) is never reset. This is minor but can cause confusion.
 
-### Recommended Improvements
+### Bug 3: Edit form doesn't pre-populate the Select value
+When editing, the category Select doesn't reflect the current project's category because `projectCategory` state is not updated.
 
-| # | Change | File |
-|---|--------|------|
-| 1 | Replace `fetchPriority` with lowercase `fetchpriority` (or remove it since React 18 doesn't support it cleanly — use an HTML attribute workaround) | `Home.tsx` |
-| 2 | Constrain logo to navbar-friendly height: `h-12 w-auto` or `h-14 w-auto` so it scales proportionally without stretching the navbar | `Navigation.tsx` |
-| 3 | Fix mobile menu `top` offset to use a dynamic or larger value matching the actual navbar height (e.g., `top-[80px]` or use a ref-based approach) | `Navigation.tsx` |
-| 4 | Add `aria-current="page"` to active nav links for better accessibility | `Navigation.tsx` |
-| 5 | Add `loading="lazy"` to the portrait image on the About page for performance | `About.tsx` |
+---
 
-### Optional Enhancements
+## Fix Plan
 
-- **Skip-to-content link** — Add a visually hidden "Skip to main content" link at the top of the page for keyboard/screen-reader users.
-- **Reduce layout shift** — Add explicit `width`/`height` attributes to the hero images to prevent CLS.
-- **SEO: Add structured data (JSON-LD)** — Add Person schema markup to improve search engine understanding of the portfolio.
+### File: `src/pages/Admin.tsx`
 
-### Implementation Approach
+**Fix 1** -- Update `handleEditProject` (around line 371) to also set the category state:
 
-All changes are minor, single-line or few-line edits across 2-3 files. No architectural changes needed. The `fetchPriority` fix and mobile menu offset fix address real bugs; the rest are quality improvements.
+```typescript
+const handleEditProject = (project) => {
+  setFormData(project);
+  setIsEditing(true);
+  setEditingId(project.id);
+  setProjectCategory(project.category); // <-- ADD THIS
+};
+```
+
+**Fix 2** -- In `handleAddProject` success path (around line 361), ensure `projectCategory` is reset:
+
+```typescript
+setProjectCategory(''); // already exists, verify it's present
+```
+
+This is already in the code at line 361, so this is correct.
+
+**Fix 3** -- In the Cancel button handler (around line 945-949), also reset `projectCategory`:
+
+```typescript
+<Button type="button" variant="outline" onClick={() => {
+  setIsEditing(false);
+  setEditingId(null);
+  setFormData({});
+  setProjectCategory(''); // <-- ADD THIS
+}}>
+```
+
+---
+
+## Summary
+
+The root cause is a single missing line: `setProjectCategory(project.category)` in the edit handler. For new projects, the flow works as long as a category is selected from the dropdown. Both adding and editing will work reliably after these fixes.
 
