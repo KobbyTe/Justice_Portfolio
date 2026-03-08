@@ -156,7 +156,7 @@ const AIChatbot = () => {
                       <Bot className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <div className="bg-secondary rounded-2xl rounded-tl-sm px-3 py-2 text-sm text-foreground max-w-[85%]">
-                      Hi! 👋 I'm Justice's AI assistant. Ask me anything about his projects, skills, or how to get in touch!
+                      Hi! 👋 I'm Kwabena, Justice's AI assistant. Ask me anything about his projects, skills, or how to get in touch!
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 pl-9">
