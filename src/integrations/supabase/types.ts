@@ -664,6 +664,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_approved: boolean | null
           message: string
           name: string
           updated_at: string
@@ -671,6 +672,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_approved?: boolean | null
           message: string
           name: string
           updated_at?: string
@@ -678,6 +680,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_approved?: boolean | null
           message?: string
           name?: string
           updated_at?: string

@@ -118,6 +118,7 @@ const Wall = () => {
       const { data, error } = await supabase
         .from('wall_messages')
         .select('*')
+        .eq('is_approved', true)
         .order('created_at', { ascending: false });
       if (error) throw error;
       setWallEntries(data || []);

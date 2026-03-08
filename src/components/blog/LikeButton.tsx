@@ -9,71 +9,68 @@ interface LikeButtonProps {
   initialLikeCount: number;
 }
 
+// Generate a persistent session-based fingerprint instead of fetching IP
+const getFingerprint = (): string => {
+  let fp = localStorage.getItem('like_fingerprint');
+  if (!fp) {
+    fp = crypto.randomUUID();
+    localStorage.setItem('like_fingerprint', fp);
+  }
+  return fp;
+};
+
 export const LikeButton = ({ postId, initialLikeCount }: LikeButtonProps) => {
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user has already liked this post
   useEffect(() => {
-    checkIfLiked();
+    // Check locally if this post was liked
+    const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '{}');
+    setIsLiked(!!likedPosts[postId]);
   }, [postId]);
-
-  const checkIfLiked = async () => {
-    try {
-      const userAgent = navigator.userAgent;
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await ipResponse.json();
-      
-      const { data } = await supabase
-        .from('blog_likes')
-        .select('id')
-        .eq('post_id', postId)
-        .eq('ip_address', ip)
-        .single();
-        
-      setIsLiked(!!data);
-    } catch (error) {
-      // Ignore error - user hasn't liked the post
-    }
-  };
 
   const toggleLike = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
+    const fingerprint = getFingerprint();
     
     try {
-      const userAgent = navigator.userAgent;
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
-      const { ip } = await ipResponse.json();
-
       if (isLiked) {
-        // Unlike the post
+        // Unlike: delete by fingerprint
         const { error } = await supabase
           .from('blog_likes')
           .delete()
           .eq('post_id', postId)
-          .eq('ip_address', ip);
+          .eq('ip_address', fingerprint);
 
         if (error) throw error;
         
         setLikeCount(prev => prev - 1);
         setIsLiked(false);
+        
+        const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '{}');
+        delete likedPosts[postId];
+        localStorage.setItem('liked_posts', JSON.stringify(likedPosts));
       } else {
         // Like the post
         const { error } = await supabase
           .from('blog_likes')
           .insert({
             post_id: postId,
-            ip_address: ip,
-            user_agent: userAgent
+            ip_address: fingerprint,
+            user_agent: navigator.userAgent
           });
 
         if (error) throw error;
         
         setLikeCount(prev => prev + 1);
         setIsLiked(true);
+        
+        const likedPosts = JSON.parse(localStorage.getItem('liked_posts') || '{}');
+        likedPosts[postId] = true;
+        localStorage.setItem('liked_posts', JSON.stringify(likedPosts));
         
         toast({
           title: "Thanks for the like! ❤️",

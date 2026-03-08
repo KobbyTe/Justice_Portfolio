@@ -1,91 +1,59 @@
 
 
-# Security Audit & Improvement Plan
+# Fix Project Upload/Add in Admin Panel
 
-## Critical Findings
+## Problem Analysis
 
-### 1. CRITICAL: 11 Tables Have No Write Protection (Severity: HIGH)
+After reviewing the Admin page code (`src/pages/Admin.tsx` lines 306-369 and 890-955), I found two bugs that cause project creation/editing to fail:
 
-The following tables use `ALL` policies with `USING (true)` and `WITH CHECK (true)`, meaning **anyone on the internet can insert, update, and delete all your portfolio data** without authentication:
+### Bug 1: Edit mode doesn't set category state
+When clicking "Edit" on a project, `handleEditProject` (line 371) sets `formData`, `isEditing`, and `editingId` -- but never calls `setProjectCategory(project.category)`. Since `projectCategory` stays as `''` (empty string), the validation on line 320 fires: "Please select a project category" and blocks submission.
 
-- `about_content`, `blog_posts`, `gallery`, `hero_images`, `impact_metrics`, `projects`, `recommendations`, `resume_files`, `social_links`, `tech_stack`, `wall_messages`
+### Bug 2: Form reset doesn't clear React state
+After a successful add, `e.target.reset()` clears native inputs but the `projectCategory` Select (controlled by React state) is never reset. This is minor but can cause confusion.
 
-**Fix**: Replace each `ALL` public policy with:
-- A `SELECT` public policy (read-only for visitors)
-- An `ALL` admin-only policy using `has_role(auth.uid(), 'admin')`
-
-Exception: `wall_messages` needs public INSERT (for the wall feature) but should restrict UPDATE/DELETE to admin.
-
-### 2. CRITICAL: Sensitive Data Exposed Publicly (Severity: HIGH)
-
-- **Bookings table**: Names, emails, phone numbers of everyone who booked are readable by anyone via the anon key
-- **Blog comments**: Commenter email addresses are returned in SELECT queries to unauthenticated users
-- **Blog likes**: IP addresses of all visitors who liked posts are publicly readable
-- **Page views**: Session IDs and referrer URLs (containing auth tokens) are publicly readable
-
-**Fix**:
-- Bookings: Replace public SELECT with admin-only SELECT
-- Blog comments: Create a database view that excludes email, or restrict email column access
-- Blog likes: Restrict SELECT to admin; use `get_blog_post_with_stats` function for public counts (already exists)
-- Page views: Restrict SELECT to admin only
-
-### 3. WARN: Blog Likes Cannot Be Deleted (Severity: MEDIUM)
-
-The `blog_likes` table has no DELETE policy, but `LikeButton.tsx` tries to delete likes for unliking. This means the unlike feature silently fails.
-
-**Fix**: Add a DELETE policy that allows deleting by matching IP address, or switch to an admin-only delete.
-
-### 4. WARN: No Rate Limiting on Public Forms (Severity: MEDIUM)
-
-Wall messages, blog comments, and booking forms have no rate limiting. A bot could spam thousands of entries.
-
-**Fix**: Add client-side throttling and consider an edge function with rate limiting for submissions.
-
-### 5. WARN: Wall Messages Have No Content Moderation (Severity: MEDIUM)
-
-Anyone can post anything to the wall with no approval workflow (unlike blog comments which have `is_approved`).
-
-**Fix**: Add an `is_approved` column and approval flow, or add basic profanity filtering.
-
-### 6. WARN: Auth & Infrastructure Issues
-
-- **OTP expiry too long**: Reduce to recommended threshold
-- **Leaked password protection disabled**: Enable in Supabase dashboard
-- **Postgres version outdated**: Upgrade to apply security patches
-
-### 7. Minor: LikeButton Calls External IP Service
-
-`LikeButton.tsx` calls `https://api.ipify.org` on every render and every like/unlike. This is slow, can fail, and leaks user behavior to a third party. Consider using a session-based identifier instead.
+### Bug 3: Edit form doesn't pre-populate the Select value
+When editing, the category Select doesn't reflect the current project's category because `projectCategory` state is not updated.
 
 ---
 
-## Implementation Plan
+## Fix Plan
 
-### Migration 1: Lock Down RLS Policies
+### File: `src/pages/Admin.tsx`
 
-A single SQL migration that:
-1. Drops all permissive `ALL` public policies on the 11 tables
-2. Adds `SELECT`-only public policies for publicly viewable tables
-3. Adds `ALL` admin-only policies using `has_role(auth.uid(), 'admin')`
-4. Special-cases `wall_messages` (public INSERT + SELECT, admin-only UPDATE/DELETE)
-5. Replaces `bookings` public SELECT with admin-only SELECT
-6. Replaces `page_views` public SELECT with admin-only SELECT
-7. Adds DELETE policy for `blog_likes` matching IP
-8. Creates a view or adjusts blog_comments to exclude email from public reads
+**Fix 1** -- Update `handleEditProject` (around line 371) to also set the category state:
 
-### Migration 2: Wall Message Moderation (Optional)
+```typescript
+const handleEditProject = (project) => {
+  setFormData(project);
+  setIsEditing(true);
+  setEditingId(project.id);
+  setProjectCategory(project.category); // <-- ADD THIS
+};
+```
 
-Add `is_approved` boolean column to `wall_messages` with default `true` (auto-approve for now, admin can toggle later).
+**Fix 2** -- In `handleAddProject` success path (around line 361), ensure `projectCategory` is reset:
 
-### Code Changes
+```typescript
+setProjectCategory(''); // already exists, verify it's present
+```
 
-1. **`src/components/blog/LikeButton.tsx`**: Remove direct IP fetch; use a fingerprint or session ID approach instead
-2. **`src/components/blog/CommentsSection.tsx`**: Ensure email is not displayed in the UI (already not shown, but data is still fetched)
-3. **No admin page changes needed** -- admin already authenticates via `has_role` RPC
+This is already in the code at line 361, so this is correct.
 
-### Non-Code Actions (Supabase Dashboard)
+**Fix 3** -- In the Cancel button handler (around line 945-949), also reset `projectCategory`:
 
-- Enable leaked password protection
-- Reduce OTP expiry to recommended threshold
-- Upgrade Postgres version
+```typescript
+<Button type="button" variant="outline" onClick={() => {
+  setIsEditing(false);
+  setEditingId(null);
+  setFormData({});
+  setProjectCategory(''); // <-- ADD THIS
+}}>
+```
+
+---
+
+## Summary
+
+The root cause is a single missing line: `setProjectCategory(project.category)` in the edit handler. For new projects, the flow works as long as a category is selected from the dropdown. Both adding and editing will work reliably after these fixes.
 
