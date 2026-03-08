@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import logoImg from '@/assets/logo.png';
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -64,9 +65,7 @@ const Navigation = () => {
             className="flex items-center gap-2 group"
             aria-label="Home"
           >
-            <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center transition-all duration-300 group-hover:bg-primary/20 group-hover:border-primary/60 group-hover:shadow-glow">
-              <span className="font-heading font-black text-primary text-sm tracking-tight">J.A</span>
-            </div>
+            <img src={logoImg} alt="Justice Ansah logo" className="w-9 h-9 rounded-lg object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import logoImg from '@/assets/logo.png';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -138,9 +139,7 @@ const AIChatbot = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
+                <img src={logoImg} alt="Chatbot" className="w-8 h-8 rounded-full object-contain" />
                 <div>
                   <p className="text-sm font-semibold text-foreground">Kwabena</p>
                   <p className="text-xs text-muted-foreground">Always online</p>
