@@ -1,4 +1,4 @@
-import { Github, Linkedin, Twitter, Mail, ArrowUp, ExternalLink } from 'lucide-react';
+import { Github, Linkedin, Twitter, Mail, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
