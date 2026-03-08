@@ -758,6 +758,7 @@ const Admin = () => {
             <TabsTrigger value="wall" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Wall</TabsTrigger>
             <TabsTrigger value="appointments" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Bookings</TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Analytics</TabsTrigger>
+            <TabsTrigger value="logos" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Logos</TabsTrigger>
           </TabsList>
 
           {/* Hero Images Tab */}
