@@ -184,14 +184,12 @@ const AIChatbot = () => {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               
-                  <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5 ${
-              msg.role === 'user' ? 'bg-primary' : 'bg-primary/20'}`
-              }>
-                    {msg.role === 'user' ?
-                <User className="w-3.5 h-3.5 text-primary-foreground" /> :
-                <Bot className="w-3.5 h-3.5 text-primary" />
+                  {msg.role === 'user' ?
+                <div className="w-7 h-7 rounded-full bg-primary flex-shrink-0 flex items-center justify-center mt-0.5">
+                  <User className="w-3.5 h-3.5 text-primary-foreground" />
+                </div> :
+                <img src={logoImg} alt="Kwabena" className="w-7 h-7 rounded-full object-contain flex-shrink-0 mt-0.5" />
                 }
-                  </div>
                   <div className={`rounded-2xl px-3 py-2 text-sm max-w-[85%] whitespace-pre-wrap ${
               msg.role === 'user' ?
               'bg-primary text-primary-foreground rounded-tr-sm' :
