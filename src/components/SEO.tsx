@@ -2,7 +2,7 @@ import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'Justice Ansah';
 const DEFAULT_DESCRIPTION = 'Portfolio of Justice Ansah - Full-Stack Developer, STEM Educator, and Robotics Engineer specializing in educational technology and innovative solutions.';
-const DEFAULT_IMAGE = '/lovable-uploads/a43e9266-b19c-46ea-aec2-17dea84337a9.png';
+const DEFAULT_IMAGE = '/logo.png';
 const BASE_URL = 'https://justiceansah.lovable.app';
 
 interface SEOProps {
