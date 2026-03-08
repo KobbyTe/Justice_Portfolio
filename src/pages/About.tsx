@@ -78,6 +78,7 @@ const About = () => {
 
   useEffect(() => {
     loadAboutContent();
+    loadSkills();
   }, []);
 
   const loadAboutContent = async () => {
