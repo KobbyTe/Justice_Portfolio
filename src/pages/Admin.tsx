@@ -1378,8 +1378,12 @@ const Admin = () => {
                     setIsUploading(true);
                     const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
                     const filePath = `partner-logos/${Date.now()}-${name.replace(/\s+/g, '-').toLowerCase()}.${ext}`;
-                    const { error: uploadError } = await supabase.storage.from('portfolio-assets').upload(filePath, file);
-                    if (uploadError) { toast.error('Failed to upload logo'); console.error(uploadError); setIsUploading(false); return; }
+                    const { error: uploadError } = await supabase.storage.from('portfolio-assets').upload(filePath, file, {
+                      contentType: file.type,
+                      cacheControl: '3600',
+                      upsert: false,
+                    });
+                    if (uploadError) { toast.error('Failed to upload logo: ' + uploadError.message); console.error('Upload error:', uploadError); setIsUploading(false); return; }
                     const { data: urlData } = supabase.storage.from('portfolio-assets').getPublicUrl(filePath);
                     finalLogoUrl = urlData.publicUrl;
                     setIsUploading(false);
