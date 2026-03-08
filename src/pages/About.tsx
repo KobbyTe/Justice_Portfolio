@@ -74,6 +74,7 @@ const FadeInSection = ({ children, delay = 0, className = '' }: { children: Reac
 const About = () => {
   const [aboutContent, setAboutContent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [skills, setSkills] = useState(defaultSkills);
 
   useEffect(() => {
     loadAboutContent();
