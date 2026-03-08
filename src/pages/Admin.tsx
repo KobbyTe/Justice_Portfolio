@@ -895,6 +895,11 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Skills Tab */}
+          <TabsContent value="skills">
+            <SkillsEditor />
+          </TabsContent>
+
           {/* Projects Tab */}
           <TabsContent value="projects" className="space-y-6">
             <Card>
