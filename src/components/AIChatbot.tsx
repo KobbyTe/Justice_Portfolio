@@ -16,13 +16,14 @@ const SUGGESTIONS = [
 
 const AIChatbot = () => {
   const location = useLocation();
-  if (location.pathname === '/admin') return null;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [pulse, setPulse] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (location.pathname === '/admin') return null;
 
   useEffect(() => {
     const t = setTimeout(() => setPulse(false), 5000);
