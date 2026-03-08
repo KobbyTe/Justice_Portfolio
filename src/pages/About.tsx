@@ -6,9 +6,9 @@ import portrait from '@/assets/portrait.jpg';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, useInView } from 'framer-motion';
-import { MapPin, Mail, Briefcase, GraduationCap, Heart, Cpu, Sprout, Lightbulb } from 'lucide-react';
+import { MapPin, Mail, GraduationCap, Cpu, Sprout, Lightbulb } from 'lucide-react';
 
-const skills = [
+const defaultSkills = [
   { skill: 'Robotics & Arduino', percentage: 88 },
   { skill: 'IoT Development', percentage: 82 },
   { skill: 'STEM Education', percentage: 92 },
@@ -74,9 +74,11 @@ const FadeInSection = ({ children, delay = 0, className = '' }: { children: Reac
 const About = () => {
   const [aboutContent, setAboutContent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [skills, setSkills] = useState(defaultSkills);
 
   useEffect(() => {
     loadAboutContent();
+    loadSkills();
   }, []);
 
   const loadAboutContent = async () => {
@@ -87,6 +89,21 @@ const About = () => {
       console.error('Error loading about content:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadSkills = async () => {
+    try {
+      const { data } = await supabase
+        .from('skills')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (data && data.length > 0) {
+        setSkills(data.map((s: any) => ({ skill: s.name, percentage: s.percentage })));
+      }
+    } catch (error) {
+      console.error('Error loading skills:', error);
     }
   };
 

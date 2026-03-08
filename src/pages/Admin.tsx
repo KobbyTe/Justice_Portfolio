@@ -16,6 +16,7 @@ import BlogManagement from '@/components/admin/BlogManagement';
 import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
+import SkillsEditor from '@/components/admin/SkillsEditor';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -740,6 +741,7 @@ const Admin = () => {
             <TabsTrigger value="about" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">About</TabsTrigger>
             <TabsTrigger value="impact" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Impact</TabsTrigger>
             <TabsTrigger value="tech" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tech Stack</TabsTrigger>
+            <TabsTrigger value="skills" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Skills</TabsTrigger>
             <TabsTrigger value="projects" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Projects</TabsTrigger>
             <TabsTrigger value="blog" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Blog</TabsTrigger>
             <TabsTrigger value="social" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Social</TabsTrigger>
@@ -891,6 +893,11 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Skills Tab */}
+          <TabsContent value="skills">
+            <SkillsEditor />
           </TabsContent>
 
           {/* Projects Tab */}
