@@ -33,6 +33,7 @@ const Admin = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [galleryItems, setGalleryItems] = useState([]);
   const [wallMessages, setWallMessages] = useState([]);
+  const [partnerLogos, setPartnerLogos] = useState([]);
 
   // Form states
   const [formData, setFormData] = useState<any>({});
