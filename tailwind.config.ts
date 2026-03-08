@@ -102,6 +102,10 @@ export default {
 			'bounce-y': {
 				'0%, 100%': { transform: 'translateY(0)' },
 				'50%': { transform: 'translateY(6px)' }
+			},
+			'logo-scroll': {
+				'0%': { transform: 'translateX(0)' },
+				'100%': { transform: 'translateX(calc(-100% - 2rem))' }
 			}
 		},
 		animation: {
@@ -112,6 +116,7 @@ export default {
 			'float': 'float 3s ease-in-out infinite',
 			'blink': 'blink 1s step-end infinite',
 			'bounce-y': 'bounce-y 1.2s ease-in-out infinite',
+			'logo-scroll': 'logo-scroll 30s linear infinite',
 		}
 		}
 	},
