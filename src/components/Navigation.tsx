@@ -74,6 +74,7 @@ const Navigation = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive(item.path) ? 'page' : undefined}
                 className={`relative text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md group ${
                   isActive(item.path)
                     ? 'text-primary'
