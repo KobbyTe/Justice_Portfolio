@@ -118,7 +118,7 @@ const Navigation = () => {
 
       {/* Mobile Menu — full-screen overlay for better UX */}
       <div
-        className={`md:hidden fixed inset-0 top-[56px] z-40 transition-all duration-300 ease-in-out ${
+        className={`md:hidden fixed inset-0 top-[80px] z-40 transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
       >
