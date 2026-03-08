@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Github, Play, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ExternalLink, Github } from 'lucide-react';
 
 interface ProjectCardProps {
   title: string;
