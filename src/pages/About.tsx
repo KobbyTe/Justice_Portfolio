@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, useInView } from 'framer-motion';
 import { MapPin, Mail, Briefcase, GraduationCap, Heart, Cpu, Sprout, Lightbulb } from 'lucide-react';
 
-const skills = [
+const defaultSkills = [
   { skill: 'Robotics & Arduino', percentage: 88 },
   { skill: 'IoT Development', percentage: 82 },
   { skill: 'STEM Education', percentage: 92 },
