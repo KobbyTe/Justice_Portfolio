@@ -174,7 +174,13 @@ const AIChatbot = () => {
               )}
 
               {messages.map((msg, i) => (
-                <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                >
                   <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5 ${
                     msg.role === 'user' ? 'bg-primary' : 'bg-primary/20'
                   }`}>
@@ -190,22 +196,38 @@ const AIChatbot = () => {
                   }`}>
                     {msg.content}
                   </div>
-                </div>
+                </motion.div>
               ))}
 
               {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-                <div className="flex gap-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-2"
+                >
                   <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
                     <Bot className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="bg-secondary rounded-2xl rounded-tl-sm px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="flex gap-1.5 items-center">
+                      <motion.span
+                        className="w-2 h-2 bg-muted-foreground/50 rounded-full"
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                      />
+                      <motion.span
+                        className="w-2 h-2 bg-muted-foreground/50 rounded-full"
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
+                      />
+                      <motion.span
+                        className="w-2 h-2 bg-muted-foreground/50 rounded-full"
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                      />
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
 
