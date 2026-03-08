@@ -1352,6 +1352,61 @@ const Admin = () => {
           <TabsContent value="analytics">
             <AnalyticsDashboard />
           </TabsContent>
+
+          {/* Partner Logos Tab */}
+          <TabsContent value="logos">
+            <Card>
+              <CardHeader>
+                <CardTitle>Partner Logos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const name = (form.elements.namedItem('logoName') as HTMLInputElement).value;
+                  const logoUrl = (form.elements.namedItem('logoUrl') as HTMLInputElement).value;
+                  const category = (form.elements.namedItem('logoCategory') as HTMLInputElement).value || 'organization';
+                  const sortOrder = parseInt((form.elements.namedItem('logoSort') as HTMLInputElement).value) || 0;
+
+                  if (!name || !logoUrl) { toast.error('Name and logo URL are required'); return; }
+
+                  const { error } = await supabase.from('partner_logos').insert({ name, logo_url: logoUrl, category, sort_order: sortOrder });
+                  if (error) { toast.error('Failed to add logo'); console.error(error); return; }
+                  toast.success('Logo added!');
+                  form.reset();
+                  reloadPartnerLogos();
+                }} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input name="logoName" placeholder="Organization name" required />
+                  <Input name="logoUrl" placeholder="Logo URL" required />
+                  <Input name="logoCategory" placeholder="Category (e.g. company, exhibition)" />
+                  <Input name="logoSort" type="number" placeholder="Sort order" defaultValue="0" />
+                  <Button type="submit" className="sm:col-span-2"><Plus className="w-4 h-4 mr-2" />Add Logo</Button>
+                </form>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {partnerLogos.map((logo: any) => (
+                    <div key={logo.id} className="flex items-center gap-3 p-3 border rounded-lg bg-card">
+                      <img src={logo.logo_url} alt={logo.name} className="h-10 w-16 object-contain" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{logo.name}</p>
+                        <p className="text-xs text-muted-foreground">{logo.category}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={async () => {
+                        await supabase.from('partner_logos').delete().eq('id', logo.id);
+                        toast.success('Logo deleted');
+                        reloadPartnerLogos();
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {partnerLogos.length === 0 && (
+                    <p className="text-muted-foreground text-center col-span-full py-8">No partner logos yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
