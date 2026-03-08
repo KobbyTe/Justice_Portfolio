@@ -88,6 +88,8 @@ const App = () => (
         <PullToRefresh>
           <AnimatedRoutes />
         </PullToRefresh>
+        <AIChatbot />
+        <GamificationWidget />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
