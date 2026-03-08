@@ -80,9 +80,12 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <OfflineFallback />
       <BrowserRouter>
         <PageTracker />
-        <AnimatedRoutes />
+        <PullToRefresh>
+          <AnimatedRoutes />
+        </PullToRefresh>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
