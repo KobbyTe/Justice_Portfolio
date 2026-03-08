@@ -119,7 +119,6 @@ const Home = () => {
                 }`}
                 loading={idx === 0 ? 'eager' : 'lazy'}
                 decoding="async"
-                fetchPriority={idx === currentImageIndex ? 'high' : 'auto'}
                 style={{
                   maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
                   WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)'

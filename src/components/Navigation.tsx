@@ -135,6 +135,7 @@ const Navigation = () => {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive(item.path) ? 'page' : undefined}
                 className={`text-left px-4 py-3.5 min-h-[48px] flex items-center rounded-xl transition-all duration-200 text-base font-medium ${
                   isActive(item.path)
                     ? 'text-primary bg-primary/10 border-l-3 border-primary pl-5'

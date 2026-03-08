@@ -143,6 +143,7 @@ const About = () => {
                   <img
                     src={(aboutContent as any)?.profile_image_url || portrait}
                     alt="Justice Ansah - STEM Educator & Robotics Engineer"
+                    loading="lazy"
                     className="relative w-full rounded-2xl object-cover aspect-[3/4] shadow-glow"
                   />
                 ) : (
