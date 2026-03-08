@@ -1363,24 +1363,50 @@ const Admin = () => {
                 <form onSubmit={async (e) => {
                   e.preventDefault();
                   const form = e.target as HTMLFormElement;
-                  const name = (form.elements.namedItem('logoName') as HTMLInputElement).value;
-                  const logoUrl = (form.elements.namedItem('logoUrl') as HTMLInputElement).value;
-                  const category = (form.elements.namedItem('logoCategory') as HTMLInputElement).value || 'organization';
+                  const name = (form.elements.namedItem('logoName') as HTMLInputElement).value.trim();
+                  const fileInput = form.elements.namedItem('logoFile') as HTMLInputElement;
+                  const logoUrl = (form.elements.namedItem('logoUrl') as HTMLInputElement).value.trim();
+                  const category = (form.elements.namedItem('logoCategory') as HTMLInputElement).value.trim() || 'organization';
                   const sortOrder = parseInt((form.elements.namedItem('logoSort') as HTMLInputElement).value) || 0;
 
-                  if (!name || !logoUrl) { toast.error('Name and logo URL are required'); return; }
+                  if (!name) { toast.error('Organization name is required'); return; }
 
-                  const { error } = await supabase.from('partner_logos').insert({ name, logo_url: logoUrl, category, sort_order: sortOrder });
+                  let finalLogoUrl = logoUrl;
+                  const file = fileInput?.files?.[0];
+
+                  if (file) {
+                    setIsUploading(true);
+                    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+                    const filePath = `partner-logos/${Date.now()}-${name.replace(/\s+/g, '-').toLowerCase()}.${ext}`;
+                    const { error: uploadError } = await supabase.storage.from('portfolio-assets').upload(filePath, file);
+                    if (uploadError) { toast.error('Failed to upload logo'); console.error(uploadError); setIsUploading(false); return; }
+                    const { data: urlData } = supabase.storage.from('portfolio-assets').getPublicUrl(filePath);
+                    finalLogoUrl = urlData.publicUrl;
+                    setIsUploading(false);
+                  }
+
+                  if (!finalLogoUrl) { toast.error('Please upload an image or provide a URL'); return; }
+
+                  const { error } = await supabase.from('partner_logos').insert({ name, logo_url: finalLogoUrl, category, sort_order: sortOrder });
                   if (error) { toast.error('Failed to add logo'); console.error(error); return; }
                   toast.success('Logo added!');
                   form.reset();
                   reloadPartnerLogos();
                 }} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input name="logoName" placeholder="Organization name" required />
-                  <Input name="logoUrl" placeholder="Logo URL" required />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-muted-foreground">Upload logo image</label>
+                    <Input name="logoFile" type="file" accept="image/*" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-muted-foreground">Or paste a URL</label>
+                    <Input name="logoUrl" placeholder="https://..." />
+                  </div>
                   <Input name="logoCategory" placeholder="Category (e.g. company, exhibition)" />
                   <Input name="logoSort" type="number" placeholder="Sort order" defaultValue="0" />
-                  <Button type="submit" className="sm:col-span-2"><Plus className="w-4 h-4 mr-2" />Add Logo</Button>
+                  <Button type="submit" disabled={isUploading} className="sm:col-span-2">
+                    {isUploading ? <><Upload className="w-4 h-4 mr-2 animate-spin" />Uploading...</> : <><Plus className="w-4 h-4 mr-2" />Add Logo</>}
+                  </Button>
                 </form>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
