@@ -67,6 +67,51 @@ const Booking = () => {
     }
   };
 
+  const getEventTitle = () => 'Appointment with Justice Ansah';
+  const getEventDates = () => {
+    if (!selectedSlot) return { start: '', end: '' };
+    const date = selectedSlot.slot_date.replace(/-/g, '');
+    const start = selectedSlot.start_time.replace(/:/g, '').slice(0, 4) + '00';
+    const end = selectedSlot.end_time.replace(/:/g, '').slice(0, 4) + '00';
+    return { start: `${date}T${start}`, end: `${date}T${end}` };
+  };
+
+  const getGoogleCalendarUrl = () => {
+    const { start, end } = getEventDates();
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: getEventTitle(),
+      dates: `${start}/${end}`,
+      details: formData.message || 'Scheduled via portfolio booking.',
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
+  const downloadICS = () => {
+    const { start, end } = getEventDates();
+    const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Portfolio//Booking//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      `DTSTAMP:${now}`,
+      `SUMMARY:${getEventTitle()}`,
+      `DESCRIPTION:${formData.message || 'Scheduled via portfolio booking.'}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'appointment.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const resetBooking = () => {
     setSelectedDate(null);
     setSelectedSlot(null);
