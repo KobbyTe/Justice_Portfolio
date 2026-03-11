@@ -225,6 +225,16 @@ const Booking = () => {
                 <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
                 <p className="text-muted-foreground mb-6">You'll receive a confirmation email shortly.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+                  <Button asChild variant="default">
+                    <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer">
+                      <Calendar className="w-4 h-4 mr-2" /> Add to Google Calendar
+                    </a>
+                  </Button>
+                  <Button variant="secondary" onClick={downloadICS}>
+                    <Calendar className="w-4 h-4 mr-2" /> Download .ics (Apple)
+                  </Button>
+                </div>
                 <Button onClick={resetBooking} variant="outline">Book Another</Button>
               </motion.div>
             )}
