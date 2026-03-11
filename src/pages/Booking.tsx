@@ -67,6 +67,51 @@ const Booking = () => {
     }
   };
 
+  const getEventTitle = () => 'Appointment with Justice Ansah';
+  const getEventDates = () => {
+    if (!selectedSlot) return { start: '', end: '' };
+    const date = selectedSlot.slot_date.replace(/-/g, '');
+    const start = selectedSlot.start_time.replace(/:/g, '').slice(0, 4) + '00';
+    const end = selectedSlot.end_time.replace(/:/g, '').slice(0, 4) + '00';
+    return { start: `${date}T${start}`, end: `${date}T${end}` };
+  };
+
+  const getGoogleCalendarUrl = () => {
+    const { start, end } = getEventDates();
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: getEventTitle(),
+      dates: `${start}/${end}`,
+      details: formData.message || 'Scheduled via portfolio booking.',
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
+  const downloadICS = () => {
+    const { start, end } = getEventDates();
+    const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Portfolio//Booking//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      `DTSTAMP:${now}`,
+      `SUMMARY:${getEventTitle()}`,
+      `DESCRIPTION:${formData.message || 'Scheduled via portfolio booking.'}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'appointment.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const resetBooking = () => {
     setSelectedDate(null);
     setSelectedSlot(null);
@@ -180,6 +225,16 @@ const Booking = () => {
                 <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Booking Confirmed!</h2>
                 <p className="text-muted-foreground mb-6">You'll receive a confirmation email shortly.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+                  <Button asChild variant="default">
+                    <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer">
+                      <Calendar className="w-4 h-4 mr-2" /> Add to Google Calendar
+                    </a>
+                  </Button>
+                  <Button variant="secondary" onClick={downloadICS}>
+                    <Calendar className="w-4 h-4 mr-2" /> Download .ics (Apple)
+                  </Button>
+                </div>
                 <Button onClick={resetBooking} variant="outline">Book Another</Button>
               </motion.div>
             )}
