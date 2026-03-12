@@ -103,13 +103,10 @@ const Booking = () => {
       'END:VEVENT',
       'END:VCALENDAR',
     ].join('\r\n');
-    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'appointment.ics';
-    a.click();
-    URL.revokeObjectURL(url);
+
+    // Use data URI for iOS Safari compatibility
+    const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+    window.open(dataUri, '_blank');
   };
 
   const resetBooking = () => {
