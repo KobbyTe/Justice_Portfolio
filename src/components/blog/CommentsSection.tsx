@@ -104,6 +104,10 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
 
       if (error) throw error;
 
+      import('@/utils/notifications').then(({ sendNotification }) => {
+        sendNotification('New Blog Comment', `${data.name} commented on a blog post`, '/admin');
+      });
+
       toast({
         title: "Comment submitted!",
         description: "Your comment is awaiting approval and will appear soon.",

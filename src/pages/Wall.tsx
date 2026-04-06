@@ -143,6 +143,10 @@ const Wall = () => {
         .insert([{ name: wallMessage.name.trim(), message: wallMessage.message.trim() }]);
       if (error) throw error;
 
+      import('@/utils/notifications').then(({ sendNotification }) => {
+        sendNotification('New Wall Message', `${wallMessage.name.trim()} posted on your wall`, '/wall');
+      });
+
       toast({ title: "🎉 Posted!", description: "Your message is now on the wall." });
       setWallMessage({ name: '', message: '' });
       loadWallMessages();
