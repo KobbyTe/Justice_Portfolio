@@ -59,6 +59,16 @@ const Booking = () => {
         message: formData.message.trim() || null,
       }]);
       if (error) throw error;
+      
+      // Send push notification
+      import('@/utils/notifications').then(({ sendNotification }) => {
+        sendNotification(
+          'New Booking',
+          `${formData.name.trim()} booked an appointment on ${format(parseISO(selectedSlot.slot_date), 'MMM d, yyyy')}`,
+          '/admin'
+        );
+      });
+      
       setStep('success');
     } catch (error: any) {
       toast.error('Failed to book appointment: ' + error.message);

@@ -91,6 +91,7 @@ const App = () => (
         </PullToRefresh>
         <AIChatbot />
         <GamificationWidget />
+        <NotificationPrompt />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
