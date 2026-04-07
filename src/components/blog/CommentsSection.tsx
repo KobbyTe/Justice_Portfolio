@@ -50,7 +50,7 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
     try {
       const { data, error } = await supabase
         .from('blog_comments')
-        .select('*')
+        .select('id, name, content, created_at, parent_id, post_id')
         .eq('post_id', postId)
         .eq('is_approved', true)
         .order('created_at', { ascending: true });

@@ -147,7 +147,7 @@ const Wall = () => {
         sendNotification('New Wall Message', `${wallMessage.name.trim()} posted on your wall`, '/wall');
       });
 
-      toast({ title: "🎉 Posted!", description: "Your message is now on the wall." });
+      toast({ title: "🎉 Submitted!", description: "Your message is pending approval and will appear shortly." });
       setWallMessage({ name: '', message: '' });
       loadWallMessages();
     } catch (error) {
