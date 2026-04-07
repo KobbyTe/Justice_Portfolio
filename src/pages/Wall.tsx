@@ -109,6 +109,7 @@ const Wall = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const { checkRateLimit } = useRateLimit(5000, 3, 60000);
 
   useEffect(() => {
     loadWallMessages();
@@ -134,6 +135,12 @@ const Wall = () => {
     e.preventDefault();
     if (!wallMessage.name.trim() || !wallMessage.message.trim()) {
       toast({ title: "Error", description: "Please fill in both fields.", variant: "destructive" });
+      return;
+    }
+
+    const { allowed, message } = checkRateLimit();
+    if (!allowed) {
+      toast({ title: "Slow down", description: message, variant: "destructive" });
       return;
     }
 

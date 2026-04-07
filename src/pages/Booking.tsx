@@ -20,6 +20,7 @@ const Booking = () => {
   const [step, setStep] = useState<'date' | 'time' | 'form' | 'success'>('date');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const { checkRateLimit } = useRateLimit(10000, 3, 300000);
 
   useEffect(() => {
     loadSlots();
@@ -47,6 +48,12 @@ const Booking = () => {
     e.preventDefault();
     if (!selectedSlot || !formData.name.trim() || !formData.email.trim()) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const { allowed, message } = checkRateLimit();
+    if (!allowed) {
+      toast.error(message);
       return;
     }
 
