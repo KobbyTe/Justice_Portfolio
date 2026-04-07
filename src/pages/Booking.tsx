@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
@@ -19,6 +20,7 @@ const Booking = () => {
   const [step, setStep] = useState<'date' | 'time' | 'form' | 'success'>('date');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const { checkRateLimit } = useRateLimit(10000, 3, 300000);
 
   useEffect(() => {
     loadSlots();
@@ -46,6 +48,12 @@ const Booking = () => {
     e.preventDefault();
     if (!selectedSlot || !formData.name.trim() || !formData.email.trim()) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const { allowed, message } = checkRateLimit();
+    if (!allowed) {
+      toast.error(message);
       return;
     }
 
@@ -205,19 +213,19 @@ const Booking = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Name *</label>
-                    <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} required placeholder="Your full name" />
+                    <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} required placeholder="Your full name" maxLength={100} />
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Email *</label>
-                    <Input type="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} required placeholder="your@email.com" />
+                    <Input type="email" value={formData.email} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} required placeholder="your@email.com" maxLength={255} />
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Phone</label>
-                    <Input type="tel" value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} placeholder="+1 234 567 8900" />
+                    <Input type="tel" value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} placeholder="+1 234 567 8900" maxLength={20} />
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1 block">Message</label>
-                    <Textarea value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))} placeholder="What would you like to discuss?" rows={3} />
+                    <Textarea value={formData.message} onChange={e => setFormData(p => ({ ...p, message: e.target.value }))} placeholder="What would you like to discuss?" rows={3} maxLength={1000} />
                   </div>
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? 'Booking...' : 'Confirm Booking'}

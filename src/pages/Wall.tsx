@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { supabase } from "@/integrations/supabase/client";
 import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
@@ -108,6 +109,7 @@ const Wall = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
+  const { checkRateLimit } = useRateLimit(5000, 3, 60000);
 
   useEffect(() => {
     loadWallMessages();
@@ -136,6 +138,12 @@ const Wall = () => {
       return;
     }
 
+    const { allowed, message } = checkRateLimit();
+    if (!allowed) {
+      toast({ title: "Slow down", description: message, variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -147,7 +155,7 @@ const Wall = () => {
         sendNotification('New Wall Message', `${wallMessage.name.trim()} posted on your wall`, '/wall');
       });
 
-      toast({ title: "🎉 Posted!", description: "Your message is now on the wall." });
+      toast({ title: "🎉 Submitted!", description: "Your message is pending approval and will appear shortly." });
       setWallMessage({ name: '', message: '' });
       loadWallMessages();
     } catch (error) {

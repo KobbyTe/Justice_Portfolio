@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,8 +36,8 @@ interface CommentsSectionProps {
 
 export const CommentsSection = ({ postId }: CommentsSectionProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const { checkRateLimit } = useRateLimit(10000, 3, 300000);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CommentForm>({
     resolver: zodResolver(commentSchema)
@@ -50,7 +51,7 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
     try {
       const { data, error } = await supabase
         .from('blog_comments')
-        .select('*')
+        .select('id, name, content, created_at, parent_id, post_id')
         .eq('post_id', postId)
         .eq('is_approved', true)
         .order('created_at', { ascending: true });
@@ -91,6 +92,11 @@ export const CommentsSection = ({ postId }: CommentsSectionProps) => {
   };
 
   const onSubmit = async (data: CommentForm) => {
+    const { allowed, message } = checkRateLimit();
+    if (!allowed) {
+      toast({ title: "Slow down", description: message, variant: "destructive" });
+      return;
+    }
     try {
       const { error } = await supabase
         .from('blog_comments')
