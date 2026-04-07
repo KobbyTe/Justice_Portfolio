@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
