@@ -1211,9 +1211,97 @@ const Admin = () => {
 
           {/* Recommendations Tab */}
           <TabsContent value="recommendations" className="space-y-6">
+            {/* Generate Recommendation Link */}
             <Card>
               <CardHeader>
-                <CardTitle>Add Recommendation</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="w-5 h-5" />
+                  Send Recommendation Request
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                      placeholder="Recommender's name *"
+                      maxLength={100}
+                    />
+                    <Input
+                      value={tokenEmail}
+                      onChange={(e) => setTokenEmail(e.target.value)}
+                      placeholder="Email (optional, for your reference)"
+                      type="email"
+                      maxLength={255}
+                    />
+                  </div>
+                  <Button onClick={handleGenerateToken} disabled={!tokenName.trim()}>
+                    <Link className="w-4 h-4 mr-2" />
+                    Generate Link
+                  </Button>
+                </div>
+
+                {/* Active tokens */}
+                {recommendationTokens.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h4 className="text-sm font-medium text-muted-foreground">Generated Links</h4>
+                    {recommendationTokens.map((t: any) => {
+                      const isExpired = new Date(t.expires_at) < new Date();
+                      return (
+                        <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg text-sm">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium">{t.recommender_name}</span>
+                            {t.recommender_email && (
+                              <span className="text-muted-foreground ml-2">({t.recommender_email})</span>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              {t.is_used ? (
+                                <Badge variant="default" className="text-xs">Used</Badge>
+                              ) : isExpired ? (
+                                <Badge variant="destructive" className="text-xs">Expired</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Pending</Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                Expires {new Date(t.expires_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {!t.is_used && !isExpired && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopyLink(t.token)}
+                              >
+                                {copiedToken === t.token ? (
+                                  <Check className="w-4 h-4" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteToken(t.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Manual Add */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Recommendation Manually</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddRecommendation} className="space-y-4">
@@ -1232,20 +1320,28 @@ const Admin = () => {
               </CardContent>
             </Card>
 
+            {/* All Recommendations */}
             <Card>
               <CardHeader>
-                <CardTitle>Current Recommendations</CardTitle>
+                <CardTitle>All Recommendations</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {recommendations.map((rec) => (
-                    <div key={rec.id} className="flex items-start justify-between p-4 border rounded">
+                    <div key={rec.id} className={`flex items-start justify-between p-4 border rounded-lg ${!rec.is_active ? 'border-dashed bg-muted/30' : ''}`}>
                       <div className="flex items-start space-x-4">
                         {rec.recommender_image_url && (
                           <img src={rec.recommender_image_url} alt={rec.name} className="w-12 h-12 object-cover rounded-full" />
                         )}
                         <div className="flex-1">
-                          <h3 className="font-medium">{rec.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{rec.name}</h3>
+                            {rec.is_active ? (
+                              <Badge variant="default" className="text-xs">Active</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">Pending</Badge>
+                            )}
+                          </div>
                           {rec.position && (
                             <p className="text-sm text-muted-foreground">
                               {rec.position}{rec.company && ` at ${rec.company}`}
@@ -1266,15 +1362,28 @@ const Admin = () => {
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => handleDeleteRecommendation(rec.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant={rec.is_active ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleRecommendation(rec.id, rec.is_active)}
+                          title={rec.is_active ? 'Hide' : 'Approve'}
+                        >
+                          {rec.is_active ? <EyeOff className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteRecommendation(rec.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
+                  {recommendations.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No recommendations yet. Generate a link above to request one!</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
