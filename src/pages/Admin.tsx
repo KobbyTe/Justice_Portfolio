@@ -563,15 +563,85 @@ const Admin = () => {
     try {
       const { error } = await supabase
         .from('recommendations')
-        .update({ is_active: false })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
       
-      toast.success('Recommendation deleted successfully');
+      toast.success('Recommendation deleted');
       reloadRecommendations();
     } catch (error) {
       toast.error('Failed to delete recommendation');
+    }
+  };
+
+  const handleToggleRecommendation = async (id: string, currentActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('recommendations')
+        .update({ is_active: !currentActive })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success(currentActive ? 'Recommendation hidden' : 'Recommendation approved');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to update recommendation');
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    if (!tokenName.trim()) {
+      toast.error('Please enter a recommender name');
+      return;
+    }
+
+    const newToken = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    try {
+      const { error } = await supabase
+        .from('recommendation_tokens')
+        .insert([{
+          token: newToken,
+          recommender_name: tokenName.trim(),
+          recommender_email: tokenEmail.trim() || null,
+          expires_at: expiresAt.toISOString(),
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Recommendation link generated!');
+      setTokenName('');
+      setTokenEmail('');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to generate link');
+      console.error(error);
+    }
+  };
+
+  const handleCopyLink = (token: string) => {
+    const url = `${window.location.origin}/recommend/${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    toast.success('Link copied to clipboard!');
+    setTimeout(() => setCopiedToken(null), 2000);
+  };
+
+  const handleDeleteToken = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('recommendation_tokens')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Token deleted');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to delete token');
     }
   };
 
