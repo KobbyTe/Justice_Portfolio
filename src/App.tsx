@@ -29,6 +29,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Booking = lazy(() => import("./pages/Booking"));
+const SubmitRecommendation = lazy(() => import("./pages/SubmitRecommendation"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +70,7 @@ const AnimatedRoutes = () => {
           <Route path="/wall" element={<PageTransition><Wall /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
           <Route path="/booking" element={<PageTransition><Booking /></PageTransition>} />
+          <Route path="/recommend/:token" element={<PageTransition><SubmitRecommendation /></PageTransition>} />
           <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit2, Upload, Eye, EyeOff, LogOut } from 'lucide-react';
+import { Plus, Trash2, Edit2, Upload, Eye, EyeOff, LogOut, Link, Copy, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
 import OptimizedImage from '@/components/OptimizedImage';
@@ -34,6 +34,10 @@ const Admin = () => {
   const [galleryItems, setGalleryItems] = useState([]);
   const [wallMessages, setWallMessages] = useState([]);
   const [partnerLogos, setPartnerLogos] = useState([]);
+  const [recommendationTokens, setRecommendationTokens] = useState([]);
+  const [tokenName, setTokenName] = useState('');
+  const [tokenEmail, setTokenEmail] = useState('');
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   // Form states
   const [formData, setFormData] = useState<any>({});
@@ -100,7 +104,7 @@ const Admin = () => {
 
   const loadAllData = async () => {
     try {
-      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes, logosRes] = await Promise.all([
+      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes, logosRes, tokensRes] = await Promise.all([
         supabase.from('hero_images').select('*').eq('is_active', true),
         supabase.from('about_content').select('*').single(),
         supabase.from('tech_stack').select('*').eq('is_active', true),
@@ -108,10 +112,11 @@ const Admin = () => {
         supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('resume_files').select('*').order('created_at', { ascending: false }),
-        supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('recommendations').select('*').order('is_active', { ascending: true }).order('created_at', { ascending: false }),
         supabase.from('gallery').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('wall_messages').select('*').order('created_at', { ascending: false }),
-        supabase.from('partner_logos').select('*').order('sort_order')
+        supabase.from('partner_logos').select('*').order('sort_order'),
+        supabase.from('recommendation_tokens').select('*').order('created_at', { ascending: false }),
       ]);
 
       setHeroImages(heroRes.data || []);
@@ -125,6 +130,7 @@ const Admin = () => {
       setGalleryItems(galleryRes.data || []);
       setWallMessages(wallRes.data || []);
       setPartnerLogos(logosRes.data || []);
+      setRecommendationTokens(tokensRes.data || []);
     } catch (error) {
       toast.error('Failed to load data');
       console.error(error);
@@ -157,8 +163,12 @@ const Admin = () => {
     setResumeFiles(data || []);
   };
   const reloadRecommendations = async () => {
-    const { data } = await supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order');
-    setRecommendations(data || []);
+    const [recRes, tokRes] = await Promise.all([
+      supabase.from('recommendations').select('*').order('is_active', { ascending: true }).order('created_at', { ascending: false }),
+      supabase.from('recommendation_tokens').select('*').order('created_at', { ascending: false }),
+    ]);
+    setRecommendations(recRes.data || []);
+    setRecommendationTokens(tokRes.data || []);
   };
   const reloadGallery = async () => {
     const { data } = await supabase.from('gallery').select('*').eq('is_active', true).order('sort_order');
@@ -555,15 +565,85 @@ const Admin = () => {
     try {
       const { error } = await supabase
         .from('recommendations')
-        .update({ is_active: false })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
       
-      toast.success('Recommendation deleted successfully');
+      toast.success('Recommendation deleted');
       reloadRecommendations();
     } catch (error) {
       toast.error('Failed to delete recommendation');
+    }
+  };
+
+  const handleToggleRecommendation = async (id: string, currentActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('recommendations')
+        .update({ is_active: !currentActive })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success(currentActive ? 'Recommendation hidden' : 'Recommendation approved');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to update recommendation');
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    if (!tokenName.trim()) {
+      toast.error('Please enter a recommender name');
+      return;
+    }
+
+    const newToken = crypto.randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    try {
+      const { error } = await supabase
+        .from('recommendation_tokens')
+        .insert([{
+          token: newToken,
+          recommender_name: tokenName.trim(),
+          recommender_email: tokenEmail.trim() || null,
+          expires_at: expiresAt.toISOString(),
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Recommendation link generated!');
+      setTokenName('');
+      setTokenEmail('');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to generate link');
+      console.error(error);
+    }
+  };
+
+  const handleCopyLink = (token: string) => {
+    const url = `${window.location.origin}/recommend/${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiedToken(token);
+    toast.success('Link copied to clipboard!');
+    setTimeout(() => setCopiedToken(null), 2000);
+  };
+
+  const handleDeleteToken = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('recommendation_tokens')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Token deleted');
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to delete token');
     }
   };
 
@@ -1133,9 +1213,97 @@ const Admin = () => {
 
           {/* Recommendations Tab */}
           <TabsContent value="recommendations" className="space-y-6">
+            {/* Generate Recommendation Link */}
             <Card>
               <CardHeader>
-                <CardTitle>Add Recommendation</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="w-5 h-5" />
+                  Send Recommendation Request
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                      placeholder="Recommender's name *"
+                      maxLength={100}
+                    />
+                    <Input
+                      value={tokenEmail}
+                      onChange={(e) => setTokenEmail(e.target.value)}
+                      placeholder="Email (optional, for your reference)"
+                      type="email"
+                      maxLength={255}
+                    />
+                  </div>
+                  <Button onClick={handleGenerateToken} disabled={!tokenName.trim()}>
+                    <Link className="w-4 h-4 mr-2" />
+                    Generate Link
+                  </Button>
+                </div>
+
+                {/* Active tokens */}
+                {recommendationTokens.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h4 className="text-sm font-medium text-muted-foreground">Generated Links</h4>
+                    {recommendationTokens.map((t: any) => {
+                      const isExpired = new Date(t.expires_at) < new Date();
+                      return (
+                        <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg text-sm">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium">{t.recommender_name}</span>
+                            {t.recommender_email && (
+                              <span className="text-muted-foreground ml-2">({t.recommender_email})</span>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              {t.is_used ? (
+                                <Badge variant="default" className="text-xs">Used</Badge>
+                              ) : isExpired ? (
+                                <Badge variant="destructive" className="text-xs">Expired</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Pending</Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                Expires {new Date(t.expires_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {!t.is_used && !isExpired && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCopyLink(t.token)}
+                              >
+                                {copiedToken === t.token ? (
+                                  <Check className="w-4 h-4" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteToken(t.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Manual Add */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Recommendation Manually</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddRecommendation} className="space-y-4">
@@ -1154,20 +1322,28 @@ const Admin = () => {
               </CardContent>
             </Card>
 
+            {/* All Recommendations */}
             <Card>
               <CardHeader>
-                <CardTitle>Current Recommendations</CardTitle>
+                <CardTitle>All Recommendations</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {recommendations.map((rec) => (
-                    <div key={rec.id} className="flex items-start justify-between p-4 border rounded">
+                    <div key={rec.id} className={`flex items-start justify-between p-4 border rounded-lg ${!rec.is_active ? 'border-dashed bg-muted/30' : ''}`}>
                       <div className="flex items-start space-x-4">
                         {rec.recommender_image_url && (
                           <img src={rec.recommender_image_url} alt={rec.name} className="w-12 h-12 object-cover rounded-full" />
                         )}
                         <div className="flex-1">
-                          <h3 className="font-medium">{rec.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{rec.name}</h3>
+                            {rec.is_active ? (
+                              <Badge variant="default" className="text-xs">Active</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">Pending</Badge>
+                            )}
+                          </div>
                           {rec.position && (
                             <p className="text-sm text-muted-foreground">
                               {rec.position}{rec.company && ` at ${rec.company}`}
@@ -1188,15 +1364,28 @@ const Admin = () => {
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => handleDeleteRecommendation(rec.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant={rec.is_active ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleRecommendation(rec.id, rec.is_active)}
+                          title={rec.is_active ? 'Hide' : 'Approve'}
+                        >
+                          {rec.is_active ? <EyeOff className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteRecommendation(rec.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
+                  {recommendations.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No recommendations yet. Generate a link above to request one!</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
