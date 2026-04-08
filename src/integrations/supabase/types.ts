@@ -537,6 +537,36 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          recommender_email: string | null
+          recommender_name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_used?: boolean
+          recommender_email?: string | null
+          recommender_name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean
+          recommender_email?: string | null
+          recommender_name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       recommendations: {
         Row: {
           company: string | null

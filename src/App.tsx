@@ -29,6 +29,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Booking = lazy(() => import("./pages/Booking"));
+const SubmitRecommendation = lazy(() => import("./pages/SubmitRecommendation"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
