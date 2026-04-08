@@ -1,59 +1,49 @@
 
 
-# Fix Project Upload/Add in Admin Panel
+## Plan: Recommendation Request Links
 
-## Problem Analysis
+### Overview
+The admin will be able to generate unique recommendation links from the Testimonials tab. These links can be shared with recommenders, who visit a public form to submit their testimonial. Submissions are saved as inactive (pending approval), and the admin can approve/reject them from the dashboard.
 
-After reviewing the Admin page code (`src/pages/Admin.tsx` lines 306-369 and 890-955), I found two bugs that cause project creation/editing to fail:
+### Architecture
 
-### Bug 1: Edit mode doesn't set category state
-When clicking "Edit" on a project, `handleEditProject` (line 371) sets `formData`, `isEditing`, and `editingId` -- but never calls `setProjectCategory(project.category)`. Since `projectCategory` stays as `''` (empty string), the validation on line 320 fires: "Please select a project category" and blocks submission.
-
-### Bug 2: Form reset doesn't clear React state
-After a successful add, `e.target.reset()` clears native inputs but the `projectCategory` Select (controlled by React state) is never reset. This is minor but can cause confusion.
-
-### Bug 3: Edit form doesn't pre-populate the Select value
-When editing, the category Select doesn't reflect the current project's category because `projectCategory` state is not updated.
-
----
-
-## Fix Plan
-
-### File: `src/pages/Admin.tsx`
-
-**Fix 1** -- Update `handleEditProject` (around line 371) to also set the category state:
-
-```typescript
-const handleEditProject = (project) => {
-  setFormData(project);
-  setIsEditing(true);
-  setEditingId(project.id);
-  setProjectCategory(project.category); // <-- ADD THIS
-};
+```text
+Admin Dashboard                    Public Form
+┌─────────────────┐     share     ┌──────────────────────┐
+│ Generate Link   │──── URL ────→ │ /recommend/:token    │
+│ (name + email)  │               │ Fill name, position, │
+│                 │               │ company, message,    │
+│ Approve/Reject  │←── insert ───│ linkedin, twitter,   │
+│ pending items   │   (inactive)  │ photo                │
+└─────────────────┘               └──────────────────────┘
 ```
 
-**Fix 2** -- In `handleAddProject` success path (around line 361), ensure `projectCategory` is reset:
+### Steps
 
-```typescript
-setProjectCategory(''); // already exists, verify it's present
-```
+**1. Database Migration**
+- Create `recommendation_tokens` table: `id`, `token` (unique text), `recommender_name`, `recommender_email`, `is_used` (default false), `expires_at`, `created_at`
+- RLS: admin-only SELECT/INSERT/UPDATE/DELETE; public SELECT for token lookup; public UPDATE to mark as used
+- No changes to existing `recommendations` table (already has `is_active` column which we'll use for approval flow)
 
-This is already in the code at line 361, so this is correct.
+**2. New Public Page: `/recommend/:token`** (`src/pages/SubmitRecommendation.tsx`)
+- Validates the token against `recommendation_tokens` (not expired, not used)
+- Shows a form with: name (pre-filled from token), position, company, message (required), LinkedIn URL, Twitter URL, profile photo upload
+- On submit: inserts into `recommendations` with `is_active: false`, marks token as used
+- Shows success/error/expired states
+- Rate limited using existing `useRateLimit` hook
 
-**Fix 3** -- In the Cancel button handler (around line 945-949), also reset `projectCategory`:
+**3. Add Route** in `src/App.tsx`
+- Add `/recommend/:token` route with lazy-loaded `SubmitRecommendation` page
 
-```typescript
-<Button type="button" variant="outline" onClick={() => {
-  setIsEditing(false);
-  setEditingId(null);
-  setFormData({});
-  setProjectCategory(''); // <-- ADD THIS
-}}>
-```
+**4. Update Admin Testimonials Tab** in `src/pages/Admin.tsx`
+- Change recommendations query to fetch ALL (remove `.eq('is_active', true)`) so pending ones appear
+- Add "Generate Link" section: input for recommender name + email, generates a token, shows copyable URL
+- Add approve/reject buttons on pending recommendations (toggle `is_active`)
+- Visual distinction between approved and pending items with badges
 
----
-
-## Summary
-
-The root cause is a single missing line: `setProjectCategory(project.category)` in the edit handler. For new projects, the flow works as long as a category is selected from the dropdown. Both adding and editing will work reliably after these fixes.
+### Technical Details
+- Tokens are generated as `crypto.randomUUID()` on the client, inserted via admin's authenticated session
+- Token expiry defaults to 7 days
+- The public form uses `maxLength` constraints and rate limiting consistent with existing security patterns
+- Photo uploads use the existing public storage bucket (`portfolio-assets`) — the public INSERT on recommendations already allows unauthenticated inserts, but we need to add a public INSERT policy for `recommendation_tokens` usage (mark as used) via an RPC or allow public UPDATE on `is_used` column only
 
