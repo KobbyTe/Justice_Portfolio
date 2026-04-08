@@ -104,7 +104,7 @@ const Admin = () => {
 
   const loadAllData = async () => {
     try {
-      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes, logosRes] = await Promise.all([
+      const [heroRes, aboutRes, techRes, projectsRes, blogRes, socialRes, resumeRes, recommendationsRes, galleryRes, wallRes, logosRes, tokensRes] = await Promise.all([
         supabase.from('hero_images').select('*').eq('is_active', true),
         supabase.from('about_content').select('*').single(),
         supabase.from('tech_stack').select('*').eq('is_active', true),
@@ -115,7 +115,8 @@ const Admin = () => {
         supabase.from('recommendations').select('*').order('is_active', { ascending: true }).order('created_at', { ascending: false }),
         supabase.from('gallery').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('wall_messages').select('*').order('created_at', { ascending: false }),
-        supabase.from('partner_logos').select('*').order('sort_order')
+        supabase.from('partner_logos').select('*').order('sort_order'),
+        supabase.from('recommendation_tokens').select('*').order('created_at', { ascending: false }),
       ]);
 
       setHeroImages(heroRes.data || []);
@@ -129,6 +130,7 @@ const Admin = () => {
       setGalleryItems(galleryRes.data || []);
       setWallMessages(wallRes.data || []);
       setPartnerLogos(logosRes.data || []);
+      setRecommendationTokens(tokensRes.data || []);
     } catch (error) {
       toast.error('Failed to load data');
       console.error(error);
