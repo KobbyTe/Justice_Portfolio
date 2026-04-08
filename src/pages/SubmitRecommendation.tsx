@@ -173,7 +173,7 @@ const SubmitRecommendation = () => {
       return (
         <Card className="max-w-lg mx-auto">
           <CardContent className="flex flex-col items-center py-12">
-            <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
+            <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
             <h2 className="text-xl font-semibold mb-2">Link Expired</h2>
             <p className="text-muted-foreground text-center">This recommendation link has expired. Please request a new one.</p>
           </CardContent>
@@ -185,7 +185,7 @@ const SubmitRecommendation = () => {
       return (
         <Card className="max-w-lg mx-auto">
           <CardContent className="flex flex-col items-center py-12">
-            <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
+            <CheckCircle className="w-12 h-12 text-primary mb-4" />
             <h2 className="text-xl font-semibold mb-2">Thank You!</h2>
             <p className="text-muted-foreground text-center">Your recommendation has been submitted successfully. It will appear on the site once approved.</p>
           </CardContent>
