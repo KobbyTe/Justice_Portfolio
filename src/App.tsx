@@ -70,6 +70,7 @@ const AnimatedRoutes = () => {
           <Route path="/wall" element={<PageTransition><Wall /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
           <Route path="/booking" element={<PageTransition><Booking /></PageTransition>} />
+          <Route path="/recommend/:token" element={<PageTransition><SubmitRecommendation /></PageTransition>} />
           <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
           <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
