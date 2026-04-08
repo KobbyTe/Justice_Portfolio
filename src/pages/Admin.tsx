@@ -34,6 +34,10 @@ const Admin = () => {
   const [galleryItems, setGalleryItems] = useState([]);
   const [wallMessages, setWallMessages] = useState([]);
   const [partnerLogos, setPartnerLogos] = useState([]);
+  const [recommendationTokens, setRecommendationTokens] = useState([]);
+  const [tokenName, setTokenName] = useState('');
+  const [tokenEmail, setTokenEmail] = useState('');
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   // Form states
   const [formData, setFormData] = useState<any>({});
@@ -108,7 +112,7 @@ const Admin = () => {
         supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('resume_files').select('*').order('created_at', { ascending: false }),
-        supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('recommendations').select('*').order('is_active', { ascending: true }).order('created_at', { ascending: false }),
         supabase.from('gallery').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('wall_messages').select('*').order('created_at', { ascending: false }),
         supabase.from('partner_logos').select('*').order('sort_order')
@@ -157,8 +161,12 @@ const Admin = () => {
     setResumeFiles(data || []);
   };
   const reloadRecommendations = async () => {
-    const { data } = await supabase.from('recommendations').select('*').eq('is_active', true).order('sort_order');
-    setRecommendations(data || []);
+    const [recRes, tokRes] = await Promise.all([
+      supabase.from('recommendations').select('*').order('is_active', { ascending: true }).order('created_at', { ascending: false }),
+      supabase.from('recommendation_tokens').select('*').order('created_at', { ascending: false }),
+    ]);
+    setRecommendations(recRes.data || []);
+    setRecommendationTokens(tokRes.data || []);
   };
   const reloadGallery = async () => {
     const { data } = await supabase.from('gallery').select('*').eq('is_active', true).order('sort_order');
