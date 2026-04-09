@@ -57,15 +57,15 @@ const Navigation = () => {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo / Monogram */}
           <Link
             to="/"
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group shrink-0"
             aria-label="Home"
           >
-            <img src={logoImg} alt="Justice Ansah logo" className="h-14 w-auto rounded-lg object-contain" />
+            <img src={logoImg} alt="Justice Ansah logo" className="h-10 sm:h-14 w-auto rounded-lg object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}
