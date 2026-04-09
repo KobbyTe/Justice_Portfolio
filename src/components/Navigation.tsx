@@ -91,25 +91,25 @@ const Navigation = () => {
           </div>
 
           {/* Theme toggle + Mobile Menu */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             <button
-              className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5 transition-transform duration-200 rotate-0" />
+                <X className="w-6 h-6 transition-transform duration-200 rotate-0" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-6 h-6" />
               )}
             </button>
           </div>
