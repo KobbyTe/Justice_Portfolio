@@ -57,15 +57,15 @@ const Navigation = () => {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo / Monogram */}
           <Link
             to="/"
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group shrink-0"
             aria-label="Home"
           >
-            <img src={logoImg} alt="Justice Ansah logo" className="h-14 w-auto rounded-lg object-contain" />
+            <img src={logoImg} alt="Justice Ansah logo" className="h-10 sm:h-14 w-auto rounded-lg object-contain" />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -91,25 +91,25 @@ const Navigation = () => {
           </div>
 
           {/* Theme toggle + Mobile Menu */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             <button
-              className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
-                <X className="w-5 h-5 transition-transform duration-200 rotate-0" />
+                <X className="w-6 h-6 transition-transform duration-200 rotate-0" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-6 h-6" />
               )}
             </button>
           </div>
@@ -118,7 +118,7 @@ const Navigation = () => {
 
       {/* Mobile Menu — full-screen overlay for better UX */}
       <div
-        className={`md:hidden fixed inset-0 top-[80px] z-40 transition-all duration-300 ease-in-out ${
+        className={`md:hidden fixed inset-0 top-[60px] sm:top-[80px] z-40 transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
       >
