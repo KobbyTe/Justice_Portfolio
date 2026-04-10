@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Linkedin, Twitter, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Linkedin, Twitter, Quote, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Recommendation {
@@ -16,25 +16,33 @@ interface Recommendation {
   is_active: boolean;
 }
 
+const MAX_CHARS = 280;
+
 const Recommendations = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadRecommendations();
   }, []);
 
-  // Auto-advance every 6 seconds
+  // Reset expanded state when testimonial changes
   useEffect(() => {
-    if (recommendations.length <= 1) return;
+    setIsExpanded(false);
+  }, [currentIndex]);
+
+  // Auto-advance every 6 seconds (pause when expanded)
+  useEffect(() => {
+    if (recommendations.length <= 1 || isExpanded) return;
     const timer = setInterval(() => {
       goNext();
     }, 6000);
     return () => clearInterval(timer);
-  }, [recommendations.length, currentIndex]);
+  }, [recommendations.length, currentIndex, isExpanded]);
 
   const loadRecommendations = async () => {
     try {
@@ -78,6 +86,10 @@ const Recommendations = () => {
   }
 
   const currentRec = recommendations[currentIndex];
+  const isLongMessage = currentRec.message.length > MAX_CHARS;
+  const displayMessage = isLongMessage && !isExpanded
+    ? currentRec.message.slice(0, MAX_CHARS).trimEnd() + '…'
+    : currentRec.message;
 
   return (
     <section className="py-16 sm:py-24 relative overflow-hidden">
@@ -128,89 +140,101 @@ const Recommendations = () => {
                 borderTop: '1px solid hsl(var(--primary) / 0.15)',
               }}
             >
-              <CardContent className="p-6 sm:p-10 md:p-14">
-                <div className="flex flex-col items-center text-center gap-6 sm:gap-8">
-                  {/* Message */}
-                  <blockquote className="text-lg sm:text-xl md:text-2xl leading-relaxed font-light max-w-3xl">
-                    <span className="text-foreground/90 italic">
-                      "{currentRec.message}"
-                    </span>
-                  </blockquote>
-
-                  {/* Divider */}
-                  <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-
-                  {/* Author info */}
-                  <div className="flex flex-col items-center gap-4">
-                    {/* Avatar */}
-                    <div className="relative group">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-accent/50 rounded-full blur opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden ring-2 ring-primary/20">
-                        {currentRec.recommender_image_url ? (
-                          <img
-                            src={currentRec.recommender_image_url}
-                            alt={currentRec.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-xl sm:text-2xl">
-                            {currentRec.name.charAt(0)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Name & Role */}
-                    <div className="text-center">
-                      <h4 className="font-heading font-semibold text-lg text-foreground">
-                        {currentRec.name}
-                      </h4>
-                      {currentRec.position && (
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {currentRec.position}
-                          {currentRec.company && (
-                            <span className="text-primary/70"> · {currentRec.company}</span>
-                          )}
-                        </p>
+              <CardContent className="p-6 sm:p-10 md:p-12">
+                {/* Author info at the top */}
+                <div className="flex items-center gap-4 mb-6">
+                  {/* Avatar */}
+                  <div className="relative group shrink-0">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-accent/50 rounded-full blur opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden ring-2 ring-primary/20">
+                      {currentRec.recommender_image_url ? (
+                        <img
+                          src={currentRec.recommender_image_url}
+                          alt={currentRec.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-lg sm:text-xl">
+                          {currentRec.name.charAt(0)}
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    {/* Social Links */}
-                    <div className="flex gap-1.5">
-                      {currentRec.linkedin_url && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          asChild
-                          className="h-9 w-9 p-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
+                  {/* Name, Role & Social */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-heading font-semibold text-base sm:text-lg text-foreground truncate">
+                        {currentRec.name}
+                      </h4>
+                      {/* Social Links inline */}
+                      <div className="flex gap-1">
+                        {currentRec.linkedin_url && (
                           <a
                             href={currentRec.linkedin_url}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-primary transition-colors"
                           >
                             <Linkedin className="w-4 h-4" />
                           </a>
-                        </Button>
-                      )}
-                      {currentRec.twitter_url && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          asChild
-                          className="h-9 w-9 p-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
+                        )}
+                        {currentRec.twitter_url && (
                           <a
                             href={currentRec.twitter_url}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-primary transition-colors"
                           >
                             <Twitter className="w-4 h-4" />
                           </a>
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
+                    {currentRec.position && (
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                        {currentRec.position}
+                        {currentRec.company && (
+                          <span className="text-primary/70"> · {currentRec.company}</span>
+                        )}
+                      </p>
+                    )}
                   </div>
+                </div>
+
+                {/* Divider */}
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent mb-5" />
+
+                {/* Message with truncation + scroll */}
+                <div className="relative">
+                  <blockquote
+                    className={`
+                      text-base sm:text-lg leading-relaxed font-light transition-all duration-500 ease-in-out
+                      ${isExpanded ? 'max-h-[300px] overflow-y-auto pr-2 scrollbar-thin' : 'max-h-none overflow-hidden'}
+                    `}
+                    style={isExpanded ? {
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: 'hsl(var(--primary) / 0.3) transparent',
+                    } : undefined}
+                  >
+                    <span className="text-foreground/85 italic">
+                      "{displayMessage}"
+                    </span>
+                  </blockquote>
+
+                  {/* Read more / less button */}
+                  {isLongMessage && (
+                    <button
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      {isExpanded ? (
+                        <>Show less <ChevronUp className="w-3.5 h-3.5" /></>
+                      ) : (
+                        <>Read more <ChevronDown className="w-3.5 h-3.5" /></>
+                      )}
+                    </button>
+                  )}
                 </div>
               </CardContent>
             </Card>
