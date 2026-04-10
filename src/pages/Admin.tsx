@@ -38,6 +38,8 @@ const Admin = () => {
   const [tokenName, setTokenName] = useState('');
   const [tokenEmail, setTokenEmail] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [editingRec, setEditingRec] = useState<any>(null);
+  const [recForm, setRecForm] = useState<any>({});
 
   // Form states
   const [formData, setFormData] = useState<any>({});
