@@ -1413,6 +1413,14 @@ const Admin = () => {
                       </div>
                       <div className="flex items-center gap-2 ml-4">
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEditRec(rec)}
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
                           variant={rec.is_active ? "outline" : "default"}
                           size="sm"
                           onClick={() => handleToggleRecommendation(rec.id, rec.is_active)}
@@ -1436,6 +1444,75 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Edit Recommendation Dialog */}
+            {editingRec && (
+              <Card className="border-primary">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Edit Recommendation</span>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingRec(null)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    {(editingRec.recommender_image_url) && (
+                      <img src={editingRec.recommender_image_url} alt={recForm.name} className="w-16 h-16 object-cover rounded-full border-2 border-muted" />
+                    )}
+                    <div className="flex-1">
+                      <label className="text-sm font-medium text-muted-foreground">Change Photo</label>
+                      <Input type="file" id="rec-edit-image" accept="image/*" className="mt-1" />
+                    </div>
+                  </div>
+                  <Input
+                    placeholder="Name"
+                    value={recForm.name}
+                    onChange={(e) => setRecForm({ ...recForm, name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Position/Title"
+                    value={recForm.position}
+                    onChange={(e) => setRecForm({ ...recForm, position: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Company/Organization"
+                    value={recForm.company}
+                    onChange={(e) => setRecForm({ ...recForm, company: e.target.value })}
+                  />
+                  <Textarea
+                    placeholder="Recommendation message"
+                    value={recForm.message}
+                    onChange={(e) => setRecForm({ ...recForm, message: e.target.value })}
+                    rows={4}
+                    required
+                  />
+                  <Input
+                    placeholder="LinkedIn URL"
+                    type="url"
+                    value={recForm.linkedin_url}
+                    onChange={(e) => setRecForm({ ...recForm, linkedin_url: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Twitter URL"
+                    type="url"
+                    value={recForm.twitter_url}
+                    onChange={(e) => setRecForm({ ...recForm, twitter_url: e.target.value })}
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateRecommendation}>
+                      <Check className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingRec(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Gallery Tab */}
