@@ -579,6 +579,51 @@ const Admin = () => {
     }
   };
 
+  const startEditRec = (rec: any) => {
+    setEditingRec(rec);
+    setRecForm({
+      name: rec.name || '',
+      position: rec.position || '',
+      company: rec.company || '',
+      message: rec.message || '',
+      linkedin_url: rec.linkedin_url || '',
+      twitter_url: rec.twitter_url || '',
+    });
+  };
+
+  const handleUpdateRecommendation = async () => {
+    if (!editingRec) return;
+    try {
+      const fileInput = document.getElementById('rec-edit-image') as HTMLInputElement;
+      let recommender_image_url = editingRec.recommender_image_url;
+
+      if (fileInput?.files?.[0]) {
+        recommender_image_url = await handleFileUpload(fileInput.files[0]);
+      }
+
+      const { error } = await supabase
+        .from('recommendations')
+        .update({
+          name: recForm.name?.trim(),
+          position: recForm.position?.trim() || null,
+          company: recForm.company?.trim() || null,
+          message: recForm.message?.trim(),
+          linkedin_url: recForm.linkedin_url?.trim() || null,
+          twitter_url: recForm.twitter_url?.trim() || null,
+          recommender_image_url,
+        })
+        .eq('id', editingRec.id);
+
+      if (error) throw error;
+      toast.success('Recommendation updated');
+      setEditingRec(null);
+      reloadRecommendations();
+    } catch (error) {
+      toast.error('Failed to update recommendation');
+      console.error(error);
+    }
+  };
+
   const handleToggleRecommendation = async (id: string, currentActive: boolean) => {
     try {
       const { error } = await supabase
