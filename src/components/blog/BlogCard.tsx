@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, ExternalLink, Play, Video } from 'lucide-react';
 import OptimizedImage from '@/components/OptimizedImage';
 
 interface BlogPost {
@@ -21,6 +21,13 @@ interface BlogCardProps {
   onClick: (slug: string) => void;
 }
 
+const getYouTubeThumbnail = (url: string): string | null => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+};
+
+const isVlog = (post: BlogPost) => !!post.featured_video_url;
+
 export const BlogCard = ({ post, onClick }: BlogCardProps) => {
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -30,10 +37,41 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
     });
   };
 
+  const vlog = isVlog(post);
+  const youtubeThumb = post.featured_video_url ? getYouTubeThumbnail(post.featured_video_url) : null;
+
   return (
     <Card className="glass-card hover-lift group cursor-pointer overflow-hidden" onClick={() => onClick(post.slug)}>
       <div className="relative">
-        {post.featured_image_url ? (
+        {vlog ? (
+          // Video-first card for vlogs
+          <div className="aspect-[16/9] overflow-hidden relative">
+            {post.featured_image_url ? (
+              <OptimizedImage
+                src={post.featured_image_url}
+                alt={post.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : youtubeThumb ? (
+              <img
+                src={youtubeThumb}
+                alt={post.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/5" />
+            )}
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors duration-300" />
+            {/* Play button */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Play className="w-6 h-6 text-primary-foreground fill-current ml-0.5" />
+              </div>
+            </div>
+          </div>
+        ) : post.featured_image_url ? (
           <div className="aspect-[16/9] overflow-hidden">
             <OptimizedImage
               src={post.featured_image_url}
@@ -41,21 +79,21 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-        ) : post.featured_video_url ? (
-          <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="text-4xl text-white/80 z-10">▶</div>
-            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-              Video
-            </div>
-          </div>
         ) : (
           <div className="aspect-[16/9] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
             <div className="text-4xl font-bold text-primary/40">{post.title.charAt(0)}</div>
           </div>
         )}
-        <div className="absolute top-4 left-4">
-          <Badge className="bg-primary text-primary-foreground">
+
+        {/* Badges */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          {vlog && (
+            <Badge className="bg-red-500/90 text-white border-0 backdrop-blur-sm">
+              <Video className="w-3 h-3 mr-1" />
+              Vlog
+            </Badge>
+          )}
+          <Badge className="bg-primary text-primary-foreground backdrop-blur-sm">
             {post.category}
           </Badge>
         </div>
@@ -69,7 +107,7 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            <span>{post.read_time_minutes} min read</span>
+            <span>{vlog ? `${post.read_time_minutes} min watch` : `${post.read_time_minutes} min read`}</span>
           </div>
         </div>
         
@@ -81,7 +119,6 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
           {post.excerpt}
         </p>
         
-        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {post.tags.slice(0, 3).map((tag) => (
@@ -98,7 +135,7 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
         )}
         
         <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
-          <span>Read More</span>
+          <span>{vlog ? 'Watch Now' : 'Read More'}</span>
           <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-1" />
         </div>
       </CardContent>

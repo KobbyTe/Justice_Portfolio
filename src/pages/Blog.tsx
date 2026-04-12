@@ -14,29 +14,21 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedContentType, setSelectedContentType] = useState('');
 
   useEffect(() => {
     loadBlogPosts();
     
-    // Set up realtime subscription for blog posts
     const channel = supabase
       .channel('blog-posts-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'blog_posts'
-        },
-        () => {
-          loadBlogPosts();
-        }
+        { event: '*', schema: 'public', table: 'blog_posts' },
+        () => { loadBlogPosts(); }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const loadBlogPosts = async () => {
@@ -55,19 +47,16 @@ const Blog = () => {
     }
   };
 
-  // Calculate read time if not set
   const calculateReadTime = (content: string) => {
     const words = content.split(' ').length;
-    return Math.max(1, Math.ceil(words / 200)); // 200 words per minute
+    return Math.max(1, Math.ceil(words / 200));
   };
 
-  // Get unique categories
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(blogPosts.map((post: any) => post.category))];
     return uniqueCategories.filter(Boolean);
   }, [blogPosts]);
 
-  // Filter posts based on search and category
   const filteredPosts = useMemo(() => {
     return blogPosts.filter((post: any) => {
       const matchesSearch = searchQuery === '' || 
@@ -78,35 +67,43 @@ const Blog = () => {
       
       const matchesCategory = selectedCategory === '' || post.category === selectedCategory;
       
-      return matchesSearch && matchesCategory;
+      const matchesContentType = selectedContentType === '' ||
+        (selectedContentType === 'vlog' && !!post.featured_video_url) ||
+        (selectedContentType === 'blog' && !post.featured_video_url);
+      
+      return matchesSearch && matchesCategory && matchesContentType;
     });
-  }, [blogPosts, searchQuery, selectedCategory]);
+  }, [blogPosts, searchQuery, selectedCategory, selectedContentType]);
 
   const handleBlogClick = (slug: string) => {
     navigate(`/blog/${slug}`);
   };
 
+  const pageTitle = selectedContentType === 'vlog' ? 'Vlogs' : selectedContentType === 'blog' ? 'Blog' : 'Blog & Vlogs';
+  const pageEmoji = selectedContentType === 'vlog' ? '🎬' : selectedContentType === 'blog' ? '✍️' : '✍️';
+
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="Blog" description="Articles and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
+      <SEO title={pageTitle} description="Articles, vlogs and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
       <Navigation />
       
-      {/* Blog Section */}
       <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4 sm:px-6">
-          <h1 className="section-heading text-center mb-8 sm:mb-12 text-3xl sm:text-4xl lg:text-5xl">✍️ Blog</h1>
+          <h1 className="section-heading text-center mb-8 sm:mb-12 text-3xl sm:text-4xl lg:text-5xl">
+            {pageEmoji} {pageTitle}
+          </h1>
           
           <div className="max-w-7xl mx-auto">
-            {/* Search and Filters */}
             <SearchAndFilters
               onSearch={setSearchQuery}
               onCategoryChange={setSelectedCategory}
+              onContentTypeChange={setSelectedContentType}
               categories={categories}
               selectedCategory={selectedCategory}
+              selectedContentType={selectedContentType}
               searchQuery={searchQuery}
             />
 
-            {/* Blog Posts Grid */}
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
@@ -136,27 +133,26 @@ const Blog = () => {
                 <div className="glass-card p-12">
                   <h3 className="text-xl font-semibold mb-2">No posts found</h3>
                   <p className="text-muted-foreground mb-6">
-                    {searchQuery || selectedCategory 
+                    {searchQuery || selectedCategory || selectedContentType
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No blog posts published yet.'
                     }
                   </p>
-                  {(searchQuery || selectedCategory) && (
+                  {(searchQuery || selectedCategory || selectedContentType) && (
                     <div className="flex justify-center gap-2">
                       {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery('')}
-                          className="text-sm text-primary hover:underline"
-                        >
+                        <button onClick={() => setSearchQuery('')} className="text-sm text-primary hover:underline">
                           Clear search
                         </button>
                       )}
                       {selectedCategory && (
-                        <button
-                          onClick={() => setSelectedCategory('')}
-                          className="text-sm text-primary hover:underline"
-                        >
+                        <button onClick={() => setSelectedCategory('')} className="text-sm text-primary hover:underline">
                           Clear filter
+                        </button>
+                      )}
+                      {selectedContentType && (
+                        <button onClick={() => setSelectedContentType('')} className="text-sm text-primary hover:underline">
+                          Clear content type
                         </button>
                       )}
                     </div>
