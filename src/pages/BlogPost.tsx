@@ -12,7 +12,7 @@ import { CommentsSection } from '@/components/blog/CommentsSection';
 import { BlogCard } from '@/components/blog/BlogCard';
 import OptimizedImage from '@/components/OptimizedImage';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Calendar, Clock, Video } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -166,6 +166,35 @@ const BlogPost = () => {
             Back to Blog
           </Button>
 
+          {/* Video Hero for Vlogs */}
+          {post.featured_video_url && (
+            <div className="mb-6 sm:mb-8">
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-2xl ring-1 ring-white/10">
+                {post.featured_video_url.includes('youtube.com') || post.featured_video_url.includes('youtu.be') ? (
+                  <iframe
+                    src={post.featured_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title={post.title}
+                  />
+                ) : post.featured_video_url.includes('vimeo.com') ? (
+                  <iframe
+                    src={post.featured_video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title={post.title}
+                  />
+                ) : (
+                  <video
+                    src={post.featured_video_url}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Hero Section */}
           <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
             <div className="space-y-3 sm:space-y-4">
@@ -184,7 +213,7 @@ const BlogPost = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  <span>{post.read_time_minutes} min read</span>
+                  <span>{post.read_time_minutes} min {post.featured_video_url ? 'watch' : 'read'}</span>
                 </div>
               </div>
 
@@ -209,8 +238,8 @@ const BlogPost = () => {
               </div>
             </div>
 
-            {/* Featured Image or Video */}
-            {post.featured_image_url ? (
+            {/* Featured Image (only for non-vlog posts) */}
+            {!post.featured_video_url && post.featured_image_url && (
               <div className="relative aspect-[16/9] rounded-lg overflow-hidden">
                 <OptimizedImage
                   src={post.featured_image_url}
@@ -218,33 +247,13 @@ const BlogPost = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-            ) : post.featured_video_url ? (
-              <div className="relative aspect-[16/9] rounded-lg overflow-hidden bg-black">
-                {post.featured_video_url.includes('youtube.com') || post.featured_video_url.includes('youtu.be') ? (
-                  <iframe
-                    src={post.featured_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title={post.title}
-                  />
-                ) : post.featured_video_url.includes('vimeo.com') ? (
-                  <iframe
-                    src={post.featured_video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title={post.title}
-                  />
-                ) : (
-                  <video
-                    src={post.featured_video_url}
-                    controls
-                    className="w-full h-full object-cover"
-                    poster=""
-                  />
-                )}
-              </div>
-            ) : null}
+            )}
           </div>
+
+          {/* Content - styled as notes for vlogs */}
+          {post.featured_video_url && post.content && (
+            <p className="text-sm text-muted-foreground mb-2 font-medium uppercase tracking-wider">Show Notes</p>
+          )}
 
           {/* Content */}
           <div className="prose prose-lg max-w-none mb-8 sm:mb-12">
