@@ -1,49 +1,48 @@
 
 
-## Plan: Recommendation Request Links
+## Plan: Add Vlog Content to Blog Section
 
-### Overview
-The admin will be able to generate unique recommendation links from the Testimonials tab. These links can be shared with recommenders, who visit a public form to submit their testimonial. Submissions are saved as inactive (pending approval), and the admin can approve/reject them from the dashboard.
+### What Changes
 
-### Architecture
+The blog system already supports video URLs but treats vlogs the same as text posts. This plan adds a dedicated **Vlog** content type with video-first presentation, a Blog/Vlog toggle filter, and enhanced video cards.
 
-```text
-Admin Dashboard                    Public Form
-┌─────────────────┐     share     ┌──────────────────────┐
-│ Generate Link   │──── URL ────→ │ /recommend/:token    │
-│ (name + email)  │               │ Fill name, position, │
-│                 │               │ company, message,    │
-│ Approve/Reject  │←── insert ───│ linkedin, twitter,   │
-│ pending items   │   (inactive)  │ photo                │
-└─────────────────┘               └──────────────────────┘
-```
+### 1. Add Blog/Vlog Content Type Toggle to Search & Filters
 
-### Steps
+**File: `src/components/blog/SearchAndFilters.tsx`**
+- Add a segmented toggle above categories: **All | Blog | Vlog**
+- Pass a new `onContentTypeChange` prop and `selectedContentType` state
+- Style as pill-shaped buttons with icons (FileText for Blog, Video for Vlog)
 
-**1. Database Migration**
-- Create `recommendation_tokens` table: `id`, `token` (unique text), `recommender_name`, `recommender_email`, `is_used` (default false), `expires_at`, `created_at`
-- RLS: admin-only SELECT/INSERT/UPDATE/DELETE; public SELECT for token lookup; public UPDATE to mark as used
-- No changes to existing `recommendations` table (already has `is_active` column which we'll use for approval flow)
+### 2. Update Blog Page with Content Type Filtering
 
-**2. New Public Page: `/recommend/:token`** (`src/pages/SubmitRecommendation.tsx`)
-- Validates the token against `recommendation_tokens` (not expired, not used)
-- Shows a form with: name (pre-filled from token), position, company, message (required), LinkedIn URL, Twitter URL, profile photo upload
-- On submit: inserts into `recommendations` with `is_active: false`, marks token as used
-- Shows success/error/expired states
-- Rate limited using existing `useRateLimit` hook
+**File: `src/pages/Blog.tsx`**
+- Add `selectedContentType` state (`'' | 'blog' | 'vlog'`)
+- Filter logic: Vlog = posts with `featured_video_url` set; Blog = posts without
+- Pass content type state to `SearchAndFilters`
+- Update page heading to reflect selection ("Blog", "Vlogs", or "Blog & Vlogs")
 
-**3. Add Route** in `src/App.tsx`
-- Add `/recommend/:token` route with lazy-loaded `SubmitRecommendation` page
+### 3. Redesign BlogCard for Video-First Vlog Display
 
-**4. Update Admin Testimonials Tab** in `src/pages/Admin.tsx`
-- Change recommendations query to fetch ALL (remove `.eq('is_active', true)`) so pending ones appear
-- Add "Generate Link" section: input for recommender name + email, generates a token, shows copyable URL
-- Add approve/reject buttons on pending recommendations (toggle `is_active`)
-- Visual distinction between approved and pending items with badges
+**File: `src/components/blog/BlogCard.tsx`**
+- When the post has a `featured_video_url`, render a video-first card:
+  - Show a large play button overlay on the thumbnail area
+  - Add a "Vlog" badge alongside the category badge
+  - For YouTube/Vimeo URLs, extract and display a thumbnail image automatically
+  - Add a subtle video duration indicator style
+- Keep the existing image card design for regular blog posts
+
+### 4. Enhance BlogPost Page for Vlog Playback
+
+**File: `src/pages/BlogPost.tsx`**
+- When a post has `featured_video_url`, prioritize the video hero over the image (already partially done, but refine):
+  - Make the video player larger and more prominent
+  - Add a "Watch" duration indicator
+  - Style the content below as supplementary notes rather than the main content
 
 ### Technical Details
-- Tokens are generated as `crypto.randomUUID()` on the client, inserted via admin's authenticated session
-- Token expiry defaults to 7 days
-- The public form uses `maxLength` constraints and rate limiting consistent with existing security patterns
-- Photo uploads use the existing public storage bucket (`portfolio-assets`) — the public INSERT on recommendations already allows unauthenticated inserts, but we need to add a public INSERT policy for `recommendation_tokens` usage (mark as used) via an RPC or allow public UPDATE on `is_used` column only
+
+- No database changes needed; `featured_video_url` column already exists on `blog_posts`
+- YouTube thumbnail extraction: parse video ID from URL, use `https://img.youtube.com/vi/{ID}/hqdefault.jpg`
+- Content type detection is purely based on whether `featured_video_url` is truthy
+- All changes are UI-only, leveraging existing data
 
