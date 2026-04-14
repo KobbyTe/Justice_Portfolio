@@ -355,7 +355,7 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
                     Image
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                   <input
                     type="radio"
                     id="video"
@@ -365,7 +365,7 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
                   />
                   <Label htmlFor="video" className="flex items-center gap-2">
                     <Video className="w-4 h-4" />
-                    Video URL
+                    Video
                   </Label>
                 </div>
               </div>
@@ -389,11 +389,43 @@ const BlogEditor = ({ post, categories, onSave, onCancel, onFileUpload }: BlogEd
                   )}
                 </div>
               ) : (
-                <Input
-                  value={formData.featured_video_url || ''}
-                  onChange={(e) => handleInputChange('featured_video_url', e.target.value)}
-                  placeholder="Enter video URL (YouTube, Vimeo, etc.)"
-                />
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Upload video file</Label>
+                    <Input
+                      type="file"
+                      accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                    {isUploading && (
+                      <p className="text-xs text-muted-foreground mt-1">Uploading video… this may take a moment.</p>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-x-0 top-1/2 border-t border-border" />
+                    <p className="relative bg-card text-xs text-muted-foreground w-fit mx-auto px-2">or paste a URL</p>
+                  </div>
+                  <Input
+                    value={formData.featured_video_url || ''}
+                    onChange={(e) => handleInputChange('featured_video_url', e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                  />
+                  {formData.featured_video_url && (
+                    <div className="mt-2">
+                      <video
+                        src={formData.featured_video_url}
+                        className="w-48 h-28 object-cover rounded border border-border"
+                        muted
+                        playsInline
+                        onError={(e) => {
+                          // Hide preview if it's an external URL (YouTube etc.)
+                          (e.target as HTMLVideoElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
