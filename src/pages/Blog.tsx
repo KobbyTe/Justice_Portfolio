@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 import Navigation from '@/components/Navigation';
@@ -7,19 +7,24 @@ import { SearchAndFilters } from '@/components/blog/SearchAndFilters';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const POSTS_PER_PAGE = 9;
 
 const Blog = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [blogPosts, setBlogPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedContentType, setSelectedContentType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadBlogPosts();
@@ -36,9 +41,10 @@ const Blog = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Reset to page 1 when filters change
+  // Reset when filters change
   useEffect(() => {
     setCurrentPage(1);
+    setVisibleCount(POSTS_PER_PAGE);
   }, [searchQuery, selectedCategory, selectedContentType]);
 
   const loadBlogPosts = async () => {
@@ -85,11 +91,37 @@ const Blog = () => {
     });
   }, [blogPosts, searchQuery, selectedCategory, selectedContentType]);
 
+  // Infinite scroll for mobile
+  const loadMore = useCallback(() => {
+    if (loadingMore || visibleCount >= filteredPosts.length) return;
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount(prev => Math.min(prev + POSTS_PER_PAGE, filteredPosts.length));
+      setLoadingMore(false);
+    }, 300);
+  }, [loadingMore, visibleCount, filteredPosts.length]);
+
+  useEffect(() => {
+    if (!isMobile || !sentinelRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [isMobile, loadMore]);
+
+  // Pagination for desktop
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
-  const paginatedPosts = filteredPosts.slice(
-    (currentPage - 1) * POSTS_PER_PAGE,
-    currentPage * POSTS_PER_PAGE
-  );
+  const displayedPosts = isMobile
+    ? filteredPosts.slice(0, visibleCount)
+    : filteredPosts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -117,7 +149,7 @@ const Blog = () => {
   };
 
   const pageTitle = selectedContentType === 'vlog' ? 'Vlogs' : selectedContentType === 'blog' ? 'Blog' : 'Blog & Vlogs';
-  const pageEmoji = selectedContentType === 'vlog' ? '🎬' : selectedContentType === 'blog' ? '✍️' : '✍️';
+  const pageEmoji = selectedContentType === 'vlog' ? '🎬' : '✍️';
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,13 +186,15 @@ const Blog = () => {
               </div>
             ) : filteredPosts.length > 0 ? (
               <>
-                {/* Results count */}
                 <p className="text-sm text-muted-foreground mb-4">
-                  Showing {(currentPage - 1) * POSTS_PER_PAGE + 1}–{Math.min(currentPage * POSTS_PER_PAGE, filteredPosts.length)} of {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
+                  {isMobile
+                    ? `Showing ${Math.min(visibleCount, filteredPosts.length)} of ${filteredPosts.length} ${filteredPosts.length === 1 ? 'post' : 'posts'}`
+                    : `Showing ${(currentPage - 1) * POSTS_PER_PAGE + 1}–${Math.min(currentPage * POSTS_PER_PAGE, filteredPosts.length)} of ${filteredPosts.length} ${filteredPosts.length === 1 ? 'post' : 'posts'}`
+                  }
                 </p>
 
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {paginatedPosts.map((post: any) => (
+                  {displayedPosts.map((post: any) => (
                     <BlogCard
                       key={post.id}
                       post={{
@@ -172,8 +206,17 @@ const Blog = () => {
                   ))}
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
+                {/* Infinite scroll sentinel for mobile */}
+                {isMobile && visibleCount < filteredPosts.length && (
+                  <div ref={sentinelRef} className="flex justify-center py-8">
+                    {loadingMore && (
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    )}
+                  </div>
+                )}
+
+                {/* Pagination for desktop */}
+                {!isMobile && totalPages > 1 && (
                   <nav aria-label="Blog pagination" className="flex items-center justify-center gap-1 mt-10">
                     <Button
                       variant="ghost"
