@@ -1,48 +1,79 @@
+## Plan: TikTok-Style Vlog Feed
 
+A new dedicated page (`/vlogs`) delivering a full-screen, vertically-snapping video feed that mimics TikTok's browsing experience. Separate from the existing `/blog` page (which keeps its grid + Blog/Vlog filter).
 
-## Plan: Add Vlog Content to Blog Section
+### 1. New Route & Navigation
 
-### What Changes
+- Add route `/vlogs` in `src/App.tsx` (lazy-loaded).
+- Add "Vlogs" item to the nav in `src/components/Navigation.tsx` (between Blog and Gallery).
+- The existing `/blog` page is unchanged.
 
-The blog system already supports video URLs but treats vlogs the same as text posts. This plan adds a dedicated **Vlog** content type with video-first presentation, a Blog/Vlog toggle filter, and enhanced video cards.
+### 2. New Page: `src/pages/Vlogs.tsx`
 
-### 1. Add Blog/Vlog Content Type Toggle to Search & Filters
+- Fetches all published `blog_posts` where `featured_video_url` is not null, ordered by `published_at` desc.
+- Falls back to a hardcoded array of 5 sample vlogs if none exist (sample MP4s from `https://commondatastorm.s3.amazonaws.com/...` style public test videos, e.g. Big Buck Bunny / Google sample MP4s).
+- Each video object: `{ id, title, description, videoUrl, likes, comments }`.
+- Renders a vertical scroll container of `VlogCard` items.
+- Hides the global Navigation/Footer for an immersive feed (renders its own minimal top bar with a back button + page title).
 
-**File: `src/components/blog/SearchAndFilters.tsx`**
-- Add a segmented toggle above categories: **All | Blog | Vlog**
-- Pass a new `onContentTypeChange` prop and `selectedContentType` state
-- Style as pill-shaped buttons with icons (FileText for Blog, Video for Vlog)
+### 3. New Component: `src/components/vlogs/VlogFeed.tsx`
 
-### 2. Update Blog Page with Content Type Filtering
+The scroll container:
+- Full-viewport height (`h-[100dvh]`) with `overflow-y-scroll snap-y snap-mandatory`.
+- Dark background (`bg-black`).
+- Hides scrollbar (`scrollbar-hide` utility via inline style).
+- Tracks `activeIndex` using an `IntersectionObserver` (threshold 0.6) on each card to drive autoplay/pause.
+- On desktop (≥ md), renders fixed up/down arrow buttons on the right that programmatically `scrollTo` the previous/next card.
+- Keyboard support: ArrowUp/ArrowDown navigate cards.
 
-**File: `src/pages/Blog.tsx`**
-- Add `selectedContentType` state (`'' | 'blog' | 'vlog'`)
-- Filter logic: Vlog = posts with `featured_video_url` set; Blog = posts without
-- Pass content type state to `SearchAndFilters`
-- Update page heading to reflect selection ("Blog", "Vlogs", or "Blog & Vlogs")
+### 4. New Component: `src/components/vlogs/VlogCard.tsx`
 
-### 3. Redesign BlogCard for Video-First Vlog Display
+Each snap section:
+- `h-[100dvh] w-full snap-start flex items-center justify-center bg-black`.
+- Inner video frame: full screen on mobile; on desktop centered column `max-w-[420px] aspect-[9/16]` with rounded corners and subtle shadow; surrounding area dimmed black.
+- HTML5 `<video>` with `playsInline`, `loop`, `muted` (controlled), `preload="metadata"`, `poster` optional.
+- Plays only when active (driven by prop from feed); pauses & resets when not active.
+- Click/tap on the video toggles a shared `muted` state (lifted to feed) — TikTok behavior. Show a brief mute/unmute icon flash on toggle.
+- Double-tap (mobile) / heart button triggers like animation.
 
-**File: `src/components/blog/BlogCard.tsx`**
-- When the post has a `featured_video_url`, render a video-first card:
-  - Show a large play button overlay on the thumbnail area
-  - Add a "Vlog" badge alongside the category badge
-  - For YouTube/Vimeo URLs, extract and display a thumbnail image automatically
-  - Add a subtle video duration indicator style
-- Keep the existing image card design for regular blog posts
+Overlay UI (absolutely positioned within the video frame):
+- **Bottom-left**: title (bold) + description (clamped to 2 lines), with subtle gradient background from black/70 to transparent for legibility.
+- **Bottom-right**: vertically stacked action column with Like (Heart), Comment (MessageCircle), Share (Share2) — each icon button with a count below. Local state for like toggle + optimistic count.
+- **Bottom edge**: thin progress bar (`<div>` width tied to `currentTime / duration` from the video's `timeupdate` event).
+- **Top-right**: mute/unmute toggle (Volume2 / VolumeX) as a fallback to tap-to-unmute.
 
-### 4. Enhance BlogPost Page for Vlog Playback
+### 5. Styling & Responsive Behavior
 
-**File: `src/pages/BlogPost.tsx`**
-- When a post has `featured_video_url`, prioritize the video hero over the image (already partially done, but refine):
-  - Make the video player larger and more prominent
-  - Add a "Watch" duration indicator
-  - Style the content below as supplementary notes rather than the main content
+- Mobile (< md): video fills the full viewport, no margins, native swipe via snap-mandatory.
+- Desktop (≥ md): screen stays black; video card centered at `max-w-[420px]`, aspect 9/16; arrow nav buttons appear to the right of the card.
+- Add a small CSS utility in `src/index.css` for `.scrollbar-hide` (webkit + firefox).
+
+### 6. Data Source
+
+- Pulls from existing `blog_posts.featured_video_url`, mapping:
+  - `title` ← `post.title`
+  - `description` ← `post.excerpt`
+  - `videoUrl` ← `post.featured_video_url`
+  - `likes` ← `post.likes_count` (if column exists, else random seed for demo)
+  - `comments` ← length of related comments (or 0 placeholder)
+- If feed is empty, sample dummy data is used so the experience is testable immediately.
 
 ### Technical Details
 
-- No database changes needed; `featured_video_url` column already exists on `blog_posts`
-- YouTube thumbnail extraction: parse video ID from URL, use `https://img.youtube.com/vi/{ID}/hqdefault.jpg`
-- Content type detection is purely based on whether `featured_video_url` is truthy
-- All changes are UI-only, leveraging existing data
+```text
+src/
+  App.tsx                              [edit] add /vlogs route
+  components/
+    Navigation.tsx                     [edit] add Vlogs link
+    vlogs/
+      VlogFeed.tsx                     [new]  scroll container + active index + arrow nav
+      VlogCard.tsx                     [new]  video + overlay UI
+  pages/
+    Vlogs.tsx                          [new]  fetch + render feed
+  index.css                            [edit] .scrollbar-hide utility
+```
 
+- Autoplay-with-sound is blocked by browsers; videos start muted, and the first user click anywhere unmutes globally (state lifted to feed).
+- IntersectionObserver root = the scroll container; threshold 0.6 ensures only one card is "active" at a time.
+- Progress bar updates throttled via `requestAnimationFrame` on `timeupdate`.
+- No DB schema changes. No new dependencies (uses existing `lucide-react`, Tailwind, framer-motion already in project).
