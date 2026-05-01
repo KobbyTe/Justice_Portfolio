@@ -12,6 +12,11 @@ export const VlogFeed = ({ vlogs }: VlogFeedProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [muted, setMuted] = useState(true);
 
+  // Move keyboard focus into the feed so shortcuts work immediately
+  useEffect(() => {
+    containerRef.current?.focus({ preventScroll: true });
+  }, []);
+
   // Track which card is in view
   useEffect(() => {
     const container = containerRef.current;
