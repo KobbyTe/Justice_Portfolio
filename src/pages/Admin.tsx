@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { isHEIFFile, convertHEIFToPNG, convertToWebP, ConvertedImages } from '@/utils/imageConverter';
 import OptimizedImage from '@/components/OptimizedImage';
 import BlogManagement from '@/components/admin/BlogManagement';
+import VlogManagement from '@/components/admin/VlogManagement';
 import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
@@ -878,6 +879,7 @@ const Admin = () => {
             <TabsTrigger value="skills" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Skills</TabsTrigger>
             <TabsTrigger value="projects" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Projects</TabsTrigger>
             <TabsTrigger value="blog" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Blog</TabsTrigger>
+            <TabsTrigger value="vlogs" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Vlogs</TabsTrigger>
             <TabsTrigger value="social" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Social</TabsTrigger>
             <TabsTrigger value="resume" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Resume</TabsTrigger>
             <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Testimonials</TabsTrigger>
@@ -1145,6 +1147,11 @@ const Admin = () => {
           {/* Blog Tab */}
           <TabsContent value="blog">
             <BlogManagement onFileUpload={handleFileUpload} />
+          </TabsContent>
+
+          {/* Vlogs Tab */}
+          <TabsContent value="vlogs">
+            <VlogManagement onFileUpload={handleFileUpload} />
           </TabsContent>
 
           {/* Social Links Tab */}

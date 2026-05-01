@@ -63,7 +63,7 @@ const Vlogs = () => {
       try {
         const { data } = await supabase
           .from('blog_posts')
-          .select('id, title, excerpt, featured_video_url, likes_count, published_at')
+          .select('id, title, excerpt, featured_video_url, published_at')
           .eq('is_published', true)
           .not('featured_video_url', 'is', null)
           .order('published_at', { ascending: false });
@@ -75,7 +75,7 @@ const Vlogs = () => {
             title: p.title,
             description: p.excerpt || '',
             videoUrl: p.featured_video_url,
-            likes: p.likes_count || 0,
+            likes: 0,
             comments: 0,
           }));
 
