@@ -57,10 +57,20 @@ export const VlogFeed = ({ vlogs }: VlogFeedProps) => {
 
   return (
     <div className="relative h-[100dvh] w-full bg-black">
+      {/* SR-only live region announcing the active vlog */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {vlogs[activeIndex]
+          ? `Now playing: ${vlogs[activeIndex].title}, ${activeIndex + 1} of ${vlogs.length}`
+          : ''}
+      </div>
+
       <div
         ref={containerRef}
-        className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide focus:outline-none"
         style={{ scrollbarWidth: 'none' }}
+        tabIndex={0}
+        role="region"
+        aria-label="Vlog feed. Use arrow keys to navigate, space to play or pause, M to toggle mute."
       >
         {vlogs.map((vlog, idx) => (
           <div
