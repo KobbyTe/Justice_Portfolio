@@ -83,13 +83,9 @@ const Blog = () => {
       
       const matchesCategory = selectedCategory === '' || post.category === selectedCategory;
       
-      const matchesContentType = selectedContentType === '' ||
-        (selectedContentType === 'vlog' && !!post.featured_video_url) ||
-        (selectedContentType === 'blog' && !post.featured_video_url);
-      
-      return matchesSearch && matchesCategory && matchesContentType;
+      return matchesSearch && matchesCategory;
     });
-  }, [blogPosts, searchQuery, selectedCategory, selectedContentType]);
+  }, [blogPosts, searchQuery, selectedCategory]);
 
   // Infinite scroll for mobile
   const loadMore = useCallback(() => {
