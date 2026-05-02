@@ -44,7 +44,7 @@ const Blog = () => {
   useEffect(() => {
     setCurrentPage(1);
     setVisibleCount(POSTS_PER_PAGE);
-  }, [searchQuery, selectedCategory, selectedContentType]);
+  }, [searchQuery, selectedCategory]);
 
   const loadBlogPosts = async () => {
     try {
@@ -53,8 +53,9 @@ const Blog = () => {
         .from('blog_posts')
         .select('*')
         .eq('is_published', true)
+        .is('featured_video_url', null)
         .order('published_at', { ascending: false });
-      setBlogPosts(data || []);
+      setBlogPosts((data || []).filter((p: any) => !p.featured_video_url));
     } catch (error) {
       console.error('Error loading blog posts:', error);
     } finally {
