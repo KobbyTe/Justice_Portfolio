@@ -20,7 +20,6 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedContentType, setSelectedContentType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
   const [loadingMore, setLoadingMore] = useState(false);
