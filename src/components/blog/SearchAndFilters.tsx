@@ -22,7 +22,8 @@ export const SearchAndFilters = ({
   categories, 
   selectedCategory, 
   selectedContentType,
-  searchQuery 
+  searchQuery,
+  hideContentTypeToggle = false,
 }: SearchAndFiltersProps) => {
   const [localSearch, setLocalSearch] = useState(searchQuery);
 
