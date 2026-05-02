@@ -20,7 +20,6 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedContentType, setSelectedContentType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -45,7 +44,7 @@ const Blog = () => {
   useEffect(() => {
     setCurrentPage(1);
     setVisibleCount(POSTS_PER_PAGE);
-  }, [searchQuery, selectedCategory, selectedContentType]);
+  }, [searchQuery, selectedCategory]);
 
   const loadBlogPosts = async () => {
     try {
@@ -54,8 +53,9 @@ const Blog = () => {
         .from('blog_posts')
         .select('*')
         .eq('is_published', true)
+        .is('featured_video_url', null)
         .order('published_at', { ascending: false });
-      setBlogPosts(data || []);
+      setBlogPosts((data || []).filter((p: any) => !p.featured_video_url));
     } catch (error) {
       console.error('Error loading blog posts:', error);
     } finally {
@@ -83,13 +83,9 @@ const Blog = () => {
       
       const matchesCategory = selectedCategory === '' || post.category === selectedCategory;
       
-      const matchesContentType = selectedContentType === '' ||
-        (selectedContentType === 'vlog' && !!post.featured_video_url) ||
-        (selectedContentType === 'blog' && !post.featured_video_url);
-      
-      return matchesSearch && matchesCategory && matchesContentType;
+      return matchesSearch && matchesCategory;
     });
-  }, [blogPosts, searchQuery, selectedCategory, selectedContentType]);
+  }, [blogPosts, searchQuery, selectedCategory]);
 
   // Infinite scroll for mobile
   const loadMore = useCallback(() => {
@@ -148,12 +144,12 @@ const Blog = () => {
     navigate(`/blog/${slug}`);
   };
 
-  const pageTitle = selectedContentType === 'vlog' ? 'Vlogs' : selectedContentType === 'blog' ? 'Blog' : 'Blog & Vlogs';
-  const pageEmoji = selectedContentType === 'vlog' ? '🎬' : '✍️';
+  const pageTitle = 'Blog';
+  const pageEmoji = '✍️';
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title={pageTitle} description="Articles, vlogs and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
+      <SEO title={pageTitle} description="Articles and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
       <Navigation />
       
       <section className="py-16 sm:py-20">
@@ -166,12 +162,14 @@ const Blog = () => {
             <SearchAndFilters
               onSearch={setSearchQuery}
               onCategoryChange={setSelectedCategory}
-              onContentTypeChange={setSelectedContentType}
+              onContentTypeChange={() => {}}
               categories={categories}
               selectedCategory={selectedCategory}
-              selectedContentType={selectedContentType}
+              selectedContentType=""
               searchQuery={searchQuery}
+              hideContentTypeToggle
             />
+
 
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -262,12 +260,12 @@ const Blog = () => {
                 <div className="glass-card p-12">
                   <h3 className="text-xl font-semibold mb-2">No posts found</h3>
                   <p className="text-muted-foreground mb-6">
-                    {searchQuery || selectedCategory || selectedContentType
+                    {searchQuery || selectedCategory
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No blog posts published yet.'
                     }
                   </p>
-                  {(searchQuery || selectedCategory || selectedContentType) && (
+                  {(searchQuery || selectedCategory) && (
                     <div className="flex justify-center gap-2">
                       {searchQuery && (
                         <button onClick={() => setSearchQuery('')} className="text-sm text-primary hover:underline">
@@ -277,11 +275,6 @@ const Blog = () => {
                       {selectedCategory && (
                         <button onClick={() => setSelectedCategory('')} className="text-sm text-primary hover:underline">
                           Clear filter
-                        </button>
-                      )}
-                      {selectedContentType && (
-                        <button onClick={() => setSelectedContentType('')} className="text-sm text-primary hover:underline">
-                          Clear content type
                         </button>
                       )}
                     </div>
