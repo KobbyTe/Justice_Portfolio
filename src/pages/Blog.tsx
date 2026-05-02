@@ -144,12 +144,12 @@ const Blog = () => {
     navigate(`/blog/${slug}`);
   };
 
-  const pageTitle = selectedContentType === 'vlog' ? 'Vlogs' : selectedContentType === 'blog' ? 'Blog' : 'Blog & Vlogs';
-  const pageEmoji = selectedContentType === 'vlog' ? '🎬' : '✍️';
+  const pageTitle = 'Blog';
+  const pageEmoji = '✍️';
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title={pageTitle} description="Articles, vlogs and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
+      <SEO title={pageTitle} description="Articles and insights by Justice Ansah on robotics, STEM education, IoT, and technology innovation." url="/blog" />
       <Navigation />
       
       <section className="py-16 sm:py-20">
@@ -162,12 +162,14 @@ const Blog = () => {
             <SearchAndFilters
               onSearch={setSearchQuery}
               onCategoryChange={setSelectedCategory}
-              onContentTypeChange={setSelectedContentType}
+              onContentTypeChange={() => {}}
               categories={categories}
               selectedCategory={selectedCategory}
-              selectedContentType={selectedContentType}
+              selectedContentType=""
               searchQuery={searchQuery}
+              hideContentTypeToggle
             />
+
 
             {loading ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
