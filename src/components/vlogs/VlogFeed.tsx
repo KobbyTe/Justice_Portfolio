@@ -4,18 +4,32 @@ import VlogCard, { Vlog } from './VlogCard';
 
 interface VlogFeedProps {
   vlogs: Vlog[];
+  initialIndex?: number;
+  onActiveChange?: (index: number) => void;
 }
 
-export const VlogFeed = ({ vlogs }: VlogFeedProps) => {
+export const VlogFeed = ({ vlogs, initialIndex = 0, onActiveChange }: VlogFeedProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [muted, setMuted] = useState(true);
 
   // Move keyboard focus into the feed so shortcuts work immediately
   useEffect(() => {
     containerRef.current?.focus({ preventScroll: true });
   }, []);
+
+  // Scroll to initial index on mount / when it changes
+  useEffect(() => {
+    const target = cardRefs.current[initialIndex];
+    if (target) target.scrollIntoView({ behavior: 'auto', block: 'start' });
+    setActiveIndex(initialIndex);
+  }, [initialIndex, vlogs.length]);
+
+  // Notify parent when active changes
+  useEffect(() => {
+    onActiveChange?.(activeIndex);
+  }, [activeIndex, onActiveChange]);
 
   // Track which card is in view
   useEffect(() => {
