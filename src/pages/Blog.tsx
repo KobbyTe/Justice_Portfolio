@@ -260,12 +260,12 @@ const Blog = () => {
                 <div className="glass-card p-12">
                   <h3 className="text-xl font-semibold mb-2">No posts found</h3>
                   <p className="text-muted-foreground mb-6">
-                    {searchQuery || selectedCategory || selectedContentType
+                    {searchQuery || selectedCategory
                       ? 'Try adjusting your search or filter criteria.'
                       : 'No blog posts published yet.'
                     }
                   </p>
-                  {(searchQuery || selectedCategory || selectedContentType) && (
+                  {(searchQuery || selectedCategory) && (
                     <div className="flex justify-center gap-2">
                       {searchQuery && (
                         <button onClick={() => setSearchQuery('')} className="text-sm text-primary hover:underline">
@@ -275,11 +275,6 @@ const Blog = () => {
                       {selectedCategory && (
                         <button onClick={() => setSelectedCategory('')} className="text-sm text-primary hover:underline">
                           Clear filter
-                        </button>
-                      )}
-                      {selectedContentType && (
-                        <button onClick={() => setSelectedContentType('')} className="text-sm text-primary hover:underline">
-                          Clear content type
                         </button>
                       )}
                     </div>
