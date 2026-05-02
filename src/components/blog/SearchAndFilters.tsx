@@ -46,24 +46,26 @@ export const SearchAndFilters = ({
   return (
     <div className="glass-card p-6 mb-8">
       {/* Content Type Toggle */}
-      <div className="flex items-center justify-center mb-6">
-        <div className="inline-flex rounded-full bg-muted/50 p-1 gap-1">
-          {contentTypes.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => onContentTypeChange(value)}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                selectedContentType === value
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+      {!hideContentTypeToggle && (
+        <div className="flex items-center justify-center mb-6">
+          <div className="inline-flex rounded-full bg-muted/50 p-1 gap-1">
+            {contentTypes.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => onContentTypeChange(value)}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedContentType === value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <form onSubmit={handleSearchSubmit} className="mb-6">
         <div className="relative">
