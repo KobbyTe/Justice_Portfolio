@@ -278,6 +278,68 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
     }
   };
 
+  const submitVlogByUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const title = urlTitle.trim();
+    const videoUrl = urlVideo.trim();
+    if (!title) {
+      toast.error('Please enter a title');
+      return;
+    }
+    if (!videoUrl) {
+      toast.error('Please enter a video URL');
+      return;
+    }
+    try {
+      new URL(videoUrl);
+      if (urlPoster.trim()) new URL(urlPoster.trim());
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    setUrlSubmitting(true);
+    try {
+      const description = urlDescription.trim() || `Vlog · ${title}`;
+      let slug = slugify(title);
+      const { data: existing } = await supabase
+        .from('blog_posts')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle();
+      if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+
+      const { error: insertError } = await supabase.from('blog_posts').insert([
+        {
+          title,
+          slug,
+          excerpt: description,
+          content: `<p>${description}</p>`,
+          category: 'Vlog',
+          tags: ['vlog'],
+          featured_video_url: videoUrl,
+          featured_image_url: urlPoster.trim() || null,
+          is_published: true,
+          published_at: new Date().toISOString(),
+          read_time_minutes: 1,
+        },
+      ]);
+      if (insertError) throw insertError;
+
+      toast.success(`Vlog "${title}" published`);
+      setUrlTitle('');
+      setUrlDescription('');
+      setUrlVideo('');
+      setUrlPoster('');
+      await loadVlogs();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Failed to add vlog');
+    } finally {
+      setUrlSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
