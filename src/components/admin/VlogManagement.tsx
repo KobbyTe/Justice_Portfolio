@@ -349,7 +349,7 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
             Vlog Management
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Upload local video files. Title, description, and poster frame are auto-generated.
+            Upload a local video file or add a vlog by pasting a featured video URL.
           </p>
         </div>
       </div>
