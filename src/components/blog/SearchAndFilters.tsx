@@ -12,6 +12,7 @@ interface SearchAndFiltersProps {
   selectedCategory: string;
   selectedContentType: string;
   searchQuery: string;
+  hideContentTypeToggle?: boolean;
 }
 
 export const SearchAndFilters = ({ 
