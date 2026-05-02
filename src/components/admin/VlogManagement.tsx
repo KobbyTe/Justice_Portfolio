@@ -126,6 +126,13 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
   const [overrideDescription, setOverrideDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // URL-based add form state
+  const [urlTitle, setUrlTitle] = useState('');
+  const [urlDescription, setUrlDescription] = useState('');
+  const [urlVideo, setUrlVideo] = useState('');
+  const [urlPoster, setUrlPoster] = useState('');
+  const [urlSubmitting, setUrlSubmitting] = useState(false);
+
   useEffect(() => {
     loadVlogs();
   }, []);
