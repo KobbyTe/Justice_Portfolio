@@ -10,6 +10,10 @@ export interface Vlog {
   videoUrl: string;
   likes: number;
   comments: number;
+  slug?: string;
+  posterUrl?: string | null;
+  publishedAt?: string | null;
+  tags?: string[];
 }
 
 interface VlogCardProps {
