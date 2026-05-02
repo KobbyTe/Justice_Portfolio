@@ -356,88 +356,166 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upload New Vlog</CardTitle>
+          <CardTitle>Add New Vlog</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="vlog-title">Title (optional)</Label>
-              <Input
-                id="vlog-title"
-                value={overrideTitle}
-                onChange={(e) => setOverrideTitle(e.target.value)}
-                placeholder="Auto-generated from filename if blank"
-                maxLength={120}
-                disabled={!!uploadingFile}
-              />
-            </div>
-            <div>
-              <Label htmlFor="vlog-desc">Description (optional)</Label>
-              <Textarea
-                id="vlog-desc"
-                value={overrideDescription}
-                onChange={(e) => setOverrideDescription(e.target.value)}
-                placeholder="Auto-generated from video metadata if blank"
-                rows={1}
-                maxLength={280}
-                disabled={!!uploadingFile}
-              />
-            </div>
-          </div>
+        <CardContent>
+          <Tabs defaultValue="file" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="file" className="gap-2">
+                <UploadCloud className="w-4 h-4" /> Upload file
+              </TabsTrigger>
+              <TabsTrigger value="url" className="gap-2">
+                <LinkIcon className="w-4 h-4" /> Add by URL
+              </TabsTrigger>
+            </TabsList>
 
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => !uploadingFile && fileInputRef.current?.click()}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && !uploadingFile) {
-                e.preventDefault();
-                fileInputRef.current?.click();
-              }
-            }}
-            aria-label="Upload vlog video file"
-            className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-              isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-            } ${uploadingFile ? 'pointer-events-none opacity-70' : ''}`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/mp4,video/webm,video/ogg,video/quicktime"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            {uploadingFile ? (
-              <div className="space-y-3">
-                <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
-                <p className="font-medium text-sm truncate">{uploadingFile}</p>
-                <Progress value={progress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {progress < 25
-                    ? 'Reading metadata…'
-                    : progress < 55
-                    ? 'Uploading poster…'
-                    : progress < 85
-                    ? 'Uploading video…'
-                    : 'Creating vlog post…'}
-                </p>
+            <TabsContent value="file" className="space-y-4 mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="vlog-title">Title (optional)</Label>
+                  <Input
+                    id="vlog-title"
+                    value={overrideTitle}
+                    onChange={(e) => setOverrideTitle(e.target.value)}
+                    placeholder="Auto-generated from filename if blank"
+                    maxLength={120}
+                    disabled={!!uploadingFile}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vlog-desc">Description (optional)</Label>
+                  <Textarea
+                    id="vlog-desc"
+                    value={overrideDescription}
+                    onChange={(e) => setOverrideDescription(e.target.value)}
+                    placeholder="Auto-generated from video metadata if blank"
+                    rows={1}
+                    maxLength={280}
+                    disabled={!!uploadingFile}
+                  />
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
-                <p className="font-medium">Drag & drop a video, or click to browse</p>
-                <p className="text-xs text-muted-foreground">
-                  MP4, WebM, OGG, or MOV · max 200MB
-                </p>
+
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => !uploadingFile && fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !uploadingFile) {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                aria-label="Upload vlog video file"
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                } ${uploadingFile ? 'pointer-events-none opacity-70' : ''}`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                {uploadingFile ? (
+                  <div className="space-y-3">
+                    <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
+                    <p className="font-medium text-sm truncate">{uploadingFile}</p>
+                    <Progress value={progress} className="h-2" />
+                    <p className="text-xs text-muted-foreground">
+                      {progress < 25
+                        ? 'Reading metadata…'
+                        : progress < 55
+                        ? 'Uploading poster…'
+                        : progress < 85
+                        ? 'Uploading video…'
+                        : 'Creating vlog post…'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <p className="font-medium">Drag & drop a video, or click to browse</p>
+                    <p className="text-xs text-muted-foreground">
+                      MP4, WebM, OGG, or MOV · max 200MB
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+
+            <TabsContent value="url" className="mt-0">
+              <form onSubmit={submitVlogByUrl} className="space-y-4">
+                <div>
+                  <Label htmlFor="url-vlog-title">Title *</Label>
+                  <Input
+                    id="url-vlog-title"
+                    value={urlTitle}
+                    onChange={(e) => setUrlTitle(e.target.value)}
+                    placeholder="My new vlog"
+                    maxLength={120}
+                    required
+                    disabled={urlSubmitting}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="url-vlog-video">Featured video URL *</Label>
+                  <Input
+                    id="url-vlog-video"
+                    type="url"
+                    value={urlVideo}
+                    onChange={(e) => setUrlVideo(e.target.value)}
+                    placeholder="https://example.com/video.mp4"
+                    maxLength={500}
+                    required
+                    disabled={urlSubmitting}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Direct video file (.mp4, .webm, .mov) for the TikTok-style feed.
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="url-vlog-poster">Poster image URL (optional)</Label>
+                  <Input
+                    id="url-vlog-poster"
+                    type="url"
+                    value={urlPoster}
+                    onChange={(e) => setUrlPoster(e.target.value)}
+                    placeholder="https://example.com/poster.jpg"
+                    maxLength={500}
+                    disabled={urlSubmitting}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="url-vlog-desc">Description (optional)</Label>
+                  <Textarea
+                    id="url-vlog-desc"
+                    value={urlDescription}
+                    onChange={(e) => setUrlDescription(e.target.value)}
+                    placeholder="Short description shown on the vlog and used for SEO"
+                    rows={3}
+                    maxLength={280}
+                    disabled={urlSubmitting}
+                  />
+                </div>
+                <Button type="submit" disabled={urlSubmitting} className="gap-2">
+                  {urlSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  {urlSubmitting ? 'Publishing…' : 'Publish vlog'}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
