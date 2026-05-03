@@ -48,11 +48,14 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled
-        ? 'bg-background/95 backdrop-blur-md shadow-soft border-b border-border'
-        : 'bg-transparent'
-    }`}>
+    <nav
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-background/95 backdrop-blur-md shadow-soft border-b border-border'
+          : 'bg-background/40 backdrop-blur-sm sm:bg-transparent'
+      }`}>
+
       {/* Glow accent line on scroll */}
       {isScrolled && (
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
@@ -119,7 +122,8 @@ const Navigation = () => {
 
       {/* Mobile Menu — full-screen overlay for better UX */}
       <div
-        className={`md:hidden fixed inset-0 top-[60px] sm:top-[80px] z-40 transition-all duration-300 ease-in-out ${
+        style={{ top: 'calc(env(safe-area-inset-top) + 60px)' }}
+        className={`md:hidden fixed inset-x-0 bottom-0 sm:!top-[80px] z-40 transition-all duration-300 ease-in-out ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
       >
