@@ -140,11 +140,61 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     return () => window.removeEventListener('keydown', onKey);
   }, [isActive, togglePlay]);
 
-  const handleLike = () => {
-    setLiked((prev) => {
-      setLikeCount((c) => c + (prev ? -1 : 1));
-      return !prev;
-    });
+  const handleLike = useCallback(async () => {
+    if (likeBusy) return;
+    setShowHeartBurst(true);
+    setTimeout(() => setShowHeartBurst(false), 600);
+
+    if (!isRealPost) {
+      // Sample vlogs: optimistic local toggle only
+      setLiked((prev) => {
+        setLikeCount((c) => c + (prev ? -1 : 1));
+        return !prev;
+      });
+      return;
+    }
+
+    setLikeBusy(true);
+    const fp = getFingerprint();
+    const wasLiked = liked;
+    // Optimistic
+    setLiked(!wasLiked);
+    setLikeCount((c) => c + (wasLiked ? -1 : 1));
+    try {
+      if (wasLiked) {
+        const { error } = await supabase
+          .from('blog_likes')
+          .delete()
+          .eq('post_id', vlog.id)
+          .eq('ip_address', fp);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('blog_likes')
+          .insert({ post_id: vlog.id, ip_address: fp, user_agent: navigator.userAgent });
+        if (error) throw error;
+      }
+    } catch {
+      // Revert on error
+      setLiked(wasLiked);
+      setLikeCount((c) => c + (wasLiked ? 1 : -1));
+      toast.error('Could not save like');
+    } finally {
+      setLikeBusy(false);
+    }
+  }, [liked, likeBusy, isRealPost, vlog.id]);
+
+  // Double-tap to like
+  const lastTapRef = useRef(0);
+  const handleVideoDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!liked) handleLike();
+      else { setShowHeartBurst(true); setTimeout(() => setShowHeartBurst(false), 600); }
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
   };
 
   const handleShare = async () => {
