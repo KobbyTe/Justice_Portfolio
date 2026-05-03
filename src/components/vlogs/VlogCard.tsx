@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import VlogComments from './VlogComments';
 
 export interface Vlog {
   id: string;
@@ -34,9 +36,44 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
   const [progress, setProgress] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(vlog.likes);
+  const [commentCount, setCommentCount] = useState(vlog.comments);
   const [showPlayHint, setShowPlayHint] = useState(false);
   const [showMuteFlash, setShowMuteFlash] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [likeBusy, setLikeBusy] = useState(false);
+
+  // Persistent fingerprint (shared with blog likes)
+  const getFingerprint = (): string => {
+    let fp = localStorage.getItem('like_fingerprint');
+    if (!fp) {
+      fp = crypto.randomUUID();
+      localStorage.setItem('like_fingerprint', fp);
+    }
+    return fp;
+  };
+
+  const isRealPost = !vlog.id.startsWith('sample-');
+
+  // Load real like + comment counts and liked state
+  useEffect(() => {
+    if (!isRealPost) return;
+    let cancelled = false;
+    (async () => {
+      const fp = getFingerprint();
+      const [{ count: lc }, { count: cc }, { data: mine }] = await Promise.all([
+        supabase.from('blog_likes').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id),
+        supabase.from('blog_comments').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id).eq('is_approved', true),
+        supabase.from('blog_likes').select('id').eq('post_id', vlog.id).eq('ip_address', fp).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setLikeCount(lc || 0);
+      setCommentCount(cc || 0);
+      setLiked(!!mine);
+    })();
+    return () => { cancelled = true; };
+  }, [vlog.id, isRealPost]);
 
   // Active state controls play/pause
   useEffect(() => {
