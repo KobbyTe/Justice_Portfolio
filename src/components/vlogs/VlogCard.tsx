@@ -234,7 +234,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           preload="metadata"
           aria-label={`${vlog.title}. ${vlog.description}`}
           onTimeUpdate={handleTimeUpdate}
-          onClick={handleVideoClick}
+          onClick={(e) => { handleVideoDoubleTap(); handleVideoClick(); }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
@@ -249,6 +249,13 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
                 <Volume2 className="w-10 h-10 text-white" />
               )}
             </div>
+          </div>
+        )}
+
+        {/* Heart burst on like / double-tap */}
+        {showHeartBurst && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+            <Heart className="w-28 h-28 fill-red-500 text-red-500 drop-shadow-2xl animate-in zoom-in-50 fade-in duration-300" />
           </div>
         )}
 
