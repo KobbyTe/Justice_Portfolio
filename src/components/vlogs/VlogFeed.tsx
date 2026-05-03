@@ -127,8 +127,8 @@ export const VlogFeed = ({ vlogs, initialIndex = 0, onActiveChange }: VlogFeedPr
         </button>
       </div>
 
-      {/* Counter */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
+      {/* Counter (desktop only — mobile is full-bleed) */}
+      <div className="hidden md:block absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
         {activeIndex + 1} / {vlogs.length}
       </div>
     </div>
