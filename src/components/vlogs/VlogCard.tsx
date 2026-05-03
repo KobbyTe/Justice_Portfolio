@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import VlogComments from './VlogComments';
 
 export interface Vlog {
   id: string;
@@ -34,9 +36,44 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
   const [progress, setProgress] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(vlog.likes);
+  const [commentCount, setCommentCount] = useState(vlog.comments);
   const [showPlayHint, setShowPlayHint] = useState(false);
   const [showMuteFlash, setShowMuteFlash] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [likeBusy, setLikeBusy] = useState(false);
+
+  // Persistent fingerprint (shared with blog likes)
+  const getFingerprint = (): string => {
+    let fp = localStorage.getItem('like_fingerprint');
+    if (!fp) {
+      fp = crypto.randomUUID();
+      localStorage.setItem('like_fingerprint', fp);
+    }
+    return fp;
+  };
+
+  const isRealPost = !vlog.id.startsWith('sample-');
+
+  // Load real like + comment counts and liked state
+  useEffect(() => {
+    if (!isRealPost) return;
+    let cancelled = false;
+    (async () => {
+      const fp = getFingerprint();
+      const [{ count: lc }, { count: cc }, { data: mine }] = await Promise.all([
+        supabase.from('blog_likes').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id),
+        supabase.from('blog_comments').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id).eq('is_approved', true),
+        supabase.from('blog_likes').select('id').eq('post_id', vlog.id).eq('ip_address', fp).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setLikeCount(lc || 0);
+      setCommentCount(cc || 0);
+      setLiked(!!mine);
+    })();
+    return () => { cancelled = true; };
+  }, [vlog.id, isRealPost]);
 
   // Active state controls play/pause
   useEffect(() => {
@@ -103,11 +140,61 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     return () => window.removeEventListener('keydown', onKey);
   }, [isActive, togglePlay]);
 
-  const handleLike = () => {
-    setLiked((prev) => {
-      setLikeCount((c) => c + (prev ? -1 : 1));
-      return !prev;
-    });
+  const handleLike = useCallback(async () => {
+    if (likeBusy) return;
+    setShowHeartBurst(true);
+    setTimeout(() => setShowHeartBurst(false), 600);
+
+    if (!isRealPost) {
+      // Sample vlogs: optimistic local toggle only
+      setLiked((prev) => {
+        setLikeCount((c) => c + (prev ? -1 : 1));
+        return !prev;
+      });
+      return;
+    }
+
+    setLikeBusy(true);
+    const fp = getFingerprint();
+    const wasLiked = liked;
+    // Optimistic
+    setLiked(!wasLiked);
+    setLikeCount((c) => c + (wasLiked ? -1 : 1));
+    try {
+      if (wasLiked) {
+        const { error } = await supabase
+          .from('blog_likes')
+          .delete()
+          .eq('post_id', vlog.id)
+          .eq('ip_address', fp);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('blog_likes')
+          .insert({ post_id: vlog.id, ip_address: fp, user_agent: navigator.userAgent });
+        if (error) throw error;
+      }
+    } catch {
+      // Revert on error
+      setLiked(wasLiked);
+      setLikeCount((c) => c + (wasLiked ? 1 : -1));
+      toast.error('Could not save like');
+    } finally {
+      setLikeBusy(false);
+    }
+  }, [liked, likeBusy, isRealPost, vlog.id]);
+
+  // Double-tap to like
+  const lastTapRef = useRef(0);
+  const handleVideoDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!liked) handleLike();
+      else { setShowHeartBurst(true); setTimeout(() => setShowHeartBurst(false), 600); }
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+    }
   };
 
   const handleShare = async () => {
@@ -147,7 +234,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           preload="metadata"
           aria-label={`${vlog.title}. ${vlog.description}`}
           onTimeUpdate={handleTimeUpdate}
-          onClick={handleVideoClick}
+          onClick={(e) => { handleVideoDoubleTap(); handleVideoClick(); }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
@@ -165,6 +252,13 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           </div>
         )}
 
+        {/* Heart burst on like / double-tap */}
+        {showHeartBurst && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+            <Heart className="w-28 h-28 fill-red-500 text-red-500 drop-shadow-2xl animate-in zoom-in-50 fade-in duration-300" />
+          </div>
+        )}
+
         {/* Play hint if autoplay was blocked */}
         {showPlayHint && (
           <button
@@ -178,12 +272,15 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           </button>
         )}
 
-        {/* Top-right action stack: play/pause + mute */}
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+        {/* Top-right action stack: play/pause + mute (offset for safe area) */}
+        <div
+          className="absolute right-3 z-10 flex flex-col gap-2"
+          style={{ top: 'calc(env(safe-area-inset-top) + 4.5rem)' }}
+        >
           <button
             onClick={togglePlay}
-            className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
-            aria-label={isPlaying ? 'Pause video (space)' : 'Play video (space)'}
+            className="rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors w-12 h-12 flex items-center justify-center"
+            aria-label={isPlaying ? 'Pause video' : 'Play video'}
             aria-pressed={isPlaying}
           >
             {isPlaying ? (
@@ -194,7 +291,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           </button>
           <button
             onClick={onToggleMuted}
-            className="p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
+            className="rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors w-12 h-12 flex items-center justify-center"
             aria-label={muted ? 'Unmute video' : 'Mute video'}
             aria-pressed={!muted}
           >
@@ -203,27 +300,32 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
         </div>
 
         {/* Bottom gradient overlay */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" aria-hidden="true" />
 
         {/* Bottom-left: title + description */}
-        <div className="absolute bottom-6 left-4 right-20 z-10 text-white">
-          <h2 className="font-bold text-lg mb-1 line-clamp-2">{vlog.title}</h2>
-          <p className="text-sm text-white/85 line-clamp-2">{vlog.description}</p>
+        <div
+          className="absolute left-4 right-20 z-10 text-white"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+        >
+          <h2 className="font-bold text-base sm:text-lg mb-1 line-clamp-2 drop-shadow">{vlog.title}</h2>
+          <p className="text-xs sm:text-sm text-white/85 line-clamp-2 drop-shadow">{vlog.description}</p>
         </div>
 
         {/* Bottom-right: action stack */}
         <div
-          className="absolute bottom-8 right-3 z-10 flex flex-col items-center gap-5"
+          className="absolute right-2 z-10 flex flex-col items-center gap-3"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 2rem)' }}
           role="group"
           aria-label="Vlog actions"
         >
           <button
             onClick={handleLike}
-            className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
+            disabled={likeBusy}
+            className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full disabled:opacity-70"
             aria-label={liked ? `Unlike. ${formatCount(likeCount)} likes` : `Like. ${formatCount(likeCount)} likes`}
             aria-pressed={liked}
           >
-            <div className="p-3 rounded-full bg-black/30 backdrop-blur-sm group-active:scale-90 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
               <Heart
                 className={cn(
                   'w-6 h-6 transition-colors',
@@ -232,18 +334,18 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
                 aria-hidden="true"
               />
             </div>
-            <span className="text-xs text-white font-semibold mt-1" aria-hidden="true">{formatCount(likeCount)}</span>
+            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">{formatCount(likeCount)}</span>
           </button>
 
           <button
-            onClick={() => toast.info('Comments coming soon')}
+            onClick={() => setCommentsOpen(true)}
             className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
-            aria-label={`Comments. ${formatCount(vlog.comments)} comments`}
+            aria-label={`Open comments. ${formatCount(commentCount)} comments`}
           >
-            <div className="p-3 rounded-full bg-black/30 backdrop-blur-sm group-active:scale-90 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
               <MessageCircle className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
-            <span className="text-xs text-white font-semibold mt-1" aria-hidden="true">{formatCount(vlog.comments)}</span>
+            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">{formatCount(commentCount)}</span>
           </button>
 
           <button
@@ -251,10 +353,10 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
             className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
             aria-label="Share this vlog"
           >
-            <div className="p-3 rounded-full bg-black/30 backdrop-blur-sm group-active:scale-90 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
               <Share2 className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
-            <span className="text-xs text-white font-semibold mt-1" aria-hidden="true">Share</span>
+            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">Share</span>
           </button>
         </div>
 
@@ -273,6 +375,15 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           />
         </div>
       </div>
+
+      {isRealPost && (
+        <VlogComments
+          postId={vlog.id}
+          open={commentsOpen}
+          onClose={() => setCommentsOpen(false)}
+          onCountChange={setCommentCount}
+        />
+      )}
     </section>
   );
 };

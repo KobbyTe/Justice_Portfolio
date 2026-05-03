@@ -140,17 +140,16 @@ const Vlogs = () => {
     <div className="fixed inset-0 bg-black overflow-hidden">
       <SEO {...seoProps} />
 
-      {/* Minimal top bar */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-3 pointer-events-none">
+      {/* Minimal top bar — back button only */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-3 pointer-events-none" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}>
         <Link
           to="/"
-          className="pointer-events-auto p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+          className="pointer-events-auto p-2.5 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors min-w-12 min-h-12 flex items-center justify-center"
           aria-label="Back to home"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <span className="pointer-events-auto text-white font-bold text-base">Vlogs</span>
-        <div className="w-10" />
+        <div className="w-12" />
       </div>
 
       {vlogs === null ? (
