@@ -38,12 +38,11 @@ export const LikeButton = ({ postId, initialLikeCount }: LikeButtonProps) => {
     
     try {
       if (isLiked) {
-        // Unlike: delete by fingerprint
-        const { error } = await supabase
-          .from('blog_likes')
-          .delete()
-          .eq('post_id', postId)
-          .eq('ip_address', fingerprint);
+        // Unlike via secure RPC (server enforces fingerprint match)
+        const { error } = await supabase.rpc('delete_own_blog_like', {
+          _post_id: postId,
+          _fingerprint: fingerprint,
+        });
 
         if (error) throw error;
         
