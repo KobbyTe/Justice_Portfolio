@@ -77,6 +77,29 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
+
+    // Input validation: prevent cost abuse, prompt injection, and payload flooding
+    const MAX_MESSAGES = 20;
+    const MAX_MSG_LENGTH = 2000;
+    const ALLOWED_ROLES = new Set(["user", "assistant"]);
+
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "Invalid messages payload" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const sanitized = messages
+      .filter((m: any) => m && typeof m === "object" && ALLOWED_ROLES.has(m.role) && typeof m.content === "string")
+      .map((m: any) => ({ role: m.role, content: m.content.slice(0, MAX_MSG_LENGTH) }))
+      .slice(-MAX_MESSAGES);
+
+    if (sanitized.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid messages provided" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -92,7 +115,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...sanitized,
         ],
         stream: true,
       }),
