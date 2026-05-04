@@ -782,6 +782,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_blog_like: {
+        Args: { _fingerprint: string; _post_id: string }
+        Returns: undefined
+      }
       get_blog_post_with_stats: {
         Args: { post_slug: string }
         Returns: {

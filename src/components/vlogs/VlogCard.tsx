@@ -162,11 +162,10 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     setLikeCount((c) => c + (wasLiked ? -1 : 1));
     try {
       if (wasLiked) {
-        const { error } = await supabase
-          .from('blog_likes')
-          .delete()
-          .eq('post_id', vlog.id)
-          .eq('ip_address', fp);
+        const { error } = await supabase.rpc('delete_own_blog_like', {
+          _post_id: vlog.id,
+          _fingerprint: fp,
+        });
         if (error) throw error;
       } else {
         const { error } = await supabase
