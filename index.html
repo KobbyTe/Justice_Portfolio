@@ -9,38 +9,95 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="index,follow" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- Favicon -->
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="/logo.png">
-    
-    <title>Justice Ansah</title>
-    <meta name="description" content="Portfolio of Justice Ansah - Full-Stack Developer, STEM Educator, and Robotics Engineer specializing in educational technology and innovative solutions." />
+
+    <title>Justice Ansah — Robotics Engineer & STEM Educator</title>
+    <meta name="description" content="Justice Ansah builds robotics, IoT and educational technology that makes STEM learning hands-on across Africa." />
     <meta name="author" content="Justice Ansah" />
 
-    <meta property="og:title" content="Justice Ansah" />
-    <meta property="og:description" content="Portfolio showcasing innovative projects in web development, robotics, and educational technology." />
+    <meta property="og:title" content="Justice Ansah — Robotics Engineer & STEM Educator" />
+    <meta property="og:description" content="Robotics, IoT and educational technology that makes STEM learning hands-on across Africa." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/logo.png" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@justice_ansah" />
-    <meta name="twitter:image" content="/logo.png" />
+    <meta name="twitter:title" content="Justice Ansah — Robotics Engineer & STEM Educator" />
+    <meta name="twitter:description" content="Robotics, IoT and educational technology that makes STEM learning hands-on across Africa." />
+    <meta name="twitter:image" content="/og-image.png" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-      }
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+
+        // Detect preview / iframe contexts — never register the SW there.
+        var inIframe = false;
+        try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+        var host = window.location.hostname;
+        var isPreview =
+          inIframe ||
+          host.indexOf('id-preview--') !== -1 ||
+          host.indexOf('lovableproject.com') !== -1 ||
+          host.indexOf('lovable.app') !== -1 ||
+          host === 'localhost' ||
+          host === '127.0.0.1';
+
+        if (isPreview) {
+          // Aggressively clean up any previously-registered SW + caches in preview.
+          navigator.serviceWorker.getRegistrations()
+            .then(function (regs) { regs.forEach(function (r) { r.unregister(); }); })
+            .catch(function () {});
+          if (window.caches && caches.keys) {
+            caches.keys().then(function (keys) { keys.forEach(function (k) { caches.delete(k); }); }).catch(function () {});
+          }
+          return;
+        }
+
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function (reg) {
+              // When a new SW is found, activate it ASAP and reload once it takes over.
+              reg.addEventListener('updatefound', function () {
+                var nw = reg.installing;
+                if (!nw) return;
+                nw.addEventListener('statechange', function () {
+                  if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                    nw.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              });
+
+              // Check for updates on each load.
+              reg.update().catch(function () {});
+            })
+            .catch(function (err) {
+              console.error('Service worker registration failed:', err);
+            });
+
+          // Reload exactly once when a new SW takes control.
+          var refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', function () {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          });
+        });
+      })();
     </script>
   </body>
 </html>

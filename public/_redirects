@@ -1,2 +1,4 @@
 /lovable-uploads/*  /uploads/:splat  301
+/vlogs              /blog            301
+/vlogs/*            /blog/:splat     301
 /*    /index.html   200

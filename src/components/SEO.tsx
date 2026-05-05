@@ -1,12 +1,27 @@
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'Justice Ansah';
-const DEFAULT_DESCRIPTION = 'Portfolio of Justice Ansah - Full-Stack Developer, STEM Educator, and Robotics Engineer specializing in educational technology and innovative solutions.';
-const DEFAULT_IMAGE = '/logo.png';
-const BASE_URL =
-  typeof window !== 'undefined' && window.location?.origin
-    ? window.location.origin
-    : '';
+const DEFAULT_DESCRIPTION =
+  'Robotics, IoT and educational technology that makes STEM learning hands-on across Africa.';
+const DEFAULT_IMAGE = '/og-image.png';
+
+const PRODUCTION_URL =
+  (import.meta.env.VITE_SITE_URL as string | undefined) || 'https://justiceansah.com';
+
+const isPreviewHost = (host: string) =>
+  host.includes('id-preview--') ||
+  host.includes('lovableproject.com') ||
+  host.includes('lovable.app') ||
+  host === 'localhost' ||
+  host === '127.0.0.1';
+
+const BASE_URL = (() => {
+  if (typeof window === 'undefined') return PRODUCTION_URL;
+  const host = window.location.hostname;
+  // Never leak preview URLs into canonical/OG tags.
+  if (isPreviewHost(host)) return PRODUCTION_URL;
+  return window.location.origin;
+})();
 
 interface SEOProps {
   title?: string;

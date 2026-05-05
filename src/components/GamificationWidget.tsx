@@ -80,7 +80,7 @@ const GamificationWidget = () => {
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   // Hide on admin and vlog routes
-  if (location.pathname === '/admin' || location.pathname.startsWith('/vlogs')) return null;
+  if (location.pathname === '/admin') return null;
 
   return (
     <>

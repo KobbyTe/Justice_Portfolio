@@ -1,4 +1,9 @@
 {
+  "redirects": [
+    { "source": "/vlogs", "destination": "/blog", "permanent": true },
+    { "source": "/vlogs/:slug", "destination": "/blog/:slug", "permanent": true },
+    { "source": "/lovable-uploads/:path*", "destination": "/uploads/:path*", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

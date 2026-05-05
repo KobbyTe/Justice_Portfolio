@@ -139,7 +139,7 @@ const Gallery = () => {
         <div className="text-center mb-8 sm:mb-12 animate-fade-up">
           <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">Visual Journal</p>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-foreground mb-3 sm:mb-4">
-            Frames of <span className="text-primary">Action</span>
+            <span className="text-primary">Gallery</span>
           </h1>
           <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             A visual record of the projects, people, and ideas that shaped my journey.

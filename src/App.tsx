@@ -11,7 +11,6 @@ import PullToRefresh from "./components/PullToRefresh";
 import OfflineFallback from "./components/OfflineFallback";
 import AIChatbot from "./components/AIChatbot";
 import GamificationWidget from "./components/GamificationWidget";
-import NotificationPrompt from "./components/NotificationPrompt";
 
 // Eagerly load the home page for fastest initial render
 import Home from "./pages/Home";
@@ -22,7 +21,7 @@ const Resume = lazy(() => import("./pages/Resume"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Vlogs = lazy(() => import("./pages/Vlogs"));
+
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Wall = lazy(() => import("./pages/Wall"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -67,8 +66,8 @@ const AnimatedRoutes = () => {
           <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
           <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
           <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
-          <Route path="/vlogs" element={<PageTransition><Vlogs /></PageTransition>} />
-          <Route path="/vlogs/:slug" element={<PageTransition><Vlogs /></PageTransition>} />
+          <Route path="/vlogs" element={<PageTransition><Blog /></PageTransition>} />
+          <Route path="/vlogs/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
           <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
           <Route path="/wall" element={<PageTransition><Wall /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
@@ -96,7 +95,6 @@ const App = () => (
         </PullToRefresh>
         <AIChatbot />
         <GamificationWidget />
-        <NotificationPrompt />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
