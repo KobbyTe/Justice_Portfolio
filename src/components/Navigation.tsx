@@ -41,8 +41,7 @@ const Navigation = () => {
     { path: '/resume', label: 'Resume' },
     { path: '/projects', label: 'Projects' },
     { path: '/blog', label: 'Blog' },
-    { path: '/vlogs', label: 'Vlogs' },
-    { path: '/gallery', label: 'Frames of Action' },
+    { path: '/gallery', label: 'Gallery' },
     { path: '/booking', label: 'Booking' },
     { path: '/wall', label: 'Wall' },
   ];
