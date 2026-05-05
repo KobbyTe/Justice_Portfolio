@@ -1,60 +1,81 @@
-const CACHE_NAME = 'justice-ansah-v2';
-const STATIC_ASSETS = ['/', '/manifest.json', '/offline.html'];
+// Bump on every release that changes asset URLs / SW behavior
+const CACHE_NAME = 'justice-ansah-v3';
+const OFFLINE_URL = '/offline.html';
 
+// Only cache the offline shell at install — never index.html itself.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
+});
+
+// Allow the page to trigger immediate activation of a new SW.
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  if (event.request.mode === 'navigate') {
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Navigations (HTML): network-first, NEVER cache index.html.
+  // On failure, fall back to the offline shell.
+  if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() =>
-          caches.match(event.request).then((cached) => cached || caches.match('/offline.html'))
-        )
+      (async () => {
+        try {
+          const fresh = await fetch(req, { cache: 'no-store' });
+          return fresh;
+        } catch {
+          const cache = await caches.open(CACHE_NAME);
+          return (await cache.match(OFFLINE_URL)) || Response.error();
+        }
+      })()
     );
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.ok && event.request.url.startsWith(self.location.origin)) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
+  // Hashed Vite assets are immutable: cache-first.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        if (cached) return cached;
+        return fetch(req).then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        });
       })
-      .catch(() => caches.match(event.request))
-  );
+    );
+    return;
+  }
+
+  // Everything else: network, fall back to cache if offline.
+  event.respondWith(fetch(req).catch(() => caches.match(req)));
 });
 
 // Push notification handler
 self.addEventListener('push', (event) => {
   let data = { title: 'New Activity', body: 'Something new happened on your portfolio.' };
   try {
-    if (event.data) {
-      data = event.data.json();
-    }
+    if (event.data) data = event.data.json();
   } catch (e) {
     // fallback to default
   }
@@ -64,16 +85,13 @@ self.addEventListener('push', (event) => {
     icon: '/logo.png',
     badge: '/logo.png',
     vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/',
-    },
+    data: { url: data.url || '/' },
     actions: data.actions || [],
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/';
