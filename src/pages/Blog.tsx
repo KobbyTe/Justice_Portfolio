@@ -20,6 +20,7 @@ const Blog = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedContentType, setSelectedContentType] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -44,7 +45,7 @@ const Blog = () => {
   useEffect(() => {
     setCurrentPage(1);
     setVisibleCount(POSTS_PER_PAGE);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, selectedContentType]);
 
   const loadBlogPosts = async () => {
     try {
@@ -53,9 +54,8 @@ const Blog = () => {
         .from('blog_posts')
         .select('*')
         .eq('is_published', true)
-        .is('featured_video_url', null)
         .order('published_at', { ascending: false });
-      setBlogPosts((data || []).filter((p: any) => !p.featured_video_url));
+      setBlogPosts(data || []);
     } catch (error) {
       console.error('Error loading blog posts:', error);
     } finally {
@@ -82,10 +82,13 @@ const Blog = () => {
         post.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesCategory = selectedCategory === '' || post.category === selectedCategory;
+      const matchesType =
+        selectedContentType === '' ||
+        (selectedContentType === 'vlog' ? !!post.featured_video_url : !post.featured_video_url);
       
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesCategory && matchesType;
     });
-  }, [blogPosts, searchQuery, selectedCategory]);
+  }, [blogPosts, searchQuery, selectedCategory, selectedContentType]);
 
   // Infinite scroll for mobile
   const loadMore = useCallback(() => {
@@ -162,12 +165,11 @@ const Blog = () => {
             <SearchAndFilters
               onSearch={setSearchQuery}
               onCategoryChange={setSelectedCategory}
-              onContentTypeChange={() => {}}
+              onContentTypeChange={setSelectedContentType}
               categories={categories}
               selectedCategory={selectedCategory}
-              selectedContentType=""
+              selectedContentType={selectedContentType}
               searchQuery={searchQuery}
-              hideContentTypeToggle
             />
 
 
