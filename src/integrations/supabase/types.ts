@@ -808,6 +808,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_recommendation_token_used: {
+        Args: { _token: string }
+        Returns: undefined
+      }
+      validate_recommendation_token: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          id: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
