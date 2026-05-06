@@ -33,27 +33,25 @@ const SubmitRecommendation = () => {
     }
 
     const { data, error } = await supabase
-      .from('recommendation_tokens')
-      .select('*')
-      .eq('token', token)
-      .maybeSingle();
+      .rpc('validate_recommendation_token', { _token: token });
 
-    if (error || !data) {
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row || row.status === 'not_found') {
       setTokenStatus('not_found');
       return;
     }
 
-    if (data.is_used) {
+    if (row.status === 'used') {
       setTokenStatus('used');
       return;
     }
 
-    if (new Date(data.expires_at) < new Date()) {
+    if (row.status === 'expired') {
       setTokenStatus('expired');
       return;
     }
 
-    setTokenData(data);
+    setTokenData({ id: row.id, token });
     setTokenStatus('valid');
   };
 
