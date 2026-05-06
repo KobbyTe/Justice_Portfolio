@@ -45,6 +45,13 @@ const BlogPost = () => {
     }
   }, [slug]);
 
+  // Vlogs go to the immersive player
+  useEffect(() => {
+    if (post?.featured_video_url && slug) {
+      navigate(`/watch/${slug}`, { replace: true });
+    }
+  }, [post, slug, navigate]);
+
   const loadBlogPost = async (postSlug: string) => {
     try {
       setLoading(true);
@@ -166,34 +173,7 @@ const BlogPost = () => {
             Back to Blog
           </Button>
 
-          {/* Video Hero for Vlogs */}
-          {post.featured_video_url && (
-            <div className="mb-6 sm:mb-8">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black shadow-2xl ring-1 ring-white/10">
-                {post.featured_video_url.includes('youtube.com') || post.featured_video_url.includes('youtu.be') ? (
-                  <iframe
-                    src={post.featured_video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title={post.title}
-                  />
-                ) : post.featured_video_url.includes('vimeo.com') ? (
-                  <iframe
-                    src={post.featured_video_url.replace('vimeo.com/', 'player.vimeo.com/video/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                    title={post.title}
-                  />
-                ) : (
-                  <video
-                    src={post.featured_video_url}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-            </div>
-          )}
+          {/* Vlogs are redirected to /watch/:slug — no inline video here */}
 
           {/* Hero Section */}
           <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">

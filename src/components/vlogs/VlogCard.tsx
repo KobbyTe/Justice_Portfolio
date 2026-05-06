@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -214,18 +214,30 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     }
   };
 
+  const relativeTime = (iso?: string | null) => {
+    if (!iso) return '';
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)}w ago`;
+    return `${Math.floor(diff / 2592000)}mo ago`;
+  };
+
   return (
     <section
-      className="relative h-[100dvh] w-full snap-start flex items-center justify-center bg-black"
+      className="relative h-[100dvh] w-full snap-start flex items-center justify-center"
       role="region"
       aria-label={`Vlog: ${vlog.title}`}
       aria-roledescription="vertical video"
     >
       {/* Video frame: full-screen on mobile, 9:16 column on desktop */}
-      <div className="relative h-full w-full md:h-auto md:max-h-[calc(100dvh-2rem)] md:aspect-[9/16] md:max-w-[420px] md:rounded-2xl md:overflow-hidden md:shadow-2xl bg-black">
+      <div className="relative h-full w-full md:h-auto md:max-h-[calc(100dvh-2rem)] md:aspect-[9/16] md:max-w-[420px] md:rounded-3xl md:overflow-hidden md:shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.35)] md:ring-1 md:ring-white/10 bg-black">
         <video
           ref={videoRef}
           src={vlog.videoUrl}
+          poster={vlog.posterUrl || undefined}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer"
           loop
           playsInline
@@ -233,15 +245,60 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           preload="metadata"
           aria-label={`${vlog.title}. ${vlog.description}`}
           onTimeUpdate={handleTimeUpdate}
-          onClick={(e) => { handleVideoDoubleTap(); handleVideoClick(); }}
+          onClick={() => { handleVideoDoubleTap(); handleVideoClick(); }}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
 
+        {/* Hairline progress bar at the top — TikTok-style */}
+        <div
+          className="absolute top-0 left-0 right-0 h-[3px] bg-white/15 z-20"
+          role="progressbar"
+          aria-label="Video playback progress"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="h-full bg-white rounded-r-full transition-[width] duration-100 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Top gradient for legibility */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent z-[1]" aria-hidden="true" />
+
+        {/* Top bar: author + timestamp */}
+        <div
+          className="absolute left-4 right-20 z-10 flex items-center gap-2.5 text-white"
+          style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+        >
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center font-bold text-sm shadow-lg ring-2 ring-white/20">
+            JA
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="font-semibold text-sm drop-shadow">Justice Ansah</span>
+            {vlog.publishedAt && (
+              <span className="text-[11px] text-white/70 drop-shadow">{relativeTime(vlog.publishedAt)}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Mute toggle (top-right, single button) */}
+        <button
+          onClick={onToggleMuted}
+          className="absolute right-3 z-10 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors flex items-center justify-center"
+          style={{ top: 'calc(env(safe-area-inset-top) + 1rem)' }}
+          aria-label={muted ? 'Unmute video' : 'Mute video'}
+          aria-pressed={!muted}
+        >
+          {muted ? <VolumeX className="w-4 h-4" aria-hidden="true" /> : <Volume2 className="w-4 h-4" aria-hidden="true" />}
+        </button>
+
         {/* Mute flash indicator */}
         {showMuteFlash && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
-            <div className="bg-black/60 rounded-full p-5 animate-in fade-in zoom-in duration-300">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-20" aria-hidden="true">
+            <div className="bg-black/50 backdrop-blur-md rounded-full p-5 animate-in fade-in zoom-in duration-300">
               {muted ? (
                 <VolumeX className="w-10 h-10 text-white" />
               ) : (
@@ -251,9 +308,18 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           </div>
         )}
 
+        {/* Pause indicator when paused */}
+        {!isPlaying && !showPlayHint && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10" aria-hidden="true">
+            <div className="bg-black/40 backdrop-blur-md rounded-full p-5 animate-in fade-in duration-200">
+              <Play className="w-10 h-10 text-white fill-white" />
+            </div>
+          </div>
+        )}
+
         {/* Heart burst on like / double-tap */}
         {showHeartBurst && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-20" aria-hidden="true">
             <Heart className="w-28 h-28 fill-red-500 text-red-500 drop-shadow-2xl animate-in zoom-in-50 fade-in duration-300" />
           </div>
         )}
@@ -262,7 +328,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
         {showPlayHint && (
           <button
             onClick={handleVideoClick}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute inset-0 flex items-center justify-center bg-black/40 z-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             aria-label="Play video"
           >
             <div className="bg-white/20 backdrop-blur-md rounded-full p-6">
@@ -271,48 +337,32 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           </button>
         )}
 
-        {/* Top-right action stack: play/pause + mute (offset for safe area) */}
-        <div
-          className="absolute right-3 z-10 flex flex-col gap-2"
-          style={{ top: 'calc(env(safe-area-inset-top) + 4.5rem)' }}
-        >
-          <button
-            onClick={togglePlay}
-            className="rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors w-12 h-12 flex items-center justify-center"
-            aria-label={isPlaying ? 'Pause video' : 'Play video'}
-            aria-pressed={isPlaying}
-          >
-            {isPlaying ? (
-              <Pause className="w-5 h-5" aria-hidden="true" />
-            ) : (
-              <Play className="w-5 h-5" aria-hidden="true" />
-            )}
-          </button>
-          <button
-            onClick={onToggleMuted}
-            className="rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors w-12 h-12 flex items-center justify-center"
-            aria-label={muted ? 'Unmute video' : 'Mute video'}
-            aria-pressed={!muted}
-          >
-            {muted ? <VolumeX className="w-5 h-5" aria-hidden="true" /> : <Volume2 className="w-5 h-5" aria-hidden="true" />}
-          </button>
-        </div>
-
         {/* Bottom gradient overlay */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/40 to-transparent" aria-hidden="true" />
 
-        {/* Bottom-left: title + description */}
+        {/* Bottom-left: title + description + tags */}
         <div
           className="absolute left-4 right-20 z-10 text-white"
           style={{ bottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
         >
           <h2 className="font-bold text-base sm:text-lg mb-1 line-clamp-2 drop-shadow">{vlog.title}</h2>
-          <p className="text-xs sm:text-sm text-white/85 line-clamp-2 drop-shadow">{vlog.description}</p>
+          {vlog.description && (
+            <p className="text-xs sm:text-sm text-white/85 line-clamp-2 drop-shadow mb-2">{vlog.description}</p>
+          )}
+          {vlog.tags && vlog.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {vlog.tags.slice(0, 3).map((t) => (
+                <span key={t} className="text-[11px] text-white/90 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Bottom-right: action stack */}
         <div
-          className="absolute right-2 z-10 flex flex-col items-center gap-3"
+          className="absolute right-2 z-10 flex flex-col items-center gap-4"
           style={{ bottom: 'calc(env(safe-area-inset-bottom) + 2rem)' }}
           role="group"
           aria-label="Vlog actions"
@@ -324,16 +374,16 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
             aria-label={liked ? `Unlike. ${formatCount(likeCount)} likes` : `Like. ${formatCount(likeCount)} likes`}
             aria-pressed={liked}
           >
-            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
+            <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center group-active:scale-90 group-hover:bg-white/20 transition-all shadow-lg">
               <Heart
                 className={cn(
-                  'w-6 h-6 transition-colors',
-                  liked ? 'fill-red-500 text-red-500' : 'text-white'
+                  'w-5 h-5 transition-all',
+                  liked ? 'fill-red-500 text-red-500 scale-110' : 'text-white'
                 )}
                 aria-hidden="true"
               />
             </div>
-            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">{formatCount(likeCount)}</span>
+            <span className="text-[11px] text-white font-medium mt-1 drop-shadow" aria-hidden="true">{formatCount(likeCount)}</span>
           </button>
 
           <button
@@ -341,10 +391,10 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
             className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
             aria-label={`Open comments. ${formatCount(commentCount)} comments`}
           >
-            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
-              <MessageCircle className="w-6 h-6 text-white" aria-hidden="true" />
+            <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center group-active:scale-90 group-hover:bg-white/20 transition-all shadow-lg">
+              <MessageCircle className="w-5 h-5 text-white" aria-hidden="true" />
             </div>
-            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">{formatCount(commentCount)}</span>
+            <span className="text-[11px] text-white font-medium mt-1 drop-shadow" aria-hidden="true">{formatCount(commentCount)}</span>
           </button>
 
           <button
@@ -352,26 +402,11 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
             className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-full"
             aria-label="Share this vlog"
           >
-            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-active:scale-90 transition-transform">
-              <Share2 className="w-6 h-6 text-white" aria-hidden="true" />
+            <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center group-active:scale-90 group-hover:bg-white/20 transition-all shadow-lg">
+              <Share2 className="w-5 h-5 text-white" aria-hidden="true" />
             </div>
-            <span className="text-[11px] text-white font-semibold mt-1 drop-shadow" aria-hidden="true">Share</span>
+            <span className="text-[11px] text-white font-medium mt-1 drop-shadow" aria-hidden="true">Share</span>
           </button>
-        </div>
-
-        {/* Progress bar */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-10"
-          role="progressbar"
-          aria-label="Video playback progress"
-          aria-valuenow={Math.round(progress)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
-          <div
-            className="h-full bg-white transition-[width] duration-100 ease-linear"
-            style={{ width: `${progress}%` }}
-          />
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, ExternalLink, Play, Video } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import OptimizedImage from '@/components/OptimizedImage';
 
 interface BlogPost {
@@ -29,6 +30,7 @@ const getYouTubeThumbnail = (url: string): string | null => {
 const isVlog = (post: BlogPost) => !!post.featured_video_url;
 
 export const BlogCard = ({ post, onClick }: BlogCardProps) => {
+  const navigate = useNavigate();
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -40,8 +42,17 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
   const vlog = isVlog(post);
   const youtubeThumb = post.featured_video_url ? getYouTubeThumbnail(post.featured_video_url) : null;
 
+  const handleClick = () => {
+    if (vlog) {
+      window.scrollTo(0, 0);
+      navigate(`/watch/${post.slug}`);
+    } else {
+      onClick(post.slug);
+    }
+  };
+
   return (
-    <Card className="glass-card hover-lift group cursor-pointer overflow-hidden" onClick={() => onClick(post.slug)}>
+    <Card className="glass-card hover-lift group cursor-pointer overflow-hidden" onClick={handleClick}>
       <div className="relative">
         {vlog ? (
           // Video-first card for vlogs

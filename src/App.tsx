@@ -21,6 +21,7 @@ const Resume = lazy(() => import("./pages/Resume"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Watch = lazy(() => import("./pages/Watch"));
 
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Wall = lazy(() => import("./pages/Wall"));
@@ -68,6 +69,7 @@ const AnimatedRoutes = () => {
           <Route path="/blog/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
           <Route path="/vlogs" element={<PageTransition><Blog /></PageTransition>} />
           <Route path="/vlogs/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
+          <Route path="/watch/:slug" element={<Watch />} />
           <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
           <Route path="/wall" element={<PageTransition><Wall /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
