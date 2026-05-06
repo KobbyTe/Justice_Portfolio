@@ -1,50 +1,60 @@
-## Plan: Ship the cleanup
 
-### 1. Remove NotificationPrompt
-- `src/App.tsx` — drop the import and the `<NotificationPrompt />` mount.
-- Delete `src/components/NotificationPrompt.tsx`.
-- Leave `push_subscriptions` table and `send-push` edge function intact (admin-side push still works); only the visitor-facing prompt goes.
+## Goal
 
-### 2. Service worker — proper registration + safe caching
-- `index.html` — replace the bare `register('/sw.js')` with a guarded registration:
-  - Skip in iframes and on `id-preview--*.lovable.app` / `lovableproject.com` hosts (unregister any existing SW there to clear the preview cache).
-  - `register('/sw.js').catch(...)` with console error.
-  - On `updatefound`, listen for the new worker's `statechange`; when it becomes `installed` and there's a controller, send `{type:'SKIP_WAITING'}` and reload once.
-- `public/sw.js`:
-  - Bump `CACHE_NAME` to `justice-ansah-v3` (and tie it to a build timestamp comment).
-  - Add `message` listener: `if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()`.
-  - Switch navigation handler to **NetworkFirst with a 3s timeout** that does NOT cache `index.html` / navigations into `CACHE_NAME` (only fall back to cached `/offline.html` on failure). This kills the "stale index.html forever" problem.
-  - Keep static-asset caching for hashed Vite assets only (filter URL by `/assets/` prefix) so JS/CSS bundles are still cached but HTML is always fresh.
+When a visitor clicks a vlog (any blog post with `featured_video_url`), open it in a full-screen, vertical, swipe-driven player — like TikTok, but cleaner and more modern — instead of the standard article layout. Text-only posts keep using the current `BlogPost` page.
 
-### 3. SEO meta — fix the lovable-preview leak and OG image
-- `src/components/SEO.tsx`:
-  - Introduce `SITE_URL` constant. Use `import.meta.env.VITE_SITE_URL` if present, fall back to a configured production URL (use `https://justiceansah.com` placeholder — user can swap once domain is set), and only fall back to `window.location.origin` when neither is set AND the host is not a lovable preview.
-  - Tighten `DEFAULT_DESCRIPTION` to a punchier one-liner.
-  - Default OG image to `/og-image.png` (1200×630). Note: ship a placeholder; user can replace.
-- `index.html`:
-  - Mirror the same `og:image` (`/og-image.png`) and add `og:image:width=1200`, `og:image:height=630`.
-  - Add `<meta name="robots" content="index,follow">`.
+## What changes
 
-### 4. Merge Vlogs into Blog
-- `src/pages/Blog.tsx` — remove `.is('featured_video_url', null)` filter and the post-filter; vlog posts now appear in Blog. `BlogCard` already renders the play-button overlay + "Vlog" badge + "Watch Now" CTA, so no card changes needed.
-- `src/components/blog/SearchAndFilters.tsx` — re-enable the content type toggle (or add a simple "All / Articles / Vlogs" pill set) so users can filter. Remove the `hideContentTypeToggle` prop usage in `Blog.tsx` and wire `selectedContentType` to filter `featured_video_url` presence.
-- `src/App.tsx` — delete the `/vlogs` and `/vlogs/:slug` routes and the `Vlogs` lazy import.
-- `src/components/Navigation.tsx` — remove the `Vlogs` nav item.
-- `public/_redirects` and `vercel.json` — add `/vlogs` → `/blog` (301) and `/vlogs/:slug` → `/blog/:slug` (301) so old links don't 404.
-- `src/components/AIChatbot.tsx` and `src/components/GamificationWidget.tsx` — drop the `/vlogs` path checks (no longer needed).
-- Delete `src/pages/Vlogs.tsx`. Keep `src/components/vlogs/*` and `src/components/admin/VlogManagement.tsx` for admin (admin still creates video posts; they just live in the unified Blog feed). Optionally rename the admin tab label from "Vlogs" to "Videos" — nice-to-have, will do.
-- `src/pages/BlogPost.tsx` already has the "Video Hero for Vlogs" branch, so deep-linked playback at `/blog/:slug` works.
+### 1. New route: `/watch/:slug`
+A dedicated full-bleed page that mounts the existing `VlogFeed` component:
+- Loads the active vlog by slug.
+- Loads sibling vlogs (other published posts where `featured_video_url is not null`, newest first) so the user can swipe up/down through the catalog.
+- Reorders the feed so the clicked vlog is the first card; the rest follow chronologically and loop back.
+- No `Navigation`/`Footer` chrome — just a small floating top-left back button and the feed.
+- SEO: title = vlog title, OG image = `featured_image_url` or YouTube thumbnail, canonical = `/watch/:slug`.
 
-### 5. Rename "Frames of Action" → "Gallery"
-- `src/components/Navigation.tsx` — change the label on the `/gallery` item to `Gallery`. Route already correct.
-- Quick `rg "Frames of Action"` sweep to catch any stray copies (page heading in `src/pages/Gallery.tsx`, footer, etc.) and rename them.
+### 2. Routing in `BlogCard`
+`src/components/blog/BlogCard.tsx`: when the card represents a vlog, navigate to `/watch/:slug` instead of `/blog/:slug`. Non-vlog cards keep going to `/blog/:slug`.
 
-### Resulting nav (8 → 7 items)
-```text
-Home · About · Resume · Projects · Blog · Gallery · Booking · Wall
-```
+`src/pages/Blog.tsx`: `handleBlogClick` becomes vlog-aware (or the routing decision moves entirely into `BlogCard`).
 
-### Notes / non-goals
-- Not touching the chatbot or gamification widget mounts in this pass (separate decision).
-- Not changing admin Vlog Management table/columns — vlogs remain `blog_posts` rows with `featured_video_url`; only the public surface is merged.
-- OG image file (`public/og-image.png`) will be created as a simple branded placeholder; swap with a designed asset later.
+`src/pages/BlogPost.tsx`: if a user lands on `/blog/:slug` and the loaded post has a `featured_video_url`, redirect once to `/watch/:slug` (keeps existing inbound links working, removes the duplicate iframe player).
+
+`src/App.tsx`: register the new `/watch/:slug` route, lazy-loaded.
+
+### 3. Cleaner, more modern `VlogCard`
+Targeted polish on `src/components/vlogs/VlogCard.tsx` — keep behavior, refine the surface:
+
+- **Top bar (new)**: thin gradient with a small avatar/initial + "Justice Ansah" label + relative timestamp ("3d ago"). Replaces the orphaned action buttons floating below the global nav.
+- **Action stack (right)**: drop the heavy black/40 circular pills. Use frosted, smaller (44px) icon buttons with subtle shadow, tighter spacing, and counts in a lighter weight. Animate the heart with a spring on tap.
+- **Title/description (bottom-left)**: tighter type scale, max 2 lines title + 2 lines description, subtle expand-on-tap for long descriptions, tag chips rendered inline when present.
+- **Progress bar**: move to the very top of the card (TikTok-style hairline) and slim it to 2px with rounded ends; remove the bottom one.
+- **Mute/play affordance**: collapse the redundant top-right play+mute pair into a single mute toggle; keep tap-to-pause and double-tap-to-like on the video itself. Show a one-time, auto-fading "tap to unmute" pill for the first card only.
+- **Desktop frame**: keep 9:16 column, but soften with `rounded-3xl`, a faint outer glow (`shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.25)]`), and a blurred ambient backdrop (scaled-up, blurred copy of the poster behind the frame) instead of pure black.
+- **Comments sheet**: open from the bottom, rounded top corners, drag handle, max-height 80dvh (already partially present in `VlogComments`; just verify styling matches the new surface).
+
+All colors via existing semantic tokens; no raw hex.
+
+### 4. Feed-level polish (`VlogFeed.tsx`)
+- Replace the bare black background with the same ambient blurred backdrop so swipes feel continuous.
+- Keep the desktop counter pill; restyle to match (smaller, frosted, top-center).
+- Add a subtle scroll-snap easing and a one-time "swipe up for more" hint on the first card on mobile.
+
+### 5. Housekeeping
+- Remove the old `<video controls>` / iframe block from `BlogPost.tsx` (lines 169–196) once the redirect is in place — vlogs no longer render here.
+- Add a `Watch` CTA on `BlogCard` for vlogs (replace current "Watch Now" text with a small play-pill that visually previews the destination experience).
+
+## Out of scope
+- No new database columns or RLS changes.
+- No edits to `VlogManagement` admin tooling.
+- Chatbot, gamification widget, and other globals are untouched.
+
+## Files touched
+- `src/App.tsx` — add `/watch/:slug` route
+- `src/pages/Watch.tsx` — new page (loads vlogs, mounts `VlogFeed`)
+- `src/pages/Blog.tsx` — vlog-aware click routing
+- `src/pages/BlogPost.tsx` — redirect vlogs to `/watch/:slug`, drop inline video block
+- `src/components/blog/BlogCard.tsx` — route vlogs to `/watch/:slug`, refresh CTA
+- `src/components/vlogs/VlogCard.tsx` — visual refresh
+- `src/components/vlogs/VlogFeed.tsx` — ambient backdrop, hint
+- `public/_redirects`, `vercel.json` — optional: add `/vlogs/:slug → /watch/:slug` (currently they go to `/blog/:slug`, which would then bounce to `/watch/:slug` anyway — fine to leave as-is)
