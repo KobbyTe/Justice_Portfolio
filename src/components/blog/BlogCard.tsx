@@ -40,8 +40,16 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
   const vlog = isVlog(post);
   const youtubeThumb = post.featured_video_url ? getYouTubeThumbnail(post.featured_video_url) : null;
 
+  const handleClick = () => {
+    if (vlog) {
+      window.location.assign(`/watch/${post.slug}`);
+    } else {
+      onClick(post.slug);
+    }
+  };
+
   return (
-    <Card className="glass-card hover-lift group cursor-pointer overflow-hidden" onClick={() => onClick(post.slug)}>
+    <Card className="glass-card hover-lift group cursor-pointer overflow-hidden" onClick={handleClick}>
       <div className="relative">
         {vlog ? (
           // Video-first card for vlogs
