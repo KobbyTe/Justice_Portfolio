@@ -33,27 +33,25 @@ const SubmitRecommendation = () => {
     }
 
     const { data, error } = await supabase
-      .from('recommendation_tokens')
-      .select('*')
-      .eq('token', token)
-      .maybeSingle();
+      .rpc('validate_recommendation_token', { _token: token });
 
-    if (error || !data) {
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row || row.status === 'not_found') {
       setTokenStatus('not_found');
       return;
     }
 
-    if (data.is_used) {
+    if (row.status === 'used') {
       setTokenStatus('used');
       return;
     }
 
-    if (new Date(data.expires_at) < new Date()) {
+    if (row.status === 'expired') {
       setTokenStatus('expired');
       return;
     }
 
-    setTokenData(data);
+    setTokenData({ id: row.id, token });
     setTokenStatus('valid');
   };
 
@@ -118,11 +116,9 @@ const SubmitRecommendation = () => {
 
       if (insertError) throw insertError;
 
-      // Mark token as used
+      // Mark token as used via secure RPC
       const { error: updateError } = await supabase
-        .from('recommendation_tokens')
-        .update({ is_used: true })
-        .eq('id', tokenData.id);
+        .rpc('mark_recommendation_token_used', { _token: token });
 
       if (updateError) console.error('Failed to mark token as used:', updateError);
 
