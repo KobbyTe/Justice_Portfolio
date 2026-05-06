@@ -75,7 +75,7 @@ export const VlogFeed = ({ vlogs, initialIndex = 0, onActiveChange }: VlogFeedPr
   }, [activeIndex, vlogs.length, scrollToIndex]);
 
   return (
-    <div className="relative h-[100dvh] w-full bg-black">
+    <div className="relative h-[100dvh] w-full bg-transparent">
       {/* SR-only live region announcing the active vlog */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {vlogs[activeIndex]
