@@ -116,11 +116,9 @@ const SubmitRecommendation = () => {
 
       if (insertError) throw insertError;
 
-      // Mark token as used
+      // Mark token as used via secure RPC
       const { error: updateError } = await supabase
-        .from('recommendation_tokens')
-        .update({ is_used: true })
-        .eq('id', tokenData.id);
+        .rpc('mark_recommendation_token_used', { _token: token });
 
       if (updateError) console.error('Failed to mark token as used:', updateError);
 
