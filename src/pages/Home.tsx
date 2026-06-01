@@ -17,7 +17,9 @@ import { Button } from '@/components/ui/button';
 const ROLES = ['Robotics Engineer', 'IoT Developer', 'STEM Instructor', 'Innovator'];
 
 const Home = () => {
-  const fallbackImages = [heroWorkspace1, heroWorkspace2, heroWorkspace3, heroWorkspace4];
+  // Use the preloaded /hero-lcp.jpg as the FIRST hero image — it matches the
+  // <link rel="preload"> in index.html, so it paints instantly.
+  const fallbackImages = ['/hero-lcp.jpg', heroWorkspace2, heroWorkspace3, heroWorkspace4];
   const [heroImages, setHeroImages] = useState(fallbackImages);
   const [socialLinks, setSocialLinks] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -33,28 +35,32 @@ const Home = () => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadData();
+    // Defer non-critical data fetching until the browser is idle so it doesn't
+    // compete with hero image decode / first paint.
+    const run = () => {
+      supabase.from('hero_images').select('*').eq('is_active', true).then(({ data }) => {
+        if (data && data.length > 0) setHeroImages(data.map((img: any) => img.image_url));
+      });
+      supabase.from('social_links').select('*').eq('is_active', true).order('sort_order').then(({ data }) => {
+        setSocialLinks(data || []);
+      });
+      supabase.from('about_content').select('*').single().then(({ data }) => {
+        setAboutContent(data);
+      });
+    };
+
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(run, { timeout: 1500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(run, 200);
+    return () => clearTimeout(t);
   }, []);
 
-  const loadData = async () => {
-    try {
-      const [heroRes, socialRes, aboutRes] = await Promise.all([
-        supabase.from('hero_images').select('*').eq('is_active', true),
-        supabase.from('social_links').select('*').eq('is_active', true).order('sort_order'),
-        supabase.from('about_content').select('*').single()
-      ]);
-      if (heroRes.data && heroRes.data.length > 0) {
-        setHeroImages(heroRes.data.map(img => img.image_url));
-      }
-      setSocialLinks(socialRes.data || []);
-      setAboutContent(aboutRes.data);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
-  };
-
   useEffect(() => {
-    setCurrentImageIndex(Math.floor(Math.random() * heroImages.length));
+    // Start on the preloaded LCP image; rotation begins after first paint.
+    setCurrentImageIndex(0);
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 10000);
