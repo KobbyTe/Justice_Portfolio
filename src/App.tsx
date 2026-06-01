@@ -6,11 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { usePageTracking } from "./hooks/usePageTracking";
+import { usePrefetchRoutes } from "./hooks/usePrefetchRoutes";
 import PageTransition from "./components/PageTransition";
 import PullToRefresh from "./components/PullToRefresh";
 import OfflineFallback from "./components/OfflineFallback";
-import AIChatbot from "./components/AIChatbot";
-import GamificationWidget from "./components/GamificationWidget";
+import IdleMount from "./components/IdleMount";
+
+// Defer non-critical floating widgets so they don't block first paint.
+const AIChatbot = lazy(() => import("./components/AIChatbot"));
+const GamificationWidget = lazy(() => import("./components/GamificationWidget"));
 
 // Eagerly load the home page for fastest initial render
 import Home from "./pages/Home";
