@@ -217,16 +217,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Logo Carousel */}
-      <LogoCarousel />
-
-      {/* Impact Metrics Section */}
-      <ImpactMetrics />
-
-      {/* Recommendations Section */}
-      <Recommendations />
-
-      <Footer />
+      {/* Below-fold sections: skip work until they scroll into view. */}
+      <div style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 800px' } as any}>
+        <LogoCarousel />
+        <ImpactMetrics />
+        <Recommendations />
+        <Footer />
+      </div>
     </div>
   );
 };
