@@ -1,60 +1,84 @@
-
 ## Goal
+Cut Time-to-Interactive on first load and make navigations feel instant. Focus on the biggest wins, not micro-tweaks.
 
-When a visitor clicks a vlog (any blog post with `featured_video_url`), open it in a full-screen, vertical, swipe-driven player — like TikTok, but cleaner and more modern — instead of the standard article layout. Text-only posts keep using the current `BlogPost` page.
+## What's slow today
+1. **Render-blocking Google Fonts** in `<head>` — blocks first paint until the CSS arrives.
+2. **No LCP preload** — the hero background image starts downloading only after JS parses `Home.tsx`.
+3. **Heavy libs ship on first load** — `framer-motion`, `recharts`, `quill`/`react-quill`, `embla`, `heic2any` are all in one main chunk even though Quill/recharts/heic only run in admin.
+4. **Eager widgets above the fold** — `AIChatbot` and `GamificationWidget` import on every route at mount, adding JS + network before paint.
+5. **Service worker doesn't precache hashed assets** — repeat visits still hit network for the app shell.
+6. **`PageLoader` spinner** flashes for every lazy route because there's no route prefetch on hover/idle.
+7. **Home does 3 sequential-ish Supabase queries before paint** even though hero has perfectly good fallback images.
 
-## What changes
+## Plan
 
-### 1. New route: `/watch/:slug`
-A dedicated full-bleed page that mounts the existing `VlogFeed` component:
-- Loads the active vlog by slug.
-- Loads sibling vlogs (other published posts where `featured_video_url is not null`, newest first) so the user can swipe up/down through the catalog.
-- Reorders the feed so the clicked vlog is the first card; the rest follow chronologically and loop back.
-- No `Navigation`/`Footer` chrome — just a small floating top-left back button and the feed.
-- SEO: title = vlog title, OG image = `featured_image_url` or YouTube thumbnail, canonical = `/watch/:slug`.
+### 1. Unblock first paint
+- Swap render-blocking `<link rel="stylesheet">` for Google Fonts into `<link rel="preload" as="style" onload="...">` + `<noscript>` fallback, and add `&display=swap` (already there). Drop the `Inter` weights down to just `400;600` — `Montserrat` already covers headings.
+- Add `<link rel="preload" as="image" href="/hero-lcp.webp" fetchpriority="high">` in `index.html`. Export the current hero-workspace.jpg to `public/hero-lcp.webp` (smaller, fixed filename, no hashing) and use it as the first frame in `Home.tsx` so the preload actually matches the LCP element.
+- Add `<link rel="dns-prefetch">` + `preconnect` for the Supabase URL.
 
-### 2. Routing in `BlogCard`
-`src/components/blog/BlogCard.tsx`: when the card represents a vlog, navigate to `/watch/:slug` instead of `/blog/:slug`. Non-vlog cards keep going to `/blog/:slug`.
+### 2. Code-split the heavy stuff
+- Manual Vite chunks in `vite.config.ts`:
+  ```ts
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'motion': ['framer-motion'],
+          'charts': ['recharts'],
+          'editor': ['quill', 'react-quill'],
+          'supabase': ['@supabase/supabase-js'],
+        }
+      }
+    },
+    target: 'es2020',
+    cssCodeSplit: true,
+  }
+  ```
+- Lazy-import `heic2any` only inside the upload handler that needs it (dynamic `import()`).
+- Confirm `Admin.tsx` and its sub-editors are already lazy (they are via `App.tsx`), and that recharts/quill are only referenced from admin sub-trees so they fall out of the main bundle.
 
-`src/pages/Blog.tsx`: `handleBlogClick` becomes vlog-aware (or the routing decision moves entirely into `BlogCard`).
+### 3. Defer non-critical widgets
+- In `App.tsx`, wrap `AIChatbot` and `GamificationWidget` in `lazy(() => import(...))` and mount them inside a `requestIdleCallback` (with `setTimeout` fallback) wrapper component so they don't compete with the hero render.
 
-`src/pages/BlogPost.tsx`: if a user lands on `/blog/:slug` and the loaded post has a `featured_video_url`, redirect once to `/watch/:slug` (keeps existing inbound links working, removes the duplicate iframe player).
+### 4. Smarter route prefetch
+- Add a tiny `usePrefetchRoutes` hook that, after the home route is interactive (`requestIdleCallback`), warms `import('./pages/Projects')`, `import('./pages/About')`, `import('./pages/Resume')`. Removes the spinner flash for the most common next-clicks.
+- Optionally prefetch on `<Link>` hover via a `PrefetchLink` wrapper for nav items.
 
-`src/App.tsx`: register the new `/watch/:slug` route, lazy-loaded.
+### 5. Service worker: precache + faster repeat loads
+- On `install`, additionally `cache.addAll(['/', '/offline.html', '/manifest.json', '/logo.png'])`.
+- Keep navigation network-first (already correct), but for `/assets/*` already cache-first — good.
+- Add stale-while-revalidate for same-origin images (`/*.webp`, `/*.png`, `/*.jpg`) so the hero image loads from cache on repeat visits.
+- Bump `CACHE_NAME` to `justice-ansah-v4`.
 
-### 3. Cleaner, more modern `VlogCard`
-Targeted polish on `src/components/vlogs/VlogCard.tsx` — keep behavior, refine the surface:
+### 6. Home page data: don't block paint
+- Render the hero immediately with `fallbackImages` and `aboutContent = null` (already the case).
+- Move `loadData()` into a `useEffect` that runs inside `requestIdleCallback` — Supabase fetches stop competing with the LCP image decode.
+- Switch `Promise.all` to fire-and-forget per-section so a slow `about_content` query doesn't delay `social_links`.
 
-- **Top bar (new)**: thin gradient with a small avatar/initial + "Justice Ansah" label + relative timestamp ("3d ago"). Replaces the orphaned action buttons floating below the global nav.
-- **Action stack (right)**: drop the heavy black/40 circular pills. Use frosted, smaller (44px) icon buttons with subtle shadow, tighter spacing, and counts in a lighter weight. Animate the heart with a spring on tap.
-- **Title/description (bottom-left)**: tighter type scale, max 2 lines title + 2 lines description, subtle expand-on-tap for long descriptions, tag chips rendered inline when present.
-- **Progress bar**: move to the very top of the card (TikTok-style hairline) and slim it to 2px with rounded ends; remove the bottom one.
-- **Mute/play affordance**: collapse the redundant top-right play+mute pair into a single mute toggle; keep tap-to-pause and double-tap-to-like on the video itself. Show a one-time, auto-fading "tap to unmute" pill for the first card only.
-- **Desktop frame**: keep 9:16 column, but soften with `rounded-3xl`, a faint outer glow (`shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.25)]`), and a blurred ambient backdrop (scaled-up, blurred copy of the poster behind the frame) instead of pure black.
-- **Comments sheet**: open from the bottom, rounded top corners, drag handle, max-height 80dvh (already partially present in `VlogComments`; just verify styling matches the new surface).
-
-All colors via existing semantic tokens; no raw hex.
-
-### 4. Feed-level polish (`VlogFeed.tsx`)
-- Replace the bare black background with the same ambient blurred backdrop so swipes feel continuous.
-- Keep the desktop counter pill; restyle to match (smaller, frosted, top-center).
-- Add a subtle scroll-snap easing and a one-time "swipe up for more" hint on the first card on mobile.
-
-### 5. Housekeeping
-- Remove the old `<video controls>` / iframe block from `BlogPost.tsx` (lines 169–196) once the redirect is in place — vlogs no longer render here.
-- Add a `Watch` CTA on `BlogCard` for vlogs (replace current "Watch Now" text with a small play-pill that visually previews the destination experience).
-
-## Out of scope
-- No new database columns or RLS changes.
-- No edits to `VlogManagement` admin tooling.
-- Chatbot, gamification widget, and other globals are untouched.
+### 7. Tiny polish
+- Add `loading="eager"` + `fetchpriority="high"` only on the first hero `<img>`; everything else stays lazy (already mostly correct).
+- Add `content-visibility: auto` on below-the-fold sections (`LogoCarousel`, `ImpactMetrics`, `Recommendations`, `Footer`) via a utility class.
+- Replace the full-screen `PageLoader` spinner with a 1-frame skeleton matching nav height so layout doesn't jump.
 
 ## Files touched
-- `src/App.tsx` — add `/watch/:slug` route
-- `src/pages/Watch.tsx` — new page (loads vlogs, mounts `VlogFeed`)
-- `src/pages/Blog.tsx` — vlog-aware click routing
-- `src/pages/BlogPost.tsx` — redirect vlogs to `/watch/:slug`, drop inline video block
-- `src/components/blog/BlogCard.tsx` — route vlogs to `/watch/:slug`, refresh CTA
-- `src/components/vlogs/VlogCard.tsx` — visual refresh
-- `src/components/vlogs/VlogFeed.tsx` — ambient backdrop, hint
-- `public/_redirects`, `vercel.json` — optional: add `/vlogs/:slug → /watch/:slug` (currently they go to `/blog/:slug`, which would then bounce to `/watch/:slug` anyway — fine to leave as-is)
+- `index.html` — font preload, LCP preload, preconnect
+- `vite.config.ts` — manualChunks, target
+- `public/sw.js` — precache + SWR for images, version bump
+- `src/App.tsx` — idle-mount chatbot/gamification, prefetch hook
+- `src/main.tsx` — no change
+- `src/pages/Home.tsx` — idle data load, LCP image swap
+- `src/hooks/usePrefetchRoutes.ts` — new
+- `src/components/IdleMount.tsx` — new
+- anywhere `heic2any` is imported — convert to dynamic import
+
+## Out of scope
+- Image format conversion pipeline (would need `vite-imagetools` + asset rework). Call out separately if you want it next.
+- SSR/prerender — not worth the rewrite for this app.
+
+## Expected impact
+- First Contentful Paint: ~40-50% faster (fonts unblocked, LCP preloaded).
+- Main JS bundle: ~30-50% smaller after splitting motion/charts/quill out.
+- Route navigations: feel instant after first idle prefetch.
+- Repeat visits: near-instant via SW precache.

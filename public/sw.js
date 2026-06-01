@@ -1,11 +1,23 @@
 // Bump on every release that changes asset URLs / SW behavior
-const CACHE_NAME = 'justice-ansah-v3';
+const CACHE_NAME = 'justice-ansah-v4';
 const OFFLINE_URL = '/offline.html';
+const PRECACHE_URLS = [
+  OFFLINE_URL,
+  '/manifest.json',
+  '/logo.png',
+  '/favicon.png',
+  '/hero-lcp.jpg',
+];
 
-// Only cache the offline shell at install — never index.html itself.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch(() => {/* ignore individual failures */})
+        )
+      )
+    )
   );
 });
 
@@ -26,6 +38,8 @@ self.addEventListener('message', (event) => {
   }
 });
 
+const isImageRequest = (url) => /\.(?:png|jpe?g|webp|avif|gif|svg)$/i.test(url.pathname);
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -34,13 +48,11 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Navigations (HTML): network-first, NEVER cache index.html.
-  // On failure, fall back to the offline shell.
   if (req.mode === 'navigate') {
     event.respondWith(
       (async () => {
         try {
-          const fresh = await fetch(req, { cache: 'no-store' });
-          return fresh;
+          return await fetch(req, { cache: 'no-store' });
         } catch {
           const cache = await caches.open(CACHE_NAME);
           return (await cache.match(OFFLINE_URL)) || Response.error();
@@ -62,6 +74,23 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         });
+      })
+    );
+    return;
+  }
+
+  // Images: stale-while-revalidate for near-instant repeat visits.
+  if (isImageRequest(url)) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(req);
+        const networkFetch = fetch(req)
+          .then((res) => {
+            if (res.ok) cache.put(req, res.clone());
+            return res;
+          })
+          .catch(() => cached);
+        return cached || networkFetch;
       })
     );
     return;
