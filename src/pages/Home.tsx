@@ -123,6 +123,7 @@ const Home = () => {
                   idx === currentImageIndex ? 'opacity-100' : 'opacity-0'
                 }`}
                 loading={idx === 0 ? 'eager' : 'lazy'}
+                {...(idx === 0 ? { fetchPriority: 'high' as any } : {})}
                 decoding="async"
                 style={{
                   maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 60%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.3) 100%)',
