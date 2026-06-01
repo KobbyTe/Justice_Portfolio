@@ -49,12 +49,13 @@ const queryClient = new QueryClient({
 
 const PageTracker = () => {
   usePageTracking();
+  usePrefetchRoutes();
   return null;
 };
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin opacity-70" />
   </div>
 );
 
@@ -99,8 +100,12 @@ const App = () => (
         <PullToRefresh>
           <AnimatedRoutes />
         </PullToRefresh>
-        <AIChatbot />
-        <GamificationWidget />
+        <IdleMount>
+          <Suspense fallback={null}>
+            <AIChatbot />
+            <GamificationWidget />
+          </Suspense>
+        </IdleMount>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
