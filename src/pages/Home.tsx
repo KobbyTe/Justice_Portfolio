@@ -4,7 +4,6 @@ import Footer from '@/components/Footer';
 import Recommendations from '@/components/Recommendations';
 import ImpactMetrics from '@/components/ImpactMetrics';
 import LogoCarousel from '@/components/LogoCarousel';
-import heroWorkspace1 from '@/assets/hero-workspace.jpg';
 import heroWorkspace2 from '@/assets/hero-workspace-2.jpg';
 import heroWorkspace3 from '@/assets/hero-workspace-3.jpg';
 import heroWorkspace4 from '@/assets/hero-workspace-4.jpg';
