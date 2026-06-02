@@ -44,10 +44,20 @@ const Gallery = () => {
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      setGalleryItems((data || []).map(item => ({
-        ...item,
-        media_type: item.media_type as 'image' | 'video'
-      })));
+      // Deduplicate by id first (paranoia), then by media URL so the same
+      // image/video can never appear twice even if the data source returns it.
+      const seenIds = new Set<string>();
+      const seenUrls = new Set<string>();
+      const unique: GalleryItem[] = [];
+      for (const item of data || []) {
+        if (seenIds.has(item.id)) continue;
+        const urlKey = (item.media_type === 'video' ? item.video_url : item.image_url) || item.image_url;
+        if (urlKey && seenUrls.has(urlKey)) continue;
+        seenIds.add(item.id);
+        if (urlKey) seenUrls.add(urlKey);
+        unique.push({ ...item, media_type: item.media_type as 'image' | 'video' });
+      }
+      setGalleryItems(unique);
     } catch (error) {
       console.error('Error loading gallery:', error);
     } finally {
