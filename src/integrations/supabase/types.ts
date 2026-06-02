@@ -132,21 +132,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          ip_address: unknown
+          ip_address: string
           post_id: string
           user_agent: string | null
         }
         Insert: {
           created_at?: string
           id?: string
-          ip_address: unknown
+          ip_address: string
           post_id: string
           user_agent?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          ip_address?: unknown
+          ip_address?: string
           post_id?: string
           user_agent?: string | null
         }
