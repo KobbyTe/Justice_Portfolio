@@ -84,70 +84,102 @@ export const VlogComments = ({ postId, open, onClose, onCountChange }: VlogComme
     }
   };
 
+  const timeAgo = (iso: string) => {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+    return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  // Stable gradient avatar per name
+  const avatarGradient = (name: string) => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return `linear-gradient(135deg, hsl(${h} 70% 55%), hsl(${(h + 40) % 360} 70% 45%))`;
+  };
+
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-black/60"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-[71] bg-background rounded-t-2xl shadow-2xl flex flex-col max-h-[85dvh]"
+            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+            className="fixed inset-x-0 bottom-0 z-[71] bg-background rounded-t-3xl shadow-2xl flex flex-col max-h-[88dvh] border-t border-border/60 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             role="dialog"
             aria-modal="true"
             aria-label="Comments"
           >
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-bold text-foreground">
-                Comments {comments.length > 0 && <span className="text-muted-foreground font-normal">({comments.length})</span>}
-              </h3>
+            {/* Drag handle */}
+            <div className="flex justify-center pt-2.5 pb-1">
+              <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 pt-2 pb-3">
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-lg font-semibold tracking-tight text-foreground">Comments</h3>
+                {comments.length > 0 && (
+                  <span className="text-sm text-muted-foreground tabular-nums">{comments.length}</span>
+                )}
+              </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-muted min-w-12 min-h-12 flex items-center justify-center"
+                className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Close comments"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="h-px bg-border/60" />
+
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
               {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+                <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
               ) : comments.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8 text-sm">No comments yet. Be the first!</p>
+                <div className="text-center py-12">
+                  <p className="text-sm font-medium text-foreground">No comments yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Start the conversation below.</p>
+                </div>
               ) : (
                 comments.map((c) => (
-                  <div key={c.id} className="flex gap-3 p-3 rounded-lg bg-muted/40">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold flex-shrink-0">
+                  <div key={c.id} className="flex gap-3">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm"
+                      style={{ background: avatarGradient(c.name) }}
+                      aria-hidden="true"
+                    >
                       {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         <span className="font-semibold text-sm text-foreground truncate">{c.name}</span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {new Date(c.created_at).toLocaleDateString()}
-                        </span>
+                        <span className="text-[11px] text-muted-foreground">{timeAgo(c.created_at)}</span>
                       </div>
-                      <p className="text-sm text-foreground/90 mt-0.5 break-words">{c.content}</p>
+                      <p className="text-sm text-foreground/90 mt-1 leading-relaxed break-words whitespace-pre-wrap">{c.content}</p>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            <form onSubmit={submit} className="border-t border-border p-3 space-y-2 bg-background">
+            <form onSubmit={submit} className="border-t border-border/60 px-4 pt-3 pb-3 bg-background/95 backdrop-blur space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  placeholder="Your name"
+                  placeholder="Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={80}
-                  className="text-base h-12"
+                  className="h-11 rounded-full bg-muted/50 border-transparent focus-visible:bg-background focus-visible:border-input px-4 text-base"
                   required
                 />
                 <Input
@@ -156,22 +188,28 @@ export const VlogComments = ({ postId, open, onClose, onCountChange }: VlogComme
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   maxLength={120}
-                  className="text-base h-12"
+                  className="h-11 rounded-full bg-muted/50 border-transparent focus-visible:bg-background focus-visible:border-input px-4 text-base"
                   required
                 />
               </div>
-              <div className="flex gap-2 items-end">
+              <div className="relative">
                 <Textarea
-                  placeholder="Add a comment..."
+                  placeholder="Add a comment…"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   maxLength={1000}
                   rows={2}
-                  className="text-base resize-none flex-1"
+                  className="text-base resize-none rounded-2xl bg-muted/50 border-transparent focus-visible:bg-background focus-visible:border-input pl-4 pr-14 py-3 min-h-[3rem]"
                   required
                 />
-                <Button type="submit" disabled={submitting} size="icon" className="h-12 w-12 flex-shrink-0">
-                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                <Button
+                  type="submit"
+                  disabled={submitting || content.trim().length < 5}
+                  size="icon"
+                  className="absolute right-1.5 bottom-1.5 h-9 w-9 rounded-full"
+                  aria-label="Post comment"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
             </form>
