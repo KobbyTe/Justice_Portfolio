@@ -62,15 +62,15 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     let cancelled = false;
     (async () => {
       const fp = getFingerprint();
-      const [{ count: lc }, { count: cc }, { data: mine }] = await Promise.all([
-        supabase.from('blog_likes').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id),
+      const [likeCountRes, commentCountRes, hasLikedRes] = await Promise.all([
+        supabase.rpc('get_blog_like_count', { _post_id: vlog.id }),
         supabase.from('blog_comments').select('id', { count: 'exact', head: true }).eq('post_id', vlog.id).eq('is_approved', true),
-        supabase.from('blog_likes').select('id').eq('post_id', vlog.id).eq('ip_address', fp).maybeSingle(),
+        supabase.rpc('has_liked_post', { _post_id: vlog.id, _fingerprint: fp }),
       ]);
       if (cancelled) return;
-      setLikeCount(lc || 0);
-      setCommentCount(cc || 0);
-      setLiked(!!mine);
+      setLikeCount(Number(likeCountRes.data ?? 0));
+      setCommentCount(commentCountRes.count || 0);
+      setLiked(!!hasLikedRes.data);
     })();
     return () => { cancelled = true; };
   }, [vlog.id, isRealPost]);
