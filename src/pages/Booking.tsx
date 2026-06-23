@@ -76,7 +76,23 @@ const Booking = () => {
           '/admin'
         );
       });
-      
+
+      // Create Google Calendar event (non-blocking — booking is already saved)
+      supabase.functions.invoke('create-booking-event', {
+        body: {
+          slot_date: selectedSlot.slot_date,
+          start_time: selectedSlot.start_time,
+          end_time: selectedSlot.end_time,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || null,
+          message: formData.message.trim() || null,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+      }).then(({ error: calErr }) => {
+        if (calErr) console.error('Calendar sync failed:', calErr);
+      });
+
       setStep('success');
     } catch (error: any) {
       toast.error('Failed to book appointment: ' + error.message);
