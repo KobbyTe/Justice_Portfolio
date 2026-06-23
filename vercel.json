@@ -5,6 +5,6 @@
     { "source": "/lovable-uploads/:path*", "destination": "/uploads/:path*", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }
   ]
 }
