@@ -786,6 +786,7 @@ export type Database = {
         Args: { _fingerprint: string; _post_id: string }
         Returns: undefined
       }
+      get_blog_like_count: { Args: { _post_id: string }; Returns: number }
       get_blog_post_with_stats: {
         Args: { post_slug: string }
         Returns: {
@@ -800,6 +801,10 @@ export type Database = {
           slug: string
           title: string
         }[]
+      }
+      has_liked_post: {
+        Args: { _fingerprint: string; _post_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
