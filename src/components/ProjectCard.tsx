@@ -143,7 +143,7 @@ const ProjectCard = ({ title, category, image, description, projectUrl, githubUr
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
