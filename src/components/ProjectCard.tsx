@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Github } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { fadeUp } from '@/lib/motion';
 
 interface ProjectCardProps {
   title: string;
@@ -13,7 +15,16 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ title, category, image, description, projectUrl, githubUrl, technologies }: ProjectCardProps) => {
   return (
-    <div className="group glass-card overflow-hidden hover-lift glow-border-hover transition-all duration-300">
+    <motion.div
+      variants={fadeUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+      className="group glass-card overflow-hidden glow-border-hover"
+    >
+
       {/* Image with hover overlay */}
       <div className="relative aspect-[4/3] bg-secondary overflow-hidden">
         {image ? (
@@ -132,7 +143,7 @@ const ProjectCard = ({ title, category, image, description, projectUrl, githubUr
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
