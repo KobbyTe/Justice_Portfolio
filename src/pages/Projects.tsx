@@ -73,24 +73,17 @@ const Projects = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredProjects.map((project: any, i: number) => (
-                <div
+              {filteredProjects.map((project: any) => (
+                <ProjectCard
                   key={project.id}
-                  style={{
-                    opacity: 1,
-                    animation: `fade-up 0.5s ease both ${i * 80}ms`
-                  }}
-                >
-                  <ProjectCard
-                    title={project.title}
-                    category={project.category}
-                    image={project.image_url}
-                    description={project.description}
-                    projectUrl={project.project_url}
-                    githubUrl={project.github_url}
-                    technologies={project.technologies}
-                  />
-                </div>
+                  title={project.title}
+                  category={project.category}
+                  image={project.image_url}
+                  description={project.description}
+                  projectUrl={project.project_url}
+                  githubUrl={project.github_url}
+                  technologies={project.technologies}
+                />
               ))}
             </div>
           )}
