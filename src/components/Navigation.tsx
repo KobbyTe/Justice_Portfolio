@@ -48,7 +48,10 @@ const Navigation = () => {
   ];
 
   return (
-    <nav
+    <motion.nav
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
