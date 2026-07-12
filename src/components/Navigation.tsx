@@ -124,44 +124,62 @@ const Navigation = () => {
       </div>
 
       {/* Mobile Menu — full-screen overlay for better UX */}
-      <div
-        style={{ top: 'calc(env(safe-area-inset-top) + 60px)' }}
-        className={`md:hidden fixed inset-x-0 bottom-0 sm:!top-[80px] z-40 transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
-      >
-        {/* Backdrop */}
-        <div 
-          className="absolute inset-0 bg-background/98 backdrop-blur-lg"
-          onClick={() => setIsMenuOpen(false)}
-        />
-        
-        {/* Menu content */}
-        <div className="relative z-10 flex flex-col px-6 pt-6 pb-8 h-full overflow-y-auto">
-          <div className="flex flex-col space-y-1">
-            {navItems.map((item, i) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-                className={`text-left px-4 py-3.5 min-h-[48px] flex items-center rounded-xl transition-all duration-200 text-base font-medium ${
-                  isActive(item.path)
-                    ? 'text-primary bg-primary/10 border-l-3 border-primary pl-5'
-                    : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
-                }`}
-                style={{ 
-                  transform: isMenuOpen ? 'translateX(0)' : 'translateX(-20px)',
-                  opacity: isMenuOpen ? 1 : 0,
-                  transition: `transform 0.3s ease ${i * 40}ms, opacity 0.3s ease ${i * 40}ms`
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </nav>
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ top: 'calc(env(safe-area-inset-top) + 60px)' }}
+            className="md:hidden fixed inset-x-0 bottom-0 sm:!top-[80px] z-40"
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-background/98 backdrop-blur-lg"
+              onClick={() => setIsMenuOpen(false)}
+            />
+
+            {/* Menu content */}
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+              }}
+              className="relative z-10 flex flex-col px-6 pt-6 pb-8 h-full overflow-y-auto"
+            >
+              <div className="flex flex-col space-y-1">
+                {navItems.map((item) => (
+                  <motion.div
+                    key={item.path}
+                    variants={{
+                      hidden: { opacity: 0, x: -20 },
+                      visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] } },
+                    }}
+                  >
+                    <Link
+                      to={item.path}
+                      aria-current={isActive(item.path) ? 'page' : undefined}
+                      className={`text-left px-4 py-3.5 min-h-[48px] flex items-center rounded-xl transition-all duration-200 text-base font-medium ${
+                        isActive(item.path)
+                          ? 'text-primary bg-primary/10 border-l-3 border-primary pl-5'
+                          : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 };
 
