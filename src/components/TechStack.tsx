@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const TechStack = () => {
   const [techStack, setTechStack] = useState([]);
+  const [brokenIcons, setBrokenIcons] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadTechStack();
