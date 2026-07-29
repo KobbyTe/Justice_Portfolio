@@ -268,7 +268,7 @@ const Gallery = () => {
               </div>
             )}
 
-            <div className="bg-background rounded-xl sm:rounded-2xl overflow-hidden border border-border shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[92vh] mt-12 sm:mt-0">
+            <div className="bg-background rounded-xl sm:rounded-2xl overflow-hidden border border-border shadow-2xl flex flex-col min-h-0 max-h-[calc(100dvh-5.5rem)] sm:max-h-[92vh] mt-12 sm:mt-0">
               {/* Media */}
               <div className="flex-shrink-0 relative">
                 {selectedImage?.media_type === 'video' && selectedImage?.video_url ? (
