@@ -77,17 +77,28 @@ const Gallery = () => {
 
   const openLightbox = (item: GalleryItem) => {
     const idx = filteredItems.findIndex(i => i.id === item.id);
+    if (idx === -1) return;
     setSelectedIndex(idx);
     setTimeout(() => setLightboxVisible(true), 10);
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = useCallback(() => {
     setLightboxVisible(false);
     document.body.style.overflow = '';
     setTimeout(() => setSelectedIndex(null), 300);
-  };
+  }, []);
+
+  // Always release the scroll lock if the page unmounts while the lightbox is open
+  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+
+  // Changing category would otherwise leave the lightbox pointing at a stale index
+  useEffect(() => {
+    setLightboxVisible(false);
+    setSelectedIndex(null);
+    document.body.style.overflow = '';
+  }, [selectedCategory]);
 
   const navigate = useCallback((dir: 1 | -1) => {
     setSelectedIndex(prev => {
