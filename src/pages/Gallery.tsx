@@ -315,7 +315,7 @@ const Gallery = () => {
               </div>
 
               {/* Info */}
-              <div className="p-4 sm:p-6 overflow-y-auto scrollbar-none">
+              <div className="p-4 sm:p-6 overflow-y-auto scrollbar-none min-h-0 flex-1">
                 <div className="flex items-start justify-between gap-3 mb-2 sm:mb-3">
                   <h3 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-primary">
                     {selectedImage?.title}
