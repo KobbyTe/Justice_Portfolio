@@ -30,7 +30,13 @@ const Gallery = () => {
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
-  const categories = ['All', 'Robotics', 'STEM Education', 'Agriculture', 'Events', 'Personal Journey'];
+  // Categories are derived from the data so no item is ever unreachable.
+  const categories = [
+    'All',
+    ...Array.from(
+      new Set(galleryItems.map((i) => i.category).filter((c): c is string => Boolean(c)))
+    ).sort((a, b) => a.localeCompare(b)),
+  ];
 
   useEffect(() => {
     loadGalleryItems();
