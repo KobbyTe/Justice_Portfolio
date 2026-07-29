@@ -239,7 +239,7 @@ const Gallery = () => {
       {/* Animated Lightbox — mobile-optimized */}
       {selectedIndex !== null && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${
+          className={`fixed inset-0 z-[70] flex items-center justify-center transition-all duration-300 ${
             lightboxVisible ? 'bg-black/95 opacity-100' : 'bg-black/0 opacity-0'
           }`}
           onClick={closeLightbox}
