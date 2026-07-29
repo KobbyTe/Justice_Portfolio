@@ -148,7 +148,9 @@ const Gallery = () => {
   const selectedImage = selectedIndex !== null ? filteredItems[selectedIndex] : null;
 
   const getCategoryCount = (cat: string) =>
-    cat === 'All' ? galleryItems.length : galleryItems.filter(i => i.category === cat).length;
+    cat === 'All'
+      ? galleryItems.length
+      : galleryItems.filter(i => (i.category || '').trim() === cat).length;
 
   if (isLoading) {
     return (
