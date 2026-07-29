@@ -30,7 +30,19 @@ const Gallery = () => {
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
-  const categories = ['All', 'Robotics', 'STEM Education', 'Agriculture', 'Events', 'Personal Journey'];
+  // Categories are derived from the data so no item is ever unreachable.
+  // The literal "All" value stored on some rows is dropped so it can't collide
+  // with the built-in "All" filter (which caused duplicate React keys).
+  const categories = [
+    'All',
+    ...Array.from(
+      new Set(
+        galleryItems
+          .map((i) => (i.category || '').trim())
+          .filter((c) => c && c.toLowerCase() !== 'all')
+      )
+    ).sort((a, b) => a.localeCompare(b)),
+  ];
 
   useEffect(() => {
     loadGalleryItems();
@@ -67,21 +79,32 @@ const Gallery = () => {
 
   const filteredItems = selectedCategory === 'All'
     ? galleryItems
-    : galleryItems.filter(item => item.category === selectedCategory);
+    : galleryItems.filter(item => (item.category || '').trim() === selectedCategory);
 
   const openLightbox = (item: GalleryItem) => {
     const idx = filteredItems.findIndex(i => i.id === item.id);
+    if (idx === -1) return;
     setSelectedIndex(idx);
     setTimeout(() => setLightboxVisible(true), 10);
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
   };
 
-  const closeLightbox = () => {
+  const closeLightbox = useCallback(() => {
     setLightboxVisible(false);
     document.body.style.overflow = '';
     setTimeout(() => setSelectedIndex(null), 300);
-  };
+  }, []);
+
+  // Always release the scroll lock if the page unmounts while the lightbox is open
+  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+
+  // Changing category would otherwise leave the lightbox pointing at a stale index
+  useEffect(() => {
+    setLightboxVisible(false);
+    setSelectedIndex(null);
+    document.body.style.overflow = '';
+  }, [selectedCategory]);
 
   const navigate = useCallback((dir: 1 | -1) => {
     setSelectedIndex(prev => {
@@ -101,7 +124,7 @@ const Gallery = () => {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [selectedIndex, navigate]);
+  }, [selectedIndex, navigate, closeLightbox]);
 
   // Touch swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -125,7 +148,9 @@ const Gallery = () => {
   const selectedImage = selectedIndex !== null ? filteredItems[selectedIndex] : null;
 
   const getCategoryCount = (cat: string) =>
-    cat === 'All' ? galleryItems.length : galleryItems.filter(i => i.category === cat).length;
+    cat === 'All'
+      ? galleryItems.length
+      : galleryItems.filter(i => (i.category || '').trim() === cat).length;
 
   if (isLoading) {
     return (
@@ -214,7 +239,7 @@ const Gallery = () => {
       {/* Animated Lightbox — mobile-optimized */}
       {selectedIndex !== null && (
         <div
-          className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${
+          className={`fixed inset-0 z-[70] flex items-center justify-center transition-all duration-300 ${
             lightboxVisible ? 'bg-black/95 opacity-100' : 'bg-black/0 opacity-0'
           }`}
           onClick={closeLightbox}
@@ -243,7 +268,7 @@ const Gallery = () => {
               </div>
             )}
 
-            <div className="bg-background rounded-xl sm:rounded-2xl overflow-hidden border border-border shadow-2xl flex flex-col max-h-[90dvh] sm:max-h-[92vh] mt-12 sm:mt-0">
+            <div className="bg-background rounded-xl sm:rounded-2xl overflow-hidden border border-border shadow-2xl flex flex-col min-h-0 max-h-[calc(100dvh-5.5rem)] sm:max-h-[92vh] mt-12 sm:mt-0">
               {/* Media */}
               <div className="flex-shrink-0 relative">
                 {selectedImage?.media_type === 'video' && selectedImage?.video_url ? (
@@ -290,7 +315,7 @@ const Gallery = () => {
               </div>
 
               {/* Info */}
-              <div className="p-4 sm:p-6 overflow-y-auto scrollbar-none">
+              <div className="p-4 sm:p-6 overflow-y-auto scrollbar-none min-h-0 flex-1">
                 <div className="flex items-start justify-between gap-3 mb-2 sm:mb-3">
                   <h3 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-primary">
                     {selectedImage?.title}

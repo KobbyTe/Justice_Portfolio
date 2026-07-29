@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const TechStack = () => {
   const [techStack, setTechStack] = useState([]);
+  const [brokenIcons, setBrokenIcons] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadTechStack();
@@ -61,26 +62,21 @@ const TechStack = () => {
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="flex flex-col items-center space-y-2 sm:space-y-3">
                 <div className="p-2 sm:p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  {tech.icon_url ? (
-                    <img 
-                      src={tech.icon_url.replace(/\s+/g, '')} 
-                      alt={tech.name}
-                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain group-hover:scale-110 transition-transform" 
-                      onError={(e) => {
-                        console.error(`Failed to load icon for ${tech.name}:`, tech.icon_url);
-                        e.currentTarget.style.display = 'none';
-                        const parent = e.currentTarget.parentElement;
-                        if (parent) {
-                          const fallbackElement = parent.querySelector('.fallback-icon') as HTMLElement;
-                          if (fallbackElement) fallbackElement.style.display = 'block';
-                        }
-                      }}
+                  {tech.icon_url && !brokenIcons[tech.id] ? (
+                    <img
+                      src={tech.icon_url.replace(/\s+/g, '')}
+                      alt=""
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain group-hover:scale-110 transition-transform"
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => setBrokenIcons((prev) => ({ ...prev, [tech.id]: true }))}
                     />
-                  ) : null}
-                  <Icon 
-                    className={`fallback-icon w-6 h-6 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform ${tech.icon_url ? 'hidden' : 'block'}`}
-                    aria-hidden="true"
-                  />
+                  ) : (
+                    <Icon
+                      className="w-6 h-6 sm:w-8 sm:h-8 text-primary group-hover:scale-110 transition-transform"
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-medium text-xs sm:text-sm text-foreground leading-tight">
