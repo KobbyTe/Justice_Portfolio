@@ -118,7 +118,7 @@ const Gallery = () => {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [selectedIndex, navigate]);
+  }, [selectedIndex, navigate, closeLightbox]);
 
   // Touch swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
