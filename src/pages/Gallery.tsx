@@ -31,10 +31,16 @@ const Gallery = () => {
   const touchStartY = useRef<number | null>(null);
 
   // Categories are derived from the data so no item is ever unreachable.
+  // The literal "All" value stored on some rows is dropped so it can't collide
+  // with the built-in "All" filter (which caused duplicate React keys).
   const categories = [
     'All',
     ...Array.from(
-      new Set(galleryItems.map((i) => i.category).filter((c): c is string => Boolean(c)))
+      new Set(
+        galleryItems
+          .map((i) => (i.category || '').trim())
+          .filter((c) => c && c.toLowerCase() !== 'all')
+      )
     ).sort((a, b) => a.localeCompare(b)),
   ];
 
