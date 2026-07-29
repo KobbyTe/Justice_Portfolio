@@ -79,7 +79,7 @@ const Gallery = () => {
 
   const filteredItems = selectedCategory === 'All'
     ? galleryItems
-    : galleryItems.filter(item => item.category === selectedCategory);
+    : galleryItems.filter(item => (item.category || '').trim() === selectedCategory);
 
   const openLightbox = (item: GalleryItem) => {
     const idx = filteredItems.findIndex(i => i.id === item.id);
