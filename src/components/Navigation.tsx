@@ -36,6 +36,20 @@ const Navigation = () => {
     return () => { document.body.style.overflow = ''; };
   }, [isMenuOpen]);
 
+  // Close the mobile menu with Escape and return focus to the toggle
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
+
+
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
