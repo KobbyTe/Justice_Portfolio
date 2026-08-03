@@ -294,8 +294,12 @@ const Gallery = () => {
 
             {/* Counter */}
             {filteredItems.length > 1 && (
-              <div className="absolute top-3 left-3 sm:-top-12 sm:left-0 text-white/60 text-sm font-medium z-20 bg-black/40 sm:bg-transparent px-2 py-1 rounded sm:px-0 sm:py-0">
-                {selectedIndex + 1} / {filteredItems.length}
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="absolute top-3 left-3 sm:-top-12 sm:left-0 text-white/60 text-sm font-medium z-20 bg-black/40 sm:bg-transparent px-2 py-1 rounded sm:px-0 sm:py-0"
+              >
+                {`Item ${selectedIndex + 1} of ${filteredItems.length}`}
               </div>
             )}
 
