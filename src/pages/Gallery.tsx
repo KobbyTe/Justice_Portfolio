@@ -89,6 +89,7 @@ const Gallery = () => {
   const openLightbox = (item: GalleryItem) => {
     const idx = filteredItems.findIndex(i => i.id === item.id);
     if (idx === -1) return;
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
     setSelectedIndex(idx);
     setTimeout(() => setLightboxVisible(true), 10);
     // Prevent body scroll
@@ -99,7 +100,16 @@ const Gallery = () => {
     setLightboxVisible(false);
     document.body.style.overflow = '';
     setTimeout(() => setSelectedIndex(null), 300);
+    // Return focus to the thumbnail that opened the lightbox
+    lastFocusedRef.current?.focus?.();
   }, []);
+
+  // Move focus into the dialog when it opens
+  useEffect(() => {
+    if (selectedIndex !== null) {
+      requestAnimationFrame(() => closeButtonRef.current?.focus());
+    }
+  }, [selectedIndex !== null]);
 
   // Always release the scroll lock if the page unmounts while the lightbox is open
   useEffect(() => () => { document.body.style.overflow = ''; }, []);
@@ -119,17 +129,33 @@ const Gallery = () => {
     });
   }, [filteredItems.length]);
 
-  // Keyboard navigation
+  // Keyboard navigation + focus trap while the lightbox is open
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (selectedIndex === null) return;
       if (e.key === 'ArrowRight') navigate(1);
       if (e.key === 'ArrowLeft') navigate(-1);
       if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'Tab' && lightboxRef.current) {
+        const focusable = lightboxRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [selectedIndex, navigate, closeLightbox]);
+
 
   // Touch swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
