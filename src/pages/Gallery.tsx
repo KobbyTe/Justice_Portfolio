@@ -29,6 +29,11 @@ const Gallery = () => {
   // Swipe support
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  // A11y: focus management for the lightbox
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+
 
   // Categories are derived from the data so no item is ever unreachable.
   // The literal "All" value stored on some rows is dropped so it can't collide
@@ -84,6 +89,7 @@ const Gallery = () => {
   const openLightbox = (item: GalleryItem) => {
     const idx = filteredItems.findIndex(i => i.id === item.id);
     if (idx === -1) return;
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
     setSelectedIndex(idx);
     setTimeout(() => setLightboxVisible(true), 10);
     // Prevent body scroll
@@ -94,7 +100,16 @@ const Gallery = () => {
     setLightboxVisible(false);
     document.body.style.overflow = '';
     setTimeout(() => setSelectedIndex(null), 300);
+    // Return focus to the thumbnail that opened the lightbox
+    lastFocusedRef.current?.focus?.();
   }, []);
+
+  // Move focus into the dialog when it opens
+  useEffect(() => {
+    if (selectedIndex !== null) {
+      requestAnimationFrame(() => closeButtonRef.current?.focus());
+    }
+  }, [selectedIndex !== null]);
 
   // Always release the scroll lock if the page unmounts while the lightbox is open
   useEffect(() => () => { document.body.style.overflow = ''; }, []);
@@ -114,17 +129,33 @@ const Gallery = () => {
     });
   }, [filteredItems.length]);
 
-  // Keyboard navigation
+  // Keyboard navigation + focus trap while the lightbox is open
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (selectedIndex === null) return;
       if (e.key === 'ArrowRight') navigate(1);
       if (e.key === 'ArrowLeft') navigate(-1);
       if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'Tab' && lightboxRef.current) {
+        const focusable = lightboxRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [selectedIndex, navigate, closeLightbox]);
+
 
   // Touch swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -169,7 +200,7 @@ const Gallery = () => {
       <SEO title="Gallery" description="A visual journal showcasing Justice Ansah's work in robotics, STEM education, and innovation." url="/gallery" />
       <Navigation />
 
-      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
+      <main id="main-content" className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12 animate-fade-up">
           <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">Visual Journal</p>
@@ -182,31 +213,42 @@ const Gallery = () => {
         </div>
 
         {/* Filter Buttons — horizontally scrollable on mobile */}
-        <div className="flex gap-2 mb-8 sm:mb-10 overflow-x-auto scrollbar-none pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
+        <div
+          role="group"
+          aria-label="Filter gallery by category"
+          className="flex gap-2 mb-8 sm:mb-10 overflow-x-auto scrollbar-none pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible"
+        >
           {categories.map((category) => {
             const count = getCategoryCount(category);
+            const isSelected = selectedCategory === category;
             return (
               <button
                 key={category}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedCategory(category)}
-                className={`relative flex-shrink-0 px-4 py-2.5 text-sm font-medium rounded-full border transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === category
+                className={`relative flex-shrink-0 px-4 py-2.5 text-sm font-medium rounded-full border transition-all duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  isSelected
                     ? 'bg-primary text-primary-foreground border-primary shadow-glow'
                     : 'border-border text-muted-foreground hover:text-primary hover:border-primary/50 bg-transparent'
                 }`}
               >
                 {category}
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                  selectedCategory === category
-                    ? 'bg-primary-foreground/20 text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <span
+                  aria-label={`${count} items`}
+                  className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                    isSelected
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
                   {count}
                 </span>
               </button>
             );
           })}
         </div>
+
 
         {/* Gallery Grid */}
         <div className="columns-2 md:columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-4 space-y-3 sm:space-y-4">
@@ -234,11 +276,16 @@ const Gallery = () => {
           </blockquote>
           <p className="text-muted-foreground text-sm">— Justice Ansah</p>
         </div>
-      </div>
+      </main>
+
 
       {/* Animated Lightbox — mobile-optimized */}
       {selectedIndex !== null && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedImage?.title ? `${selectedImage.title} — gallery viewer` : 'Gallery viewer'}
+          ref={lightboxRef}
           className={`fixed inset-0 z-[70] flex items-center justify-center transition-all duration-300 ${
             lightboxVisible ? 'bg-black/95 opacity-100' : 'bg-black/0 opacity-0'
           }`}
@@ -254,17 +301,24 @@ const Gallery = () => {
           >
             {/* Close button — larger on mobile */}
             <button
+              type="button"
+              ref={closeButtonRef}
               onClick={closeLightbox}
-              className="absolute top-2 right-2 sm:-top-12 sm:right-0 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-20 bg-black/40 sm:bg-transparent"
+              className="absolute top-2 right-2 sm:-top-12 sm:right-0 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-20 bg-black/40 sm:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               aria-label="Close lightbox"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6" aria-hidden="true" />
             </button>
+
 
             {/* Counter */}
             {filteredItems.length > 1 && (
-              <div className="absolute top-3 left-3 sm:-top-12 sm:left-0 text-white/60 text-sm font-medium z-20 bg-black/40 sm:bg-transparent px-2 py-1 rounded sm:px-0 sm:py-0">
-                {selectedIndex + 1} / {filteredItems.length}
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="absolute top-3 left-3 sm:-top-12 sm:left-0 text-white/60 text-sm font-medium z-20 bg-black/40 sm:bg-transparent px-2 py-1 rounded sm:px-0 sm:py-0"
+              >
+                {`Item ${selectedIndex + 1} of ${filteredItems.length}`}
               </div>
             )}
 
@@ -297,19 +351,22 @@ const Gallery = () => {
                 {filteredItems.length > 1 && (
                   <>
                     <button
+                      type="button"
                       onClick={() => navigate(-1)}
-                      className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40"
-                      aria-label="Previous image"
+                      className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Previous item"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => navigate(1)}
-                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40"
-                      aria-label="Next image"
+                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Next item"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-5 h-5" aria-hidden="true" />
                     </button>
+
                   </>
                 )}
               </div>
