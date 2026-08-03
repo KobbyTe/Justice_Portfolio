@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -8,10 +8,12 @@ import logoImg from '@/assets/logo.png';
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const { theme, setTheme } = useTheme();
 
   const isActive = (path: string) => location.pathname === path;
+
 
   useEffect(() => {
     const handleScroll = () => {
