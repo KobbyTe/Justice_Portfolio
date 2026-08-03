@@ -29,6 +29,11 @@ const Gallery = () => {
   // Swipe support
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  // A11y: focus management for the lightbox
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+
 
   // Categories are derived from the data so no item is ever unreachable.
   // The literal "All" value stored on some rows is dropped so it can't collide
