@@ -116,25 +116,30 @@ const Navigation = () => {
           {/* Theme toggle + Mobile Menu */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
-              aria-label="Toggle theme"
+              className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {theme === 'dark' ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
             </button>
 
             <button
-              className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors"
+              type="button"
+              ref={menuButtonRef}
+              className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
             >
               {isMenuOpen ? (
-                <X className="w-6 h-6 transition-transform duration-200 rotate-0" />
+                <X className="w-6 h-6 transition-transform duration-200 rotate-0" aria-hidden="true" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <Menu className="w-6 h-6" aria-hidden="true" />
               )}
             </button>
+
           </div>
         </div>
       </div>
