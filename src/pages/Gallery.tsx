@@ -200,7 +200,7 @@ const Gallery = () => {
       <SEO title="Gallery" description="A visual journal showcasing Justice Ansah's work in robotics, STEM education, and innovation." url="/gallery" />
       <Navigation />
 
-      <div className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
+      <main id="main-content" className="container mx-auto px-4 pt-20 sm:pt-24 pb-12">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12 animate-fade-up">
           <p className="text-primary text-sm font-medium tracking-widest uppercase mb-3">Visual Journal</p>
