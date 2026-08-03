@@ -276,7 +276,8 @@ const Gallery = () => {
           </blockquote>
           <p className="text-muted-foreground text-sm">— Justice Ansah</p>
         </div>
-      </div>
+      </main>
+
 
       {/* Animated Lightbox — mobile-optimized */}
       {selectedIndex !== null && (
