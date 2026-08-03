@@ -213,31 +213,42 @@ const Gallery = () => {
         </div>
 
         {/* Filter Buttons — horizontally scrollable on mobile */}
-        <div className="flex gap-2 mb-8 sm:mb-10 overflow-x-auto scrollbar-none pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
+        <div
+          role="group"
+          aria-label="Filter gallery by category"
+          className="flex gap-2 mb-8 sm:mb-10 overflow-x-auto scrollbar-none pb-2 sm:flex-wrap sm:justify-center sm:overflow-visible"
+        >
           {categories.map((category) => {
             const count = getCategoryCount(category);
+            const isSelected = selectedCategory === category;
             return (
               <button
                 key={category}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => setSelectedCategory(category)}
-                className={`relative flex-shrink-0 px-4 py-2.5 text-sm font-medium rounded-full border transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === category
+                className={`relative flex-shrink-0 px-4 py-2.5 text-sm font-medium rounded-full border transition-all duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  isSelected
                     ? 'bg-primary text-primary-foreground border-primary shadow-glow'
                     : 'border-border text-muted-foreground hover:text-primary hover:border-primary/50 bg-transparent'
                 }`}
               >
                 {category}
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                  selectedCategory === category
-                    ? 'bg-primary-foreground/20 text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <span
+                  aria-label={`${count} items`}
+                  className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                    isSelected
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
                   {count}
                 </span>
               </button>
             );
           })}
         </div>
+
 
         {/* Gallery Grid */}
         <div className="columns-2 md:columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-4 space-y-3 sm:space-y-4">
