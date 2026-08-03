@@ -153,9 +153,11 @@ const Navigation = () => {
           >
             {/* Backdrop */}
             <div
+              aria-hidden="true"
               className="absolute inset-0 bg-background/98 backdrop-blur-lg"
               onClick={() => setIsMenuOpen(false)}
             />
+
 
             {/* Menu content */}
             <motion.div
