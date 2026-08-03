@@ -270,6 +270,10 @@ const Gallery = () => {
       {/* Animated Lightbox — mobile-optimized */}
       {selectedIndex !== null && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedImage?.title ? `${selectedImage.title} — gallery viewer` : 'Gallery viewer'}
+          ref={lightboxRef}
           className={`fixed inset-0 z-[70] flex items-center justify-center transition-all duration-300 ${
             lightboxVisible ? 'bg-black/95 opacity-100' : 'bg-black/0 opacity-0'
           }`}
@@ -285,12 +289,15 @@ const Gallery = () => {
           >
             {/* Close button — larger on mobile */}
             <button
+              type="button"
+              ref={closeButtonRef}
               onClick={closeLightbox}
-              className="absolute top-2 right-2 sm:-top-12 sm:right-0 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-20 bg-black/40 sm:bg-transparent"
+              className="absolute top-2 right-2 sm:-top-12 sm:right-0 p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors z-20 bg-black/40 sm:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               aria-label="Close lightbox"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6" aria-hidden="true" />
             </button>
+
 
             {/* Counter */}
             {filteredItems.length > 1 && (
