@@ -339,19 +339,22 @@ const Gallery = () => {
                 {filteredItems.length > 1 && (
                   <>
                     <button
+                      type="button"
                       onClick={() => navigate(-1)}
-                      className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40"
-                      aria-label="Previous image"
+                      className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Previous item"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => navigate(1)}
-                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40"
-                      aria-label="Next image"
+                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-primary hover:bg-background transition-all duration-200 border border-border hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      aria-label="Next item"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-5 h-5" aria-hidden="true" />
                     </button>
+
                   </>
                 )}
               </div>
