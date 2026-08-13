@@ -1,48 +1,60 @@
 // Creates a Google Calendar event for a confirmed booking via the Lovable connector gateway.
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import {
+  z,
+  corsHeaders,
+  json,
+  safeString,
+  emailSchema,
+  getClientIp,
+  checkRateLimit,
+  rateLimited,
+  parseBody,
+} from "../_shared/security.ts";
 
 const GATEWAY_URL = 'https://connector-gateway.lovable.dev/google_calendar/calendar/v3';
 
-interface BookingPayload {
-  slot_date: string;       // YYYY-MM-DD
-  start_time: string;      // HH:MM:SS
-  end_time: string;        // HH:MM:SS
-  name: string;
-  email: string;
-  phone?: string | null;
-  message?: string | null;
-  timeZone?: string;       // optional IANA tz, defaults to UTC
-}
+const BookingSchema = z.object({
+  slot_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD"),
+  start_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Expected HH:MM:SS"),
+  end_time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Expected HH:MM:SS"),
+  name: safeString(1, 100),
+  email: emailSchema,
+  phone: safeString(0, 30).nullish(),
+  message: safeString(0, 1000).nullish(),
+  timeZone: z.string().regex(/^[A-Za-z0-9_+\-\/]{1,64}$/).optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+
   try {
+    // Rate limit: 5 booking events per minute per IP
+    const ip = getClientIp(req);
+    if (!(await checkRateLimit('create-booking-event', ip, 5, 60))) return rateLimited();
+
+    const parsed = await parseBody(req, BookingSchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
+
     const lovableKey = Deno.env.get('LOVABLE_API_KEY');
     const connKey = Deno.env.get('GOOGLE_CALENDAR_API_KEY');
     if (!lovableKey || !connKey) {
-      return new Response(
-        JSON.stringify({ error: 'Google Calendar connection not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      console.error('Google Calendar connection not configured');
+      return json({ error: 'Google Calendar connection not configured' }, 500);
     }
 
-    const body = (await req.json()) as BookingPayload;
-    const required = ['slot_date', 'start_time', 'end_time', 'name', 'email'] as const;
-    for (const k of required) {
-      if (!body[k] || typeof body[k] !== 'string') {
-        return new Response(
-          JSON.stringify({ error: `Missing or invalid field: ${k}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        );
-      }
-    }
-
+    const pad = (t: string) => (t.length === 5 ? `${t}:00` : t);
     const tz = body.timeZone || 'UTC';
-    const startDateTime = `${body.slot_date}T${body.start_time}`;
-    const endDateTime = `${body.slot_date}T${body.end_time}`;
+    const startDateTime = `${body.slot_date}T${pad(body.start_time)}`;
+    const endDateTime = `${body.slot_date}T${pad(body.end_time)}`;
+
+    if (new Date(`${endDateTime}Z`) <= new Date(`${startDateTime}Z`)) {
+      return json({ error: 'End time must be after start time' }, 400);
+    }
 
     const event = {
       summary: `Appointment with ${body.name}`,
@@ -75,22 +87,13 @@ Deno.serve(async (req) => {
     const text = await resp.text();
     if (!resp.ok) {
       console.error('Google Calendar error', resp.status, text);
-      return new Response(
-        JSON.stringify({ error: 'Calendar API error', status: resp.status, details: text }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return json({ error: 'Calendar API error' }, 502);
     }
 
     const data = JSON.parse(text);
-    return new Response(
-      JSON.stringify({ ok: true, eventId: data.id, htmlLink: data.htmlLink }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return json({ ok: true, eventId: data.id, htmlLink: data.htmlLink });
   } catch (err) {
     console.error('create-booking-event failure', err);
-    return new Response(
-      JSON.stringify({ error: (err as Error).message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return json({ error: 'Unexpected server error' }, 500);
   }
 });
