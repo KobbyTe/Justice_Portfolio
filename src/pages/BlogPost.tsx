@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -241,7 +242,7 @@ const BlogPost = () => {
               <CardContent className="p-4 sm:p-6 md:p-8">
                 <div 
                   className="prose prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-sm sm:prose-base"
-                  dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content.replace(/\n/g, '<br>')) }}
                 />
               </CardContent>
             </Card>
