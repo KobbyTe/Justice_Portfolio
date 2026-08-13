@@ -77,6 +77,24 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          identifier_hash: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          identifier_hash: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          identifier_hash?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -537,6 +555,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_events: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       recommendation_tokens: {
         Row: {
           created_at: string
@@ -782,6 +818,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_clear_failures: { Args: { _identifier: string }; Returns: undefined }
+      auth_lockout_seconds: { Args: { _identifier: string }; Returns: number }
+      auth_record_failure: { Args: { _identifier: string }; Returns: number }
+      check_rate_limit: {
+        Args: {
+          _bucket: string
+          _max_requests: number
+          _window_seconds: number
+        }
+        Returns: boolean
+      }
       delete_own_blog_like: {
         Args: { _fingerprint: string; _post_id: string }
         Returns: undefined
