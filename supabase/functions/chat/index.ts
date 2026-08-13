@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import {
+  z,
+  corsHeaders,
+  json,
+  sanitizeText,
+  getClientIp,
+  checkRateLimit,
+  rateLimited,
+  parseBody,
+} from "../_shared/security.ts";
 
 const BASE_PROMPT = `You are Justice Ansah's AI portfolio assistant. You help visitors learn about Justice's work, skills, and experience.
 
@@ -72,36 +77,39 @@ async function buildSystemPrompt(): Promise<string> {
   return context;
 }
 
+const MessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(2000).transform(sanitizeText),
+});
+
+const RequestSchema = z.object({
+  messages: z.array(MessageSchema).min(1).max(20),
+});
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
   try {
-    const { messages } = await req.json();
+    // Rate limit: 15 chat messages per minute per IP
+    const ip = getClientIp(req);
+    if (!(await checkRateLimit("chat", ip, 15, 60))) return rateLimited();
 
-    // Input validation: prevent cost abuse, prompt injection, and payload flooding
-    const MAX_MESSAGES = 20;
-    const MAX_MSG_LENGTH = 2000;
-    const ALLOWED_ROLES = new Set(["user", "assistant"]);
+    const parsed = await parseBody(req, RequestSchema);
+    if (!parsed.ok) return parsed.response;
 
-    if (!Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Invalid messages payload" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const sanitized = parsed.data.messages
+      .filter((m) => m.content.length > 0)
+      .slice(-20);
 
-    const sanitized = messages
-      .filter((m: any) => m && typeof m === "object" && ALLOWED_ROLES.has(m.role) && typeof m.content === "string")
-      .map((m: any) => ({ role: m.role, content: m.content.slice(0, MAX_MSG_LENGTH) }))
-      .slice(-MAX_MESSAGES);
-
-    if (sanitized.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid messages provided" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (sanitized.length === 0) return json({ error: "No valid messages provided" }, 400);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY is not configured");
+      return json({ error: "AI service unavailable" }, 500);
+    }
 
     const systemPrompt = await buildSystemPrompt();
 
@@ -123,20 +131,13 @@ serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Rate limit exceeded. Please try again shortly." }, 429);
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "AI service temporarily unavailable." }, 402);
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("AI gateway error:", response.status, await response.text());
+      return json({ error: "AI service error" }, 500);
     }
 
     return new Response(response.body, {
@@ -144,8 +145,6 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Unexpected server error" }, 500);
   }
 });

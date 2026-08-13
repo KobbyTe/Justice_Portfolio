@@ -1,9 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  z,
+  corsHeaders,
+  json,
+  safeString,
+  getClientIp,
+  checkRateLimit,
+  rateLimited,
+  parseBody,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const PushSchema = z.object({
+  title: safeString(1, 120),
+  body: safeString(1, 500),
+  url: z.string().max(500).regex(/^\/[^\s]*$/, "url must be a relative path").optional(),
+  event_type: safeString(0, 60).nullish(),
+});
 
 // Web Push utilities
 function base64UrlToUint8Array(base64Url: string): Uint8Array {
@@ -121,14 +133,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, body, url, event_type } = await req.json();
+    const ip = getClientIp(req);
+    if (!(await checkRateLimit("send-push", ip, 10, 60))) return rateLimited();
 
-    if (!title || !body) {
-      return new Response(JSON.stringify({ error: "title and body required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const parsed = await parseBody(req, PushSchema);
+    if (!parsed.ok) return parsed.response;
+    const { title, body, url } = parsed.data;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -180,9 +190,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("send-push error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Unexpected server error" }, 500);
   }
 });
