@@ -90,7 +90,9 @@ const Navigation = () => {
             className="flex items-center gap-2 group shrink-0"
             aria-label="Home"
           >
-            <img src={logoImg} alt="Justice Ansah logo" className="h-10 sm:h-14 w-auto rounded-lg object-contain" />
+            <span className="font-heading text-lg sm:text-xl font-extrabold tracking-tight text-foreground group-hover:text-primary transition-colors">
+              Justice Ansah
+            </span>
           </Link>
 
           {/* Desktop Navigation Links */}
