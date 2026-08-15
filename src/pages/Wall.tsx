@@ -328,6 +328,8 @@ const Wall = () => {
 
       toast({ title: "🎉 Submitted!", description: "Your message is pending approval and will appear shortly." });
       setWallMessage({ name: '', message: '' });
+      setJustPosted(true);
+      setTimeout(() => setJustPosted(false), 6000);
       loadWallMessages();
     } catch (error) {
       console.error('Error submitting message:', error);
