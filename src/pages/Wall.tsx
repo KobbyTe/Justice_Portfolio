@@ -277,6 +277,7 @@ const Wall = () => {
   const [wallEntries, setWallEntries] = useState<WallEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [justPosted, setJustPosted] = useState(false);
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
   const { checkRateLimit } = useRateLimit(5000, 3, 60000);
