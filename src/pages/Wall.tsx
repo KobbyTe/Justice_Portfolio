@@ -362,49 +362,15 @@ const Wall = () => {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            {/* Form Card */}
-            <div
-              ref={formRef}
-              className="relative rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-6 sm:p-8 mb-12 sm:mb-16 animate-fade-up"
-              style={{ animationDelay: '150ms' }}
-            >
-              {/* Glow edge */}
-              <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-primary/20 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-              <div className="flex items-center gap-2 mb-5">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h2 className="font-heading font-semibold text-foreground">Sign the Wall</h2>
-              </div>
-
-              <form onSubmit={handleWallSubmit} className="space-y-4">
-                <Input
-                  placeholder="Your name"
-                  value={wallMessage.name}
-                  onChange={(e) => setWallMessage(prev => ({ ...prev, name: e.target.value }))}
-                  className="bg-background/60 border-border focus:border-primary/50 h-11"
-                  maxLength={50}
-                />
-                <Textarea
-                  placeholder="Write something inspiring, funny, or kind..."
-                  value={wallMessage.message}
-                  onChange={(e) => setWallMessage(prev => ({ ...prev, message: e.target.value }))}
-                  className="bg-background/60 border-border focus:border-primary/50 min-h-[100px] resize-none"
-                  maxLength={500}
-                />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground/50">
-                    {wallMessage.message.length}/500
-                  </span>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !wallMessage.name.trim() || !wallMessage.message.trim()}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow hover:shadow-[0_0_28px_hsl(var(--primary)/0.4)] transition-all duration-300"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    {isSubmitting ? "Posting..." : "Post to Wall"}
-                  </Button>
-                </div>
-              </form>
+            {/* Composer */}
+            <div ref={formRef} className="animate-fade-up" style={{ animationDelay: '150ms' }}>
+              <WallComposer
+                value={wallMessage}
+                onChange={setWallMessage}
+                onSubmit={handleWallSubmit}
+                isSubmitting={isSubmitting}
+                justPosted={justPosted}
+              />
             </div>
 
             {/* Messages count */}
