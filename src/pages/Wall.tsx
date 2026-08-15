@@ -117,6 +117,11 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
   const [expanded, setExpanded] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (justPosted) setExpanded(false);
+  }, [justPosted]);
+
+
   const initials =
     value.name.trim()
       ? value.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
