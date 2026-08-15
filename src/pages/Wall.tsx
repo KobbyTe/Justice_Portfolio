@@ -103,6 +103,170 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
   );
 };
 
+const MAX_MESSAGE = 500;
+
+interface ComposerProps {
+  value: { name: string; message: string };
+  onChange: (v: { name: string; message: string }) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
+  justPosted: boolean;
+}
+
+const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: ComposerProps) => {
+  const [expanded, setExpanded] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const initials =
+    value.name.trim()
+      ? value.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+      : '';
+  const color = getAvatarColor(value.name.trim() || 'guest');
+
+  const pct = Math.min(value.message.length / MAX_MESSAGE, 1);
+  const ringColor =
+    value.message.length >= MAX_MESSAGE ? 'text-destructive'
+      : value.message.length > 450 ? 'text-amber-500'
+      : 'text-primary';
+
+  const open = () => {
+    setExpanded(true);
+    requestAnimationFrame(() => nameRef.current?.focus());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      open();
+    }
+  };
+
+  const canSubmit = !isSubmitting && !!value.name.trim() && !!value.message.trim();
+
+  return (
+    <motion.div
+      layout
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !value.name && !value.message) setExpanded(false);
+      }}
+      className="group relative rounded-2xl border border-border bg-card/70 backdrop-blur-sm mb-12 sm:mb-16 transition-all duration-300 hover:-translate-y-0.5 focus-within:border-primary/50 focus-within:shadow-[0_0_36px_hsl(var(--primary)/0.12)]"
+    >
+      {/* Glow edge */}
+      <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-primary/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+      <AnimatePresence initial={false} mode="wait">
+        {!expanded ? (
+          <motion.div
+            key="collapsed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={false}
+            aria-label="Leave a message on the wall"
+            onClick={open}
+            onFocus={open}
+            onKeyDown={handleKeyDown}
+            className="relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 min-h-[64px] cursor-text rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          >
+            <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
+              {justPosted ? (
+                <Check className="w-4 h-4 text-white" />
+              ) : initials ? (
+                <span className="text-white font-bold text-xs">{initials}</span>
+              ) : (
+                <MessageSquare className="w-4 h-4 text-white" />
+              )}
+            </div>
+            <span className="flex-1 text-muted-foreground text-[16px] sm:text-base truncate">
+              {justPosted ? 'Thanks — your message is pending approval.' : 'Leave your mark…'}
+            </span>
+            <span className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary transition-transform duration-300 group-hover:translate-x-0.5">
+              <ArrowRight className="w-4 h-4" />
+            </span>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="expanded"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] }}
+            onSubmit={onSubmit}
+            className="relative overflow-hidden p-5 sm:p-7"
+          >
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg mt-1`}>
+                {initials ? (
+                  <span className="text-white font-bold text-xs">{initials}</span>
+                ) : (
+                  <MessageSquare className="w-4 h-4 text-white" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 rounded-xl bg-background/50 border border-border/60 px-4 py-3">
+                <label htmlFor="wall-name" className="sr-only">Your name</label>
+                <Input
+                  id="wall-name"
+                  ref={nameRef}
+                  placeholder="Your name"
+                  value={value.name}
+                  onChange={(e) => onChange({ ...value, name: e.target.value })}
+                  maxLength={50}
+                  className="border-0 bg-transparent px-0 h-9 text-[16px] font-semibold text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                />
+                <div className="h-px bg-border/70 my-1" />
+                <label htmlFor="wall-message" className="sr-only">Your message</label>
+                <Textarea
+                  id="wall-message"
+                  placeholder="Write something inspiring, funny, or kind…"
+                  value={value.message}
+                  onChange={(e) => onChange({ ...value, message: e.target.value })}
+                  maxLength={MAX_MESSAGE}
+                  className="border-0 bg-transparent px-0 min-h-[104px] resize-none text-[16px] leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className={`w-6 h-6 -rotate-90 ${ringColor}`} aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" fill="none" strokeWidth="2.5" className="stroke-border" />
+                  <circle
+                    cx="12" cy="12" r="9" fill="none" strokeWidth="2.5" strokeLinecap="round"
+                    stroke="currentColor"
+                    strokeDasharray={2 * Math.PI * 9}
+                    strokeDashoffset={2 * Math.PI * 9 * (1 - pct)}
+                    style={{ transition: 'stroke-dashoffset 0.25s ease' }}
+                  />
+                </svg>
+                <span aria-live="polite" className="text-xs text-muted-foreground tabular-nums">
+                  {value.message.length}/{MAX_MESSAGE}
+                </span>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                className="group/btn rounded-full px-6 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-glow hover:shadow-[0_0_28px_hsl(var(--primary)/0.4)] transition-all duration-300"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2 transition-transform duration-300 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                )}
+                {isSubmitting ? 'Posting…' : 'Post to Wall'}
+              </Button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 const Wall = () => {
   const [wallMessage, setWallMessage] = useState({ name: '', message: '' });
   const [wallEntries, setWallEntries] = useState<WallEntry[]>([]);
