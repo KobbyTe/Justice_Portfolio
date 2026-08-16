@@ -76,9 +76,7 @@ const Footer = () => {
 
             <div className="flex items-center space-x-1">
               {[
-                { href: 'https://github.com/KobbyTe', icon: Github, label: 'GitHub', tooltip: 'GitHub' },
-                { href: 'https://www.linkedin.com/in/justice-ansah-85917529a/', icon: Linkedin, label: 'LinkedIn', tooltip: 'LinkedIn' },
-                { href: '#', icon: Twitter, label: 'Twitter', tooltip: 'Twitter' },
+                ...socials.map((s) => ({ href: s.url, icon: getIcon(s.platform), label: s.platform, tooltip: s.platform })),
                 { href: 'mailto:kwabenatekyi19@gmail.com', icon: Mail, label: 'Email', tooltip: 'Email' },
               ].map(({ href, icon: Icon, label, tooltip }) => (
                 <a
