@@ -1,8 +1,38 @@
-import { Github, Linkedin, Twitter, Mail, ArrowUp } from 'lucide-react';
+import { Github, Linkedin, Twitter, Mail, ArrowUp, Instagram, Youtube, Facebook, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+type SocialLink = { id: string; platform: string; url: string };
+
+const getIcon = (platform: string) => {
+  switch (platform.toLowerCase()) {
+    case 'github': return Github;
+    case 'linkedin': return Linkedin;
+    case 'twitter':
+    case 'x': return Twitter;
+    case 'instagram': return Instagram;
+    case 'youtube': return Youtube;
+    case 'facebook': return Facebook;
+    case 'email':
+    case 'mail': return Mail;
+    default: return ExternalLink;
+  }
+};
 
 const Footer = () => {
   const year = new Date().getFullYear();
+  const [socials, setSocials] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('social_links')
+      .select('id, platform, url')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => setSocials((data as SocialLink[]) || []));
+  }, []);
+
 
   return (
     <footer className="relative border-t border-border overflow-hidden">
@@ -46,9 +76,7 @@ const Footer = () => {
 
             <div className="flex items-center space-x-1">
               {[
-                { href: 'https://github.com/KobbyTe', icon: Github, label: 'GitHub', tooltip: 'GitHub' },
-                { href: 'https://www.linkedin.com/in/justice-ansah-85917529a/', icon: Linkedin, label: 'LinkedIn', tooltip: 'LinkedIn' },
-                { href: '#', icon: Twitter, label: 'Twitter', tooltip: 'Twitter' },
+                ...socials.map((s) => ({ href: s.url, icon: getIcon(s.platform), label: s.platform, tooltip: s.platform })),
                 { href: 'mailto:kwabenatekyi19@gmail.com', icon: Mail, label: 'Email', tooltip: 'Email' },
               ].map(({ href, icon: Icon, label, tooltip }) => (
                 <a
