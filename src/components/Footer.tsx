@@ -1,8 +1,38 @@
-import { Github, Linkedin, Twitter, Mail, ArrowUp } from 'lucide-react';
+import { Github, Linkedin, Twitter, Mail, ArrowUp, Instagram, Youtube, Facebook, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+type SocialLink = { id: string; platform: string; url: string };
+
+const getIcon = (platform: string) => {
+  switch (platform.toLowerCase()) {
+    case 'github': return Github;
+    case 'linkedin': return Linkedin;
+    case 'twitter':
+    case 'x': return Twitter;
+    case 'instagram': return Instagram;
+    case 'youtube': return Youtube;
+    case 'facebook': return Facebook;
+    case 'email':
+    case 'mail': return Mail;
+    default: return ExternalLink;
+  }
+};
 
 const Footer = () => {
   const year = new Date().getFullYear();
+  const [socials, setSocials] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('social_links')
+      .select('id, platform, url')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => setSocials((data as SocialLink[]) || []));
+  }, []);
+
 
   return (
     <footer className="relative border-t border-border overflow-hidden">
