@@ -36,9 +36,13 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Deterministic 3D-style avatar per name (DiceBear "bottts" — glossy 3D robots)
-const getAvatarUrl = (name: string) =>
-  `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(name.trim() || 'Guest')}&backgroundType=gradientLinear`;
+// Loving emoji avatar per name — consistent, friendly, zero external requests
+const lovingEmojis = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💖', '💗', '💓', '💞', '💕', '😍', '🥰', '😘', '💋', '🫶', '❣️'];
+const getAvatarEmoji = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return lovingEmojis[Math.abs(hash) % lovingEmojis.length];
+};
 
 const timeAgo = (dateStr: string) => {
   const diff = Date.now() - new Date(dateStr).getTime();
