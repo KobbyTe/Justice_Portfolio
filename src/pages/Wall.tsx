@@ -36,9 +36,13 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Deterministic 3D-style avatar per name (DiceBear "bottts" — glossy 3D robots)
-const getAvatarUrl = (name: string) =>
-  `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(name.trim() || 'Guest')}&backgroundType=gradientLinear`;
+// Loving emoji avatar per name — consistent, friendly, zero external requests
+const lovingEmojis = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💖', '💗', '💓', '💞', '💕', '😍', '🥰', '😘', '💋', '🫶', '❣️'];
+const getAvatarEmoji = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return lovingEmojis[Math.abs(hash) % lovingEmojis.length];
+};
 
 const timeAgo = (dateStr: string) => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -85,17 +89,12 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
 
         <div className="flex gap-4">
           {/* Avatar */}
-          <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${color} overflow-hidden shadow-lg`}>
-            <img
-              src={getAvatarUrl(entry.name)}
-              alt={`${entry.name}'s avatar`}
-              loading="lazy"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            <span className="sr-only">{initials}</span>
+          <div
+            className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}
+            aria-label={`${entry.name}'s avatar`}
+            role="img"
+          >
+            <span className="text-lg sm:text-xl select-none">{getAvatarEmoji(entry.name)}</span>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -143,10 +142,6 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
   }, [justPosted]);
 
 
-  const initials =
-    value.name.trim()
-      ? value.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-      : '';
   const color = getAvatarColor(value.name.trim() || 'guest');
 
   const pct = Math.min(value.message.length / MAX_MESSAGE, 1);
@@ -197,11 +192,11 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
             onKeyDown={handleKeyDown}
             className="relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 min-h-[64px] cursor-text rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
-            <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center overflow-hidden shadow-lg`}>
+            <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
               {justPosted ? (
                 <Check className="w-4 h-4 text-white" />
-              ) : initials ? (
-                <img src={getAvatarUrl(value.name)} alt="Your avatar preview" className="w-full h-full object-cover" />
+              ) : value.name.trim() ? (
+                <span className="text-lg select-none">{getAvatarEmoji(value.name)}</span>
               ) : (
                 <MessageSquare className="w-4 h-4 text-white" />
               )}
@@ -224,9 +219,9 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
             className="relative overflow-hidden p-5 sm:p-7"
           >
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center overflow-hidden shadow-lg mt-1`}>
-                {initials ? (
-                  <img src={getAvatarUrl(value.name)} alt="Your avatar preview" className="w-full h-full object-cover" />
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg mt-1`}>
+                {value.name.trim() ? (
+                  <span className="text-lg select-none">{getAvatarEmoji(value.name)}</span>
                 ) : (
                   <MessageSquare className="w-4 h-4 text-white" />
                 )}
