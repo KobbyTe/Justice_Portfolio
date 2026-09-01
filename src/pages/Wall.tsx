@@ -142,10 +142,6 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
   }, [justPosted]);
 
 
-  const initials =
-    value.name.trim()
-      ? value.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-      : '';
   const color = getAvatarColor(value.name.trim() || 'guest');
 
   const pct = Math.min(value.message.length / MAX_MESSAGE, 1);
