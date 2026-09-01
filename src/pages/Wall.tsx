@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface WallEntry {
   id: string;
   name: string;
+  affiliation?: string | null;
   message: string;
   created_at: string;
 }
@@ -85,7 +86,7 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">
                 {entry.name}
               </h3>
@@ -93,6 +94,11 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
                 {timeAgo(entry.created_at)}
               </span>
             </div>
+            {entry.affiliation?.trim() && (
+              <p className="text-xs sm:text-[13px] text-primary/80 mb-2 truncate">
+                {entry.affiliation}
+              </p>
+            )}
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
               {entry.message}
             </p>
@@ -105,9 +111,11 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
 
 const MAX_MESSAGE = 500;
 
+interface ComposerValue { name: string; affiliation: string; message: string }
+
 interface ComposerProps {
-  value: { name: string; message: string };
-  onChange: (v: { name: string; message: string }) => void;
+  value: ComposerValue;
+  onChange: (v: ComposerValue) => void;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   justPosted: boolean;
@@ -223,6 +231,16 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
                   className="border-0 bg-transparent px-0 h-9 text-[16px] font-semibold text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                 />
                 <div className="h-px bg-border/70 my-1" />
+                <label htmlFor="wall-affiliation" className="sr-only">Who you are (optional)</label>
+                <Input
+                  id="wall-affiliation"
+                  placeholder="Who are you? e.g. Student at KNUST, CEO of Kwabs Labs (optional)"
+                  value={value.affiliation}
+                  onChange={(e) => onChange({ ...value, affiliation: e.target.value })}
+                  maxLength={80}
+                  className="border-0 bg-transparent px-0 h-9 text-[16px] text-muted-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                />
+                <div className="h-px bg-border/70 my-1" />
                 <label htmlFor="wall-message" className="sr-only">Your message</label>
                 <Textarea
                   id="wall-message"
@@ -273,7 +291,7 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
 };
 
 const Wall = () => {
-  const [wallMessage, setWallMessage] = useState({ name: '', message: '' });
+  const [wallMessage, setWallMessage] = useState({ name: '', affiliation: '', message: '' });
   const [wallEntries, setWallEntries] = useState<WallEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -319,7 +337,11 @@ const Wall = () => {
     try {
       const { error } = await supabase
         .from('wall_messages')
-        .insert([{ name: wallMessage.name.trim(), message: wallMessage.message.trim() }]);
+        .insert([{
+          name: wallMessage.name.trim(),
+          affiliation: wallMessage.affiliation.trim() || null,
+          message: wallMessage.message.trim(),
+        }]);
       if (error) throw error;
 
       import('@/utils/notifications').then(({ sendNotification }) => {
@@ -327,7 +349,7 @@ const Wall = () => {
       });
 
       toast({ title: "🎉 Submitted!", description: "Your message is pending approval and will appear shortly." });
-      setWallMessage({ name: '', message: '' });
+      setWallMessage({ name: '', affiliation: '', message: '' });
       setJustPosted(true);
       setTimeout(() => setJustPosted(false), 6000);
       loadWallMessages();
