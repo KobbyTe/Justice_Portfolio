@@ -36,9 +36,9 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Deterministic cartoon avatar per name (DiceBear "adventurer-neutral")
+// Deterministic 3D-style avatar per name (DiceBear "bottts" — glossy 3D robots)
 const getAvatarUrl = (name: string) =>
-  `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(name.trim() || 'Guest')}`;
+  `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(name.trim() || 'Guest')}&backgroundType=gradientLinear`;
 
 const timeAgo = (dateStr: string) => {
   const diff = Date.now() - new Date(dateStr).getTime();
