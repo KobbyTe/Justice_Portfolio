@@ -196,11 +196,11 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
             onKeyDown={handleKeyDown}
             className="relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 min-h-[64px] cursor-text rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
-            <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center overflow-hidden shadow-lg`}>
+            <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}>
               {justPosted ? (
                 <Check className="w-4 h-4 text-white" />
-              ) : initials ? (
-                <img src={getAvatarUrl(value.name)} alt="Your avatar preview" className="w-full h-full object-cover" />
+              ) : value.name.trim() ? (
+                <span className="text-lg select-none">{getAvatarEmoji(value.name)}</span>
               ) : (
                 <MessageSquare className="w-4 h-4 text-white" />
               )}
