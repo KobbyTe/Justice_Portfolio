@@ -89,17 +89,12 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
 
         <div className="flex gap-4">
           {/* Avatar */}
-          <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${color} overflow-hidden shadow-lg`}>
-            <img
-              src={getAvatarUrl(entry.name)}
-              alt={`${entry.name}'s avatar`}
-              loading="lazy"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            <span className="sr-only">{initials}</span>
+          <div
+            className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg`}
+            aria-label={`${entry.name}'s avatar`}
+            role="img"
+          >
+            <span className="text-lg sm:text-xl select-none">{getAvatarEmoji(entry.name)}</span>
           </div>
 
           <div className="flex-1 min-w-0">
