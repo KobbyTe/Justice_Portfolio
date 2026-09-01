@@ -788,6 +788,7 @@ export type Database = {
       }
       wall_messages: {
         Row: {
+          affiliation: string | null
           created_at: string
           id: string
           is_approved: boolean | null
@@ -796,6 +797,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          affiliation?: string | null
           created_at?: string
           id?: string
           is_approved?: boolean | null
@@ -804,6 +806,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          affiliation?: string | null
           created_at?: string
           id?: string
           is_approved?: boolean | null
