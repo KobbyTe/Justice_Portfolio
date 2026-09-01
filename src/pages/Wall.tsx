@@ -224,9 +224,9 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
             className="relative overflow-hidden p-5 sm:p-7"
           >
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center shadow-lg mt-1`}>
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${color} flex items-center justify-center overflow-hidden shadow-lg mt-1`}>
                 {initials ? (
-                  <span className="text-white font-bold text-xs">{initials}</span>
+                  <img src={getAvatarUrl(value.name)} alt="Your avatar preview" className="w-full h-full object-cover" />
                 ) : (
                   <MessageSquare className="w-4 h-4 text-white" />
                 )}
