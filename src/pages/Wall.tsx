@@ -291,7 +291,7 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
 };
 
 const Wall = () => {
-  const [wallMessage, setWallMessage] = useState({ name: '', message: '' });
+  const [wallMessage, setWallMessage] = useState({ name: '', affiliation: '', message: '' });
   const [wallEntries, setWallEntries] = useState<WallEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -337,7 +337,11 @@ const Wall = () => {
     try {
       const { error } = await supabase
         .from('wall_messages')
-        .insert([{ name: wallMessage.name.trim(), message: wallMessage.message.trim() }]);
+        .insert([{
+          name: wallMessage.name.trim(),
+          affiliation: wallMessage.affiliation.trim() || null,
+          message: wallMessage.message.trim(),
+        }]);
       if (error) throw error;
 
       import('@/utils/notifications').then(({ sendNotification }) => {
@@ -345,7 +349,7 @@ const Wall = () => {
       });
 
       toast({ title: "🎉 Submitted!", description: "Your message is pending approval and will appear shortly." });
-      setWallMessage({ name: '', message: '' });
+      setWallMessage({ name: '', affiliation: '', message: '' });
       setJustPosted(true);
       setTimeout(() => setJustPosted(false), 6000);
       loadWallMessages();
