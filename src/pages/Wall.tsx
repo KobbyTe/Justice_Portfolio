@@ -231,6 +231,16 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
                   className="border-0 bg-transparent px-0 h-9 text-[16px] font-semibold text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                 />
                 <div className="h-px bg-border/70 my-1" />
+                <label htmlFor="wall-affiliation" className="sr-only">Who you are (optional)</label>
+                <Input
+                  id="wall-affiliation"
+                  placeholder="Who are you? e.g. Student at KNUST, CEO of Kwabs Labs (optional)"
+                  value={value.affiliation}
+                  onChange={(e) => onChange({ ...value, affiliation: e.target.value })}
+                  maxLength={80}
+                  className="border-0 bg-transparent px-0 h-9 text-[16px] text-muted-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                />
+                <div className="h-px bg-border/70 my-1" />
                 <label htmlFor="wall-message" className="sr-only">Your message</label>
                 <Textarea
                   id="wall-message"
