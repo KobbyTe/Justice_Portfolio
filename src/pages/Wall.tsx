@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface WallEntry {
   id: string;
   name: string;
+  affiliation?: string | null;
   message: string;
   created_at: string;
 }
@@ -85,7 +86,7 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">
                 {entry.name}
               </h3>
@@ -93,6 +94,11 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
                 {timeAgo(entry.created_at)}
               </span>
             </div>
+            {entry.affiliation?.trim() && (
+              <p className="text-xs sm:text-[13px] text-primary/80 mb-2 truncate">
+                {entry.affiliation}
+              </p>
+            )}
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
               {entry.message}
             </p>
