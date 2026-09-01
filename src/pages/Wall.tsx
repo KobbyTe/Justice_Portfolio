@@ -111,9 +111,11 @@ const WallCard = ({ entry, index }: { entry: WallEntry; index: number }) => {
 
 const MAX_MESSAGE = 500;
 
+interface ComposerValue { name: string; affiliation: string; message: string }
+
 interface ComposerProps {
-  value: { name: string; message: string };
-  onChange: (v: { name: string; message: string }) => void;
+  value: ComposerValue;
+  onChange: (v: ComposerValue) => void;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   justPosted: boolean;
