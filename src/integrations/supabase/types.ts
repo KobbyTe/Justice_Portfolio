@@ -279,6 +279,51 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          category: string
+          created_at: string
+          credential_url: string | null
+          description: string | null
+          file_url: string | null
+          id: string
+          is_active: boolean
+          issued_on: string | null
+          issuer: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          credential_url?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          issued_on?: string | null
+          issuer?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          credential_url?: string | null
+          description?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          issued_on?: string | null
+          issuer?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gallery: {
         Row: {
           category: string | null
