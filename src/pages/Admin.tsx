@@ -830,6 +830,22 @@ const Admin = () => {
   };
 
   // Wall Management
+  const handleToggleWallApproval = async (id, approve) => {
+    try {
+      const { error } = await supabase
+        .from('wall_messages')
+        .update({ is_approved: approve })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success(approve ? 'Message approved and now public' : 'Message hidden from the wall');
+      reloadWallMessages();
+    } catch (error) {
+      toast.error('Failed to update message');
+    }
+  };
+
   const handleDeleteWallMessage = async (id) => {
     try {
       const { error } = await supabase
