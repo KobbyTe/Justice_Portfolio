@@ -1629,7 +1629,12 @@ const Admin = () => {
                     <div key={message.id} className="flex items-start justify-between p-4 border rounded">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold">@{message.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">@{message.name}</h4>
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full border ${message.is_approved ? 'text-primary border-primary/30 bg-primary/10' : 'text-amber-500 border-amber-500/30 bg-amber-500/10'}`}>
+                              {message.is_approved ? 'Approved' : 'Pending'}
+                            </span>
+                          </div>
                           <span className="text-sm text-muted-foreground">
                             {new Date(message.created_at).toLocaleDateString('en-US', {
                               year: 'numeric',
@@ -1640,17 +1645,29 @@ const Admin = () => {
                             })}
                           </span>
                         </div>
+                        {message.affiliation && (
+                          <p className="text-xs text-primary/80 mb-1">{message.affiliation}</p>
+                        )}
                         <p className="text-sm">{message.message}</p>
                       </div>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => handleDeleteWallMessage(message.id)}
-                        className="ml-4"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Button
+                          variant={message.is_approved ? 'outline' : 'default'}
+                          size="sm"
+                          onClick={() => handleToggleWallApproval(message.id, !message.is_approved)}
+                        >
+                          {message.is_approved ? 'Unapprove' : 'Approve'}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteWallMessage(message.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
+
                   ))}
                   
                   {wallMessages.length === 0 && (
