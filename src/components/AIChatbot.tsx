@@ -33,8 +33,6 @@ const AIChatbot = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  if (location.pathname === '/admin') return null;
-
   const send = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: 'user', content: text.trim() };
@@ -104,6 +102,9 @@ const AIChatbot = () => {
       setIsLoading(false);
     }
   }, [messages, isLoading]);
+
+  if (location.pathname === '/admin') return null;
+
 
   return (
     <>
