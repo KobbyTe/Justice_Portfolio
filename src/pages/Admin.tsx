@@ -18,6 +18,7 @@ import ImpactMetricsEditor from '@/components/admin/ImpactMetricsEditor';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
 import SkillsEditor from '@/components/admin/SkillsEditor';
+import CertificatesManagement from '@/components/admin/CertificatesManagement';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -893,6 +894,7 @@ const Admin = () => {
             <TabsTrigger value="impact" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Impact</TabsTrigger>
             <TabsTrigger value="tech" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tech Stack</TabsTrigger>
             <TabsTrigger value="skills" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Skills</TabsTrigger>
+            <TabsTrigger value="certificates" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Certificates</TabsTrigger>
             <TabsTrigger value="projects" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Projects</TabsTrigger>
             <TabsTrigger value="blog" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Blog</TabsTrigger>
             <TabsTrigger value="vlogs" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Vlogs</TabsTrigger>
@@ -1051,6 +1053,10 @@ const Admin = () => {
           {/* Skills Tab */}
           <TabsContent value="skills">
             <SkillsEditor />
+          </TabsContent>
+
+          <TabsContent value="certificates">
+            <CertificatesManagement />
           </TabsContent>
 
           {/* Projects Tab */}
