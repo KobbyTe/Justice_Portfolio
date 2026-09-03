@@ -28,6 +28,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Watch = lazy(() => import("./pages/Watch"));
 
 const Gallery = lazy(() => import("./pages/Gallery"));
+const Certificates = lazy(() => import("./pages/Certificates"));
 const Wall = lazy(() => import("./pages/Wall"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -76,6 +77,7 @@ const AnimatedRoutes = () => {
           <Route path="/vlogs/:slug" element={<PageTransition><BlogPost /></PageTransition>} />
           <Route path="/watch/:slug" element={<Watch />} />
           <Route path="/gallery" element={<PageTransition><Gallery /></PageTransition>} />
+          <Route path="/certificates" element={<PageTransition><Certificates /></PageTransition>} />
           <Route path="/wall" element={<PageTransition><Wall /></PageTransition>} />
           <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
           <Route path="/booking" element={<PageTransition><Booking /></PageTransition>} />
