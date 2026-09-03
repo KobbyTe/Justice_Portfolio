@@ -112,90 +112,92 @@ const Navigation = () => {
   };
 
   return (
-    <motion.nav
-      aria-label="Main navigation"
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-background/95 backdrop-blur-md shadow-soft border-b border-border'
-          : 'bg-background/40 backdrop-blur-sm sm:bg-transparent'
-      }`}>
+    <>
+      <motion.nav
+        aria-label="Main navigation"
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-background/95 backdrop-blur-md shadow-soft border-b border-border'
+            : 'bg-background/40 backdrop-blur-sm sm:bg-transparent'
+        }`}>
 
-      {/* Glow accent line on scroll */}
-      {isScrolled && (
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
-      )}
+        {/* Glow accent line on scroll */}
+        {isScrolled && (
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+        )}
 
-      <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo / Monogram */}
-          <Link
-            to="/"
-            className="flex items-center gap-2 group shrink-0"
-            aria-label="Home"
-          >
-            <span className="font-heading text-lg sm:text-xl font-extrabold tracking-tight text-foreground group-hover:text-primary transition-colors">
-              Justice Ansah
-            </span>
-          </Link>
+        <div className="container mx-auto px-4 sm:px-6 py-2 sm:py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo / Monogram */}
+            <Link
+              to="/"
+              className="flex items-center gap-2 group shrink-0"
+              aria-label="Home"
+            >
+              <span className="font-heading text-lg sm:text-xl font-extrabold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                Justice Ansah
+              </span>
+            </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                aria-current={isActive(item.path) ? 'page' : undefined}
-                className={`relative text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md group ${
-                  isActive(item.path)
-                    ? 'text-primary'
-                    : 'text-foreground hover:text-primary'
-                }`}
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                  className={`relative text-sm font-medium transition-all duration-300 px-3 py-2 rounded-md group ${
+                    isActive(item.path)
+                      ? 'text-primary'
+                      : 'text-foreground hover:text-primary'
+                  }`}
+                >
+                  {item.label}
+                  {/* Animated underline indicator */}
+                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-primary transition-all duration-300 ${
+                    isActive(item.path) ? 'w-4/5 opacity-100' : 'w-0 opacity-0 group-hover:w-3/5 group-hover:opacity-60'
+                  }`} />
+                </Link>
+              ))}
+            </div>
+
+            {/* Theme toggle + Mobile Menu */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
               >
-                {item.label}
-                {/* Animated underline indicator */}
-                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-primary transition-all duration-300 ${
-                  isActive(item.path) ? 'w-4/5 opacity-100' : 'w-0 opacity-0 group-hover:w-3/5 group-hover:opacity-60'
-                }`} />
-              </Link>
-            ))}
-          </div>
+                {theme === 'dark' ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
+              </button>
 
-          {/* Theme toggle + Mobile Menu */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" aria-hidden="true" /> : <Moon className="w-5 h-5" aria-hidden="true" />}
-            </button>
+              <button
+                type="button"
+                ref={menuButtonRef}
+                className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+              >
+                {isMenuOpen ? (
+                  <X className="w-6 h-6 transition-transform duration-200 rotate-0" aria-hidden="true" />
+                ) : (
+                  <Menu className="w-6 h-6" aria-hidden="true" />
+                )}
+              </button>
 
-            <button
-              type="button"
-              ref={menuButtonRef}
-              className="md:hidden p-3 min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg text-foreground hover:text-primary hover:bg-primary/10 active:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMenuOpen}
-              aria-controls="mobile-menu"
-            >
-              {isMenuOpen ? (
-                <X className="w-6 h-6 transition-transform duration-200 rotate-0" aria-hidden="true" />
-              ) : (
-                <Menu className="w-6 h-6" aria-hidden="true" />
-              )}
-            </button>
-
+            </div>
           </div>
         </div>
-      </div>
+      </motion.nav>
 
-      {/* Mobile Menu — modern bottom-sheet drawer */}
+      {/* Mobile Menu — modern bottom-sheet drawer (sibling of nav to avoid fixed-position ancestor transform issues) */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -285,7 +287,7 @@ const Navigation = () => {
           </>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </>
   );
 };
 
