@@ -20,7 +20,7 @@ interface Certificate {
   is_active: boolean;
 }
 
-const CATEGORIES = ['Robotics', 'STEM', 'AI', 'Leadership', 'Other'];
+const CATEGORIES = ['Robotics', 'STEM', 'Space / STEM', 'AI', 'Leadership', 'Other'];
 
 const emptyForm = {
   title: '',
