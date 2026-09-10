@@ -210,7 +210,7 @@ const CertificatesManagement = () => {
               <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, HEIC or HEIF, up to 20 MB.</p>
             </div>
             {formError && (
-              <p role="alert" className="text-sm text-destructive">
+              <p id="certificate-save-error" role="alert" className="text-sm text-destructive">
                 {formError}
               </p>
             )}
