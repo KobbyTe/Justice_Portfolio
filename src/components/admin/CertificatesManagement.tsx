@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Trash2, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { compressImage, validateImage } from '@/utils/imageOptimizer';
+import { convertHEIFToPNG, isHEIFFile } from '@/utils/imageConverter';
 
 interface Certificate {
   id: string;
@@ -37,6 +39,8 @@ const CertificatesManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data } = await supabase
@@ -54,15 +58,32 @@ const CertificatesManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+    setFormError('');
     setSaving(true);
+    let uploadedPath: string | null = null;
     try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError || !authData.user) {
+        throw new Error('Your admin session has expired. Sign in again, then retry.');
+      }
+
       let fileUrl: string | null = null;
       if (file) {
-        const path = `certificates/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const validation = validateImage(file);
+        if (!validation.valid) throw new Error(validation.error || 'Choose a valid certificate image.');
+
+        const convertedFile = isHEIFFile(file) ? await convertHEIFToPNG(file) : file;
+        const uploadFile = await compressImage(convertedFile, 1920, 0.86);
+        const safeBaseName = file.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[^a-zA-Z0-9_-]/g, '_')
+          .slice(0, 80);
+        const path = `certificates/${crypto.randomUUID()}-${safeBaseName || 'certificate'}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from('portfolio-assets')
-          .upload(path, file, { cacheControl: '3600', upsert: false });
-        if (uploadError) throw uploadError;
+          .upload(path, uploadFile, { cacheControl: '31536000', contentType: 'image/jpeg', upsert: false });
+        if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+        uploadedPath = path;
         fileUrl = supabase.storage.from('portfolio-assets').getPublicUrl(path).data.publicUrl;
       }
 
@@ -75,14 +96,20 @@ const CertificatesManagement = () => {
         issued_on: form.issued_on || null,
         file_url: fileUrl,
       });
-      if (error) throw error;
+      if (error) throw new Error(`Certificate save failed: ${error.message}`);
 
       toast({ title: 'Certificate added' });
       setForm(emptyForm);
       setFile(null);
-      load();
-    } catch (err: any) {
-      toast({ title: 'Could not save', description: err.message, variant: 'destructive' });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      await load();
+    } catch (err: unknown) {
+      if (uploadedPath) {
+        await supabase.storage.from('portfolio-assets').remove([uploadedPath]);
+      }
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred. Please retry.';
+      setFormError(message);
+      toast({ title: 'Could not add certificate', description: message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -171,13 +198,23 @@ const CertificatesManagement = () => {
             <div className="space-y-2">
               <Label htmlFor="cert-file">Certificate image (optional)</Label>
               <Input
+                ref={fileInputRef}
                 id="cert-file"
                 type="file"
-                accept="image/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                onChange={(e) => {
+                  setFormError('');
+                  setFile(e.target.files?.[0] || null);
+                }}
               />
+              <p className="text-xs text-muted-foreground">JPEG, PNG, WebP, HEIC or HEIF, up to 20 MB.</p>
             </div>
-            <Button type="submit" disabled={saving}>
+            {formError && (
+              <p role="alert" className="text-sm text-destructive">
+                {formError}
+              </p>
+            )}
+            <Button type="submit" disabled={saving} aria-describedby={formError ? 'certificate-save-error' : undefined}>
               {saving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
