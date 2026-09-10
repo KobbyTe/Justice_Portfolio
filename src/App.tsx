@@ -14,7 +14,6 @@ import IdleMount from "./components/IdleMount";
 
 // Defer non-critical floating widgets so they don't block first paint.
 const AIChatbot = lazy(() => import("./components/AIChatbot"));
-const GamificationWidget = lazy(() => import("./components/GamificationWidget"));
 
 // Eagerly load the home page for fastest initial render
 import Home from "./pages/Home";
@@ -105,7 +104,6 @@ const App = () => (
         <IdleMount>
           <Suspense fallback={null}>
             <AIChatbot />
-            <GamificationWidget />
           </Suspense>
         </IdleMount>
       </BrowserRouter>
