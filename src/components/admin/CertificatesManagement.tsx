@@ -57,13 +57,19 @@ const CertificatesManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (saving) return;
+    if (!form.title.trim()) {
+      setFormError('Please enter a certificate title.');
+      return;
+    }
     setFormError('');
     setSaving(true);
     let uploadedPath: string | null = null;
     try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData.user) {
+      // Read the session locally (no extra blocking network round-trip).
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        console.error('[Certificates] No active session', sessionError);
         throw new Error('Your admin session has expired. Sign in again, then retry.');
       }
 
@@ -72,17 +78,42 @@ const CertificatesManagement = () => {
         const validation = validateImage(file);
         if (!validation.valid) throw new Error(validation.error || 'Choose a valid certificate image.');
 
-        const convertedFile = isHEIFFile(file) ? await convertHEIFToPNG(file) : file;
-        const uploadFile = await compressImage(convertedFile, 1920, 0.86);
+        let workingFile: File = file;
+        if (isHEIFFile(file)) {
+          try {
+            workingFile = await convertHEIFToPNG(file);
+          } catch (convErr) {
+            console.error('[Certificates] HEIC conversion failed', convErr);
+            throw new Error('Could not convert this HEIC/HEIF photo. Please export it as JPEG or PNG and retry.');
+          }
+        }
+
+        // Compress when possible; fall back to the original file if the browser can't process it.
+        let uploadFile: File = workingFile;
+        let contentType = workingFile.type || 'image/jpeg';
+        let extension = (workingFile.name.split('.').pop() || 'jpg').toLowerCase();
+        try {
+          uploadFile = await compressImage(workingFile, 1920, 0.86);
+          contentType = 'image/jpeg';
+          extension = 'jpg';
+        } catch (compressErr) {
+          console.warn('[Certificates] Compression failed, uploading original file', compressErr);
+          if (!['jpg', 'jpeg', 'png', 'webp'].includes(extension)) extension = 'jpg';
+          if (!contentType.startsWith('image/')) contentType = 'image/jpeg';
+        }
+
         const safeBaseName = file.name
           .replace(/\.[^/.]+$/, '')
           .replace(/[^a-zA-Z0-9_-]/g, '_')
           .slice(0, 80);
-        const path = `certificates/${crypto.randomUUID()}-${safeBaseName || 'certificate'}.jpg`;
+        const path = `certificates/${crypto.randomUUID()}-${safeBaseName || 'certificate'}.${extension}`;
         const { error: uploadError } = await supabase.storage
           .from('portfolio-assets')
-          .upload(path, uploadFile, { cacheControl: '31536000', contentType: 'image/jpeg', upsert: false });
-        if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+          .upload(path, uploadFile, { cacheControl: '31536000', contentType, upsert: false });
+        if (uploadError) {
+          console.error('[Certificates] Storage upload failed', uploadError);
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
         uploadedPath = path;
         fileUrl = supabase.storage.from('portfolio-assets').getPublicUrl(path).data.publicUrl;
       }
@@ -96,7 +127,10 @@ const CertificatesManagement = () => {
         issued_on: form.issued_on || null,
         file_url: fileUrl,
       });
-      if (error) throw new Error(`Certificate save failed: ${error.message}`);
+      if (error) {
+        console.error('[Certificates] Database insert failed', error);
+        throw new Error(`Certificate save failed: ${error.message}`);
+      }
 
       toast({ title: 'Certificate added' });
       setForm(emptyForm);
@@ -104,6 +138,7 @@ const CertificatesManagement = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
       await load();
     } catch (err: unknown) {
+      console.error('[Certificates] Add certificate failed', err);
       if (uploadedPath) {
         await supabase.storage.from('portfolio-assets').remove([uploadedPath]);
       }

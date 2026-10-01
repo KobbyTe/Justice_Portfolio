@@ -1,6 +1,14 @@
 export const isHEIFFile = (file: File): boolean => {
   const extension = file.name.split('.').pop()?.toLowerCase();
-  return extension === 'heic' || extension === 'heif';
+  const type = (file.type || '').toLowerCase();
+  return (
+    extension === 'heic' ||
+    extension === 'heif' ||
+    type === 'image/heic' ||
+    type === 'image/heif' ||
+    type === 'image/heic-sequence' ||
+    type === 'image/heif-sequence'
+  );
 };
 
 export const convertHEIFToPNG = async (file: File): Promise<File> => {
