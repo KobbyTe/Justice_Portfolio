@@ -70,9 +70,14 @@ const Footer = () => {
       <div className="py-6 sm:py-10 relative z-10">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-col items-center gap-4 sm:gap-6 md:flex-row md:justify-between">
-            <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">
-              © {year} Justice Ansah. All rights reserved.
-            </p>
+            <div className="flex items-center gap-3">
+              <a href="/" aria-label="Home" className="shrink-0">
+                <img src="/logo-128.png" alt="Justice Ansah – Official Logo" width={48} height={48} className="h-10 w-10 sm:h-12 sm:w-12 object-contain" loading="lazy" />
+              </a>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">
+                © {year} Justice Ansah. All rights reserved.
+              </p>
+            </div>
 
             <div className="flex items-center space-x-1">
               {[
