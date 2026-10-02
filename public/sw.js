@@ -3,9 +3,9 @@ const CACHE_NAME = 'justice-ansah-v4';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = [
   OFFLINE_URL,
-  '/manifest.json',
+  '/site.webmanifest',
   '/logo.png',
-  '/favicon.png',
+  '/favicon.ico',
   '/hero-lcp.jpg',
 ];
 
