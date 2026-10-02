@@ -138,6 +138,7 @@ const Navigation = () => {
               className="flex items-center gap-2 group shrink-0"
               aria-label="Home"
             >
+              <img src="/logo-128.png" alt="Justice Ansah – Official Logo" width={64} height={64} className="h-10 w-10 md:h-14 md:w-14 object-contain" fetchPriority="high" />
               <span className="font-heading text-lg sm:text-xl font-extrabold tracking-tight text-foreground group-hover:text-primary transition-colors">
                 Justice Ansah
               </span>
