@@ -115,7 +115,20 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEO title="About" description="Learn about Justice Ansah — a self-taught innovator bridging technology, agriculture, and sustainable development." url="/about" />
+      <SEO
+        title="About"
+        description="Learn about Justice Ansah — a Ghanaian autodidact engineer, robotics and IoT developer, and STEM educator bridging technology, agriculture, and sustainable development."
+        url="/about"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          '@id': 'https://justiceansah.com/about#profilepage',
+          url: 'https://justiceansah.com/about',
+          name: 'About Justice Ansah',
+          isPartOf: { '@id': 'https://justiceansah.com/#website' },
+          mainEntity: { '@id': 'https://justiceansah.com/#person' },
+        }}
+      />
       <Navigation />
 
       {/* Hero Section — Cinematic Intro */}
