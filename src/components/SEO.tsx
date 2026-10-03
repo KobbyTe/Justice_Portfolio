@@ -2,8 +2,9 @@ import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'Justice Ansah';
 const DEFAULT_DESCRIPTION =
-  'Robotics, IoT and educational technology that makes STEM learning hands-on across Africa.';
+  'Justice Ansah is a Ghanaian autodidact engineer, robotics and IoT developer, STEM educator and innovator building practical technology across education, agriculture and sustainability.';
 const DEFAULT_IMAGE = '/og-image.png';
+const PERSON_ID = 'https://justiceansah.com/#person';
 
 const PRODUCTION_URL =
   (import.meta.env.VITE_SITE_URL as string | undefined) || 'https://justiceansah.com';
@@ -34,6 +35,7 @@ interface SEOProps {
     tags?: string[];
     category?: string;
   };
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const SEO = ({
@@ -43,6 +45,7 @@ const SEO = ({
   url,
   type = 'website',
   article,
+  jsonLd,
 }: SEOProps) => {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
