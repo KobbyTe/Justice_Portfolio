@@ -81,6 +81,13 @@ const SEO = ({
       {article?.category && (
         <meta property="article:section" content={article.category} />
       )}
+
+      {/* Structured data */}
+      {jsonLd && (
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLd)}
+        </script>
+      )}
     </Helmet>
   );
 };
