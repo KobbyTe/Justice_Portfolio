@@ -26,6 +26,8 @@ const BASE_URL = (() => {
 
 interface SEOProps {
   title?: string;
+  /** Overrides the composed "title | site" pattern entirely. */
+  fullTitle?: string;
   description?: string;
   image?: string;
   url?: string;
