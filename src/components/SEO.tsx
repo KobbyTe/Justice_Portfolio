@@ -42,6 +42,7 @@ interface SEOProps {
 
 const SEO = ({
   title,
+  fullTitle: fullTitleOverride,
   description = DEFAULT_DESCRIPTION,
   image = DEFAULT_IMAGE,
   url,
@@ -49,7 +50,7 @@ const SEO = ({
   article,
   jsonLd,
 }: SEOProps) => {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+  const fullTitle = fullTitleOverride ?? (title ? `${title} | ${SITE_NAME}` : SITE_NAME);
   const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
   const fullImage = image.startsWith('http') ? image : `${BASE_URL}${image}`;
 
