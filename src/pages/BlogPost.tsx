@@ -159,6 +159,17 @@ const BlogPost = () => {
           tags: post.tags,
           category: post.category,
         }}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: post.title,
+          description: post.excerpt,
+          ...(post.featured_image_url ? { image: post.featured_image_url } : {}),
+          datePublished: post.published_at,
+          author: { '@id': 'https://justiceansah.com/#person' },
+          isPartOf: { '@id': 'https://justiceansah.com/#website' },
+          mainEntityOfPage: `https://justiceansah.com/blog/${post.slug}`,
+        }}
       />
       <Navigation />
       
