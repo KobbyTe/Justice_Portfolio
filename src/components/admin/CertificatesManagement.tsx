@@ -146,22 +146,28 @@ const processCertificateImage = async (file: File): Promise<{ blob: File; conten
   let working = file;
   if (isHEIFFile(file)) {
     try {
-      working = await convertHEIFToPNG(file);
+      working = await withTimeout(convertHEIFToPNG(file), 60_000, 'Image processing failed: HEIC conversion took too long. Please export it as JPG or PNG and retry.', 'heic-conversion');
     } catch (err) {
+      if (err instanceof CertificateError) throw err;
       logError('Image processing failed', err, { stage: 'heic-conversion', fileName: file.name });
-      throw new CertificateError('Could not convert this HEIC/HEIF photo. Please export it as JPG or PNG and retry.');
+      throw new CertificateError('Image processing failed: could not convert this HEIC/HEIF photo. Please export it as JPG or PNG and retry.');
     }
   }
 
-  try {
-    const compressed = await compressImage(working, 1920, 0.86);
-    if (compressed.size > 0) return { blob: compressed, contentType: 'image/jpeg', extension: 'jpg' };
-  } catch (err) {
-    logError('Image processing failed', err, { stage: 'compression', fileName: working.name });
+  const ext0 = getExtension(working.name);
+  const webSafe = ['image/jpeg', 'image/png', 'image/webp'].includes(working.type) || ['jpg', 'jpeg', 'png', 'webp'].includes(ext0);
+  // Small web-ready images are uploaded as-is — no expensive re-encoding.
+  if (!(webSafe && working.size <= 2 * 1024 * 1024)) {
+    try {
+      const compressed = await compressImage(working, 2400, 0.88);
+      if (compressed.size > 0) return { blob: compressed, contentType: 'image/jpeg', extension: 'jpg' };
+    } catch (err) {
+      logError('Image processing failed', err, { stage: 'compression', fileName: working.name });
+    }
   }
 
-  if (!(await canDecode(working))) {
-    throw new CertificateError('This image could not be read. It may be damaged — please export it again as JPG or PNG.');
+  if (!(await withTimeout(canDecode(working), 20_000, 'Image processing failed: the image could not be read.', 'decode'))) {
+    throw new CertificateError('Image processing failed: this image could not be read. Please export it again as JPG or PNG.');
   }
   const ext = getExtension(working.name);
   const extension = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
@@ -175,12 +181,27 @@ const uploadCertificateFile = async (original: File) => {
   const safeBase = original.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 80) || 'certificate';
   const path = `certificates/${crypto.randomUUID()}-${safeBase}.${extension}`;
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, blob, { cacheControl: '31536000', contentType, upsert: false });
+  let result;
+  try {
+    result = await withTimeout(
+      supabase.storage.from(BUCKET).upload(path, blob, { cacheControl: '31536000', contentType, upsert: false }),
+      120_000,
+      'Upload timed out: certificate upload timed out. Please check your connection and try again.',
+      'storage-upload'
+    );
+  } catch (err) {
+    // The request may still finish in the background; try to remove it so no orphan is left.
+    void supabase.storage.from(BUCKET).remove([path]);
+    throw err;
+  }
+  const { data, error } = result;
   if (error || !data?.path) {
     logError('Storage upload failed', error, { path });
-    throw new CertificateError('The image could not be uploaded. Please check your connection and retry.');
+    const msg = (error?.message || '').toLowerCase();
+    if (msg.includes('row-level security') || msg.includes('unauthorized') || msg.includes('403')) {
+      throw new CertificateError('Permission denied: storage rejected the upload for this account.');
+    }
+    throw new CertificateError(`Upload failed: ${error?.message || 'the image could not be uploaded'}. Please retry.`);
   }
 
   const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(data.path).data.publicUrl;
