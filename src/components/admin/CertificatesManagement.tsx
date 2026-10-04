@@ -319,10 +319,10 @@ const CertificatesManagement = () => {
       const payload = { ...toPayload(form), ...(fileUrl !== undefined ? { file_url: fileUrl } : {}) };
 
       if (editing) {
-        const { error } = await supabase.from('certificates').update(payload).eq('id', editing.id);
+        const { error } = await withTimeout(supabase.from('certificates').update(payload).eq('id', editing.id), 30_000, 'Database update timed out. Please retry.', 'db-update');
         if (error) {
           logError('Database update failed', error, { certificateId: editing.id, path: uploadedPath });
-          throw new CertificateError('The certificate could not be updated. Please retry.');
+          throw new CertificateError(`Database update failed: ${error.message}.`);
         }
         uploadedPath = null; // committed
         // Replace image: remove the previous file only after the new one is saved.
@@ -332,10 +332,10 @@ const CertificatesManagement = () => {
         }
         toast({ title: 'Certificate updated' });
       } else {
-        const { data, error } = await supabase.from('certificates').insert(payload).select('id').single();
+        const { data, error } = await withTimeout(supabase.from('certificates').insert(payload).select('id').single(), 30_000, 'Database insert timed out. Please retry.', 'db-insert');
         if (error || !data) {
           logError('Database insert failed', error, { path: uploadedPath });
-          throw new CertificateError('The certificate could not be saved. Please retry.');
+          throw new CertificateError(`Database insert failed: ${error?.message || 'the certificate could not be saved'}.`);
         }
         uploadedPath = null; // committed
         toast({ title: 'Certificate added' });
