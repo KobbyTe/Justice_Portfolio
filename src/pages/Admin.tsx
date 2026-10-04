@@ -81,19 +81,21 @@ const Admin = () => {
       loadAllData();
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // IMPORTANT: this callback must stay synchronous. Awaiting Supabase calls inside
+    // onAuthStateChange holds the auth lock and deadlocks every later request
+    // (uploads, inserts) — that made certificate uploads hang on "Uploading…".
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Skip INITIAL_SESSION since getSession handles it
       if (event === 'INITIAL_SESSION') return;
-      // Handle sign out, sign in, token refresh
       if (event === 'SIGNED_OUT') {
         setIsAdmin(false);
         setAuthChecked(true);
         navigate('/auth');
         return;
       }
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_IN') {
         if (!initialCheckDone) return; // Let getSession handle first check
-        await handleSession(session);
+        setTimeout(() => { void handleSession(session); }, 0);
       }
     });
 

@@ -73,19 +73,44 @@ const storagePathFromUrl = (url: string | null): string | null => {
 
 const getExtension = (name: string) => (name.split('.').pop() || '').toLowerCase();
 
-// 1. Authentication — refresh the session if it is missing or about to expire.
+/** Rejects with a safe message if a step never settles, so the UI can't stay stuck. */
+const withTimeout = <T,>(promise: PromiseLike<T>, ms: number, message: string, stage: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      logError('Timed out', new Error(`${stage} exceeded ${ms}ms`), { stage });
+      reject(new CertificateError(message));
+    }, ms);
+    Promise.resolve(promise).then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); }
+    );
+  });
+
+// 1. Authentication — session must exist and the user must be an admin.
 const ensureAdminSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
+  const authMsg = 'Authentication required: your admin session has expired. Please sign in again.';
+  const { data, error } = await withTimeout(supabase.auth.getSession(), 15_000, authMsg, 'getSession');
   let session = data.session;
   const expiresSoon = session?.expires_at ? session.expires_at * 1000 - Date.now() < 60_000 : false;
   if (error || !session || expiresSoon) {
-    const refreshed = await supabase.auth.refreshSession();
+    const refreshed = await withTimeout(supabase.auth.refreshSession(), 15_000, authMsg, 'refreshSession');
     session = refreshed.data.session;
     if (refreshed.error || !session) {
       logError('Authentication failed', refreshed.error ?? error);
-      throw new CertificateError('Your admin session has expired. Please sign in again, then retry.');
+      throw new CertificateError(authMsg);
     }
   }
+  const { data: isAdmin, error: roleError } = await withTimeout(
+    supabase.rpc('has_role', { _user_id: session.user.id, _role: 'admin' }),
+    15_000,
+    'Could not verify admin access. Please check your connection and retry.',
+    'has_role'
+  );
+  if (roleError) {
+    logError('Admin check failed', roleError);
+    throw new CertificateError('Could not verify admin access. Please retry.');
+  }
+  if (!isAdmin) throw new CertificateError('Permission denied: this account is not an admin.');
   return session;
 };
 
