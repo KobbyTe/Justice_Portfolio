@@ -73,19 +73,44 @@ const storagePathFromUrl = (url: string | null): string | null => {
 
 const getExtension = (name: string) => (name.split('.').pop() || '').toLowerCase();
 
-// 1. Authentication — refresh the session if it is missing or about to expire.
+/** Rejects with a safe message if a step never settles, so the UI can't stay stuck. */
+const withTimeout = <T,>(promise: PromiseLike<T>, ms: number, message: string, stage: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      logError('Timed out', new Error(`${stage} exceeded ${ms}ms`), { stage });
+      reject(new CertificateError(message));
+    }, ms);
+    Promise.resolve(promise).then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); }
+    );
+  });
+
+// 1. Authentication — session must exist and the user must be an admin.
 const ensureAdminSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
+  const authMsg = 'Authentication required: your admin session has expired. Please sign in again.';
+  const { data, error } = await withTimeout(supabase.auth.getSession(), 15_000, authMsg, 'getSession');
   let session = data.session;
   const expiresSoon = session?.expires_at ? session.expires_at * 1000 - Date.now() < 60_000 : false;
   if (error || !session || expiresSoon) {
-    const refreshed = await supabase.auth.refreshSession();
+    const refreshed = await withTimeout(supabase.auth.refreshSession(), 15_000, authMsg, 'refreshSession');
     session = refreshed.data.session;
     if (refreshed.error || !session) {
       logError('Authentication failed', refreshed.error ?? error);
-      throw new CertificateError('Your admin session has expired. Please sign in again, then retry.');
+      throw new CertificateError(authMsg);
     }
   }
+  const { data: isAdmin, error: roleError } = await withTimeout(
+    supabase.rpc('has_role', { _user_id: session.user.id, _role: 'admin' }),
+    15_000,
+    'Could not verify admin access. Please check your connection and retry.',
+    'has_role'
+  );
+  if (roleError) {
+    logError('Admin check failed', roleError);
+    throw new CertificateError('Could not verify admin access. Please retry.');
+  }
+  if (!isAdmin) throw new CertificateError('Permission denied: this account is not an admin.');
   return session;
 };
 
@@ -121,22 +146,28 @@ const processCertificateImage = async (file: File): Promise<{ blob: File; conten
   let working = file;
   if (isHEIFFile(file)) {
     try {
-      working = await convertHEIFToPNG(file);
+      working = await withTimeout(convertHEIFToPNG(file), 60_000, 'Image processing failed: HEIC conversion took too long. Please export it as JPG or PNG and retry.', 'heic-conversion');
     } catch (err) {
+      if (err instanceof CertificateError) throw err;
       logError('Image processing failed', err, { stage: 'heic-conversion', fileName: file.name });
-      throw new CertificateError('Could not convert this HEIC/HEIF photo. Please export it as JPG or PNG and retry.');
+      throw new CertificateError('Image processing failed: could not convert this HEIC/HEIF photo. Please export it as JPG or PNG and retry.');
     }
   }
 
-  try {
-    const compressed = await compressImage(working, 1920, 0.86);
-    if (compressed.size > 0) return { blob: compressed, contentType: 'image/jpeg', extension: 'jpg' };
-  } catch (err) {
-    logError('Image processing failed', err, { stage: 'compression', fileName: working.name });
+  const ext0 = getExtension(working.name);
+  const webSafe = ['image/jpeg', 'image/png', 'image/webp'].includes(working.type) || ['jpg', 'jpeg', 'png', 'webp'].includes(ext0);
+  // Small web-ready images are uploaded as-is — no expensive re-encoding.
+  if (!(webSafe && working.size <= 2 * 1024 * 1024)) {
+    try {
+      const compressed = await compressImage(working, 2400, 0.88);
+      if (compressed.size > 0) return { blob: compressed, contentType: 'image/jpeg', extension: 'jpg' };
+    } catch (err) {
+      logError('Image processing failed', err, { stage: 'compression', fileName: working.name });
+    }
   }
 
-  if (!(await canDecode(working))) {
-    throw new CertificateError('This image could not be read. It may be damaged — please export it again as JPG or PNG.');
+  if (!(await withTimeout(canDecode(working), 20_000, 'Image processing failed: the image could not be read.', 'decode'))) {
+    throw new CertificateError('Image processing failed: this image could not be read. Please export it again as JPG or PNG.');
   }
   const ext = getExtension(working.name);
   const extension = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
@@ -150,12 +181,27 @@ const uploadCertificateFile = async (original: File) => {
   const safeBase = original.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 80) || 'certificate';
   const path = `certificates/${crypto.randomUUID()}-${safeBase}.${extension}`;
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, blob, { cacheControl: '31536000', contentType, upsert: false });
+  let result;
+  try {
+    result = await withTimeout(
+      supabase.storage.from(BUCKET).upload(path, blob, { cacheControl: '31536000', contentType, upsert: false }),
+      120_000,
+      'Upload timed out: certificate upload timed out. Please check your connection and try again.',
+      'storage-upload'
+    );
+  } catch (err) {
+    // The request may still finish in the background; try to remove it so no orphan is left.
+    void supabase.storage.from(BUCKET).remove([path]);
+    throw err;
+  }
+  const { data, error } = result;
   if (error || !data?.path) {
     logError('Storage upload failed', error, { path });
-    throw new CertificateError('The image could not be uploaded. Please check your connection and retry.');
+    const msg = (error?.message || '').toLowerCase();
+    if (msg.includes('row-level security') || msg.includes('unauthorized') || msg.includes('403')) {
+      throw new CertificateError('Permission denied: storage rejected the upload for this account.');
+    }
+    throw new CertificateError(`Upload failed: ${error?.message || 'the image could not be uploaded'}. Please retry.`);
   }
 
   const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(data.path).data.publicUrl;
@@ -273,10 +319,10 @@ const CertificatesManagement = () => {
       const payload = { ...toPayload(form), ...(fileUrl !== undefined ? { file_url: fileUrl } : {}) };
 
       if (editing) {
-        const { error } = await supabase.from('certificates').update(payload).eq('id', editing.id);
+        const { error } = await withTimeout(supabase.from('certificates').update(payload).eq('id', editing.id), 30_000, 'Database update timed out. Please retry.', 'db-update');
         if (error) {
           logError('Database update failed', error, { certificateId: editing.id, path: uploadedPath });
-          throw new CertificateError('The certificate could not be updated. Please retry.');
+          throw new CertificateError(`Database update failed: ${error.message}.`);
         }
         uploadedPath = null; // committed
         // Replace image: remove the previous file only after the new one is saved.
@@ -286,10 +332,10 @@ const CertificatesManagement = () => {
         }
         toast({ title: 'Certificate updated' });
       } else {
-        const { data, error } = await supabase.from('certificates').insert(payload).select('id').single();
+        const { data, error } = await withTimeout(supabase.from('certificates').insert(payload).select('id').single(), 30_000, 'Database insert timed out. Please retry.', 'db-insert');
         if (error || !data) {
           logError('Database insert failed', error, { path: uploadedPath });
-          throw new CertificateError('The certificate could not be saved. Please retry.');
+          throw new CertificateError(`Database insert failed: ${error?.message || 'the certificate could not be saved'}.`);
         }
         uploadedPath = null; // committed
         toast({ title: 'Certificate added' });
