@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, User } from 'lucide-react';
-import logoImg from '@/assets/logo.png';
+const logoImg = '/logo-128.png';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -140,7 +140,7 @@ const AIChatbot = () => {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
               <div className="flex items-center gap-2">
-                <img src={logoImg} alt="Kwabena" className="w-8 h-8 rounded-full object-contain" />
+                <img src={logoImg} alt="Justice Ansah" className="w-8 h-8 rounded-full object-contain" />
                 <div>
                   <p className="text-sm font-semibold text-foreground">Kwabena</p>
                   <p className="text-xs text-muted-foreground">Always online</p>
@@ -189,7 +189,7 @@ const AIChatbot = () => {
                 <div className="w-7 h-7 rounded-full bg-primary flex-shrink-0 flex items-center justify-center mt-0.5">
                   <User className="w-3.5 h-3.5 text-primary-foreground" />
                 </div> :
-                <img src={logoImg} alt="Kwabena" className="w-7 h-7 rounded-full object-contain flex-shrink-0 mt-0.5" />
+                <img src={logoImg} alt="Justice Ansah" className="w-7 h-7 rounded-full object-contain flex-shrink-0 mt-0.5" />
                 }
                   <div className={`rounded-2xl px-3 py-2 text-sm max-w-[85%] whitespace-pre-wrap ${
               msg.role === 'user' ?
@@ -207,7 +207,7 @@ const AIChatbot = () => {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-2">
               
-                  <img src={logoImg} alt="Kwabena" className="w-7 h-7 rounded-full object-contain" />
+                  <img src={logoImg} alt="Justice Ansah" className="w-7 h-7 rounded-full object-contain" />
                   <div className="bg-secondary rounded-2xl rounded-tl-sm px-4 py-3">
                     <div className="flex gap-1.5 items-center">
                       <motion.span
