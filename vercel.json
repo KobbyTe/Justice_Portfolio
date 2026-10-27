@@ -1,4 +1,5 @@
 {
+  "cleanUrls": true,
   "redirects": [
     { "source": "/vlogs", "destination": "/blog", "permanent": true },
     { "source": "/vlogs/:slug", "destination": "/blog/:slug", "permanent": true },
