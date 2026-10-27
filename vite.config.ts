@@ -22,7 +22,6 @@ export default defineConfig(() => ({
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           motion: ["framer-motion"],
-          charts: ["recharts"],
           editor: ["quill", "react-quill"],
           supabase: ["@supabase/supabase-js"],
         },
