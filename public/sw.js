@@ -1,10 +1,10 @@
 // Bump on every release that changes asset URLs / SW behavior
-const CACHE_NAME = 'justice-ansah-v4';
+const CACHE_NAME = 'justice-ansah-v5';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE_URLS = [
   OFFLINE_URL,
   '/site.webmanifest',
-  '/logo.png',
+  '/logo-128.png',
   '/favicon.ico',
   '/hero-lcp.jpg',
 ];
