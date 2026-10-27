@@ -1,6 +1,6 @@
 # Justice Ansah — Portfolio
 
-Personal portfolio of Justice Ansah: Full-Stack Developer, STEM Educator, and Robotics Engineer.
+Personal portfolio of Justice Ansah: Robotics & IoT Engineer, STEM Educator, and Full-Stack Developer.
 
 ## Tech stack
 
