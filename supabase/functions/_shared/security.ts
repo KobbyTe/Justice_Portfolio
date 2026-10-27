@@ -5,8 +5,13 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 export { z };
 
+// Only the live site may call these functions from a browser.
+// For local testing, set the ALLOWED_ORIGIN secret (e.g. http://localhost:8080).
+const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "https://justiceansah.com";
+
 export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
