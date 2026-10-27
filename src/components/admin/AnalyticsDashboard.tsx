@@ -80,7 +80,7 @@ const AnalyticsDashboard = () => {
       supabase.from('bookings').select('*').gte('created_at', since).order('created_at', { ascending: true }),
       supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
       supabase.from('blog_likes').select('*').gte('created_at', since).order('created_at', { ascending: true }),
-      supabase.from('blog_comments').select('*').gte('created_at', since).order('created_at', { ascending: true }),
+      supabase.from('blog_comments').select('id, post_id, created_at, is_approved').gte('created_at', since).order('created_at', { ascending: true }),
     ]);
 
     setPageViews(viewsRes.data || []);
