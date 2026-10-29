@@ -1,11 +1,46 @@
 {
   "cleanUrls": true,
   "redirects": [
-    { "source": "/vlogs", "destination": "/blog", "permanent": true },
-    { "source": "/vlogs/:slug", "destination": "/blog/:slug", "permanent": true },
-    { "source": "/lovable-uploads/:path*", "destination": "/uploads/:path*", "permanent": true }
+    {
+      "source": "/vlogs",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/vlogs/:slug",
+      "destination": "/blog/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/lovable-uploads/:path*",
+      "destination": "/uploads/:path*",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/((?!assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/" }
+    {
+      "source": "/",
+      "destination": "/api/render?path=/"
+    },
+    {
+      "source": "/:page(about|projects|blog|resume|certificates|gallery|booking|wall)",
+      "destination": "/api/render?path=/:page"
+    },
+    {
+      "source": "/:section(blog|watch)/:slug",
+      "destination": "/api/render?path=/:section/:slug"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/render?path=/sitemap.xml"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/api/render?path=/llms.txt"
+    },
+    {
+      "source": "/((?!api/|assets/|.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/spa-shell"
+    }
   ]
 }
