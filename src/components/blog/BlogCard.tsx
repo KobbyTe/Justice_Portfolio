@@ -104,9 +104,11 @@ export const BlogCard = ({ post, onClick }: BlogCardProps) => {
               Vlog
             </Badge>
           )}
-          <Badge className="bg-primary text-primary-foreground backdrop-blur-sm">
-            {post.category}
-          </Badge>
+          {post.category && !(vlog && post.category.toLowerCase() === 'vlog') && (
+            <Badge className="bg-primary text-primary-foreground backdrop-blur-sm">
+              {post.category}
+            </Badge>
+          )}
         </div>
       </div>
       
