@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SEO from '@/components/SEO';
@@ -38,6 +38,7 @@ const Watch = () => {
         .select('id, title, excerpt, slug, featured_video_url, featured_image_url, published_at, tags')
         .eq('is_published', true)
         .not('featured_video_url', 'is', null)
+        .neq('featured_video_url', '')
         .order('published_at', { ascending: false });
       if (cancelled) return;
       setPosts((data as VlogPost[]) || []);
@@ -47,11 +48,10 @@ const Watch = () => {
   }, []);
 
   const { vlogs, initialIndex } = useMemo(() => {
+    // Keep newest-first order and open on the requested video, so newer
+    // videos stay above it and older ones below (no wrap-around).
     const idx = Math.max(0, posts.findIndex((p) => p.slug === slug));
-    const ordered = posts.length
-      ? [...posts.slice(idx), ...posts.slice(0, idx)]
-      : [];
-    const v: Vlog[] = ordered.map((p) => ({
+    const v: Vlog[] = posts.map((p) => ({
       id: p.id,
       title: p.title,
       description: p.excerpt || '',
@@ -63,10 +63,32 @@ const Watch = () => {
       publishedAt: p.published_at,
       tags: p.tags || [],
     }));
-    return { vlogs: v, initialIndex: 0 };
+    return { vlogs: v, initialIndex: idx };
   }, [posts, slug]);
 
-  const active = vlogs[0];
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const active = vlogs[activeIndex ?? initialIndex];
+
+  // Keep the address bar (and therefore Share, refresh and bookmarks) in sync
+  // with the video on screen, without remounting the feed.
+  const handleActiveChange = useCallback(
+    (i: number) => {
+      setActiveIndex(i);
+      const s = vlogs[i]?.slug;
+      if (s && window.location.pathname !== `/watch/${s}`) {
+        window.history.replaceState(window.history.state, '', `/watch/${s}`);
+      }
+    },
+    [vlogs]
+  );
+
+  // Go back inside the site; if the video was opened from a shared link,
+  // there is no in-site history, so go to the blog instead of leaving.
+  const goBack = useCallback(() => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1);
+    else navigate('/blog');
+  }, [navigate]);
 
   if (!loading && vlogs.length === 0) {
     return (
@@ -109,7 +131,7 @@ const Watch = () => {
 
       {/* Floating back button */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={goBack}
         className="fixed left-3 z-30 w-11 h-11 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors"
         style={{ top: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
         aria-label="Back"
@@ -119,7 +141,7 @@ const Watch = () => {
 
       <div className="relative z-10 h-full">
         {!loading && vlogs.length > 0 && (
-          <VlogFeed vlogs={vlogs} initialIndex={initialIndex} />
+          <VlogFeed vlogs={vlogs} initialIndex={initialIndex} onActiveChange={handleActiveChange} />
         )}
       </div>
     </div>
