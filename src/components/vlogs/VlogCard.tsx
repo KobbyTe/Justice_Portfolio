@@ -197,16 +197,18 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
   };
 
   const handleShare = async () => {
+    // Share this card's own link, not whatever the address bar shows.
+    const url = vlog.slug ? `${window.location.origin}/watch/${vlog.slug}` : window.location.href;
     const shareData = {
       title: vlog.title,
       text: vlog.description,
-      url: window.location.href,
+      url,
     };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(url);
         toast.success('Link copied to clipboard');
       }
     } catch {
