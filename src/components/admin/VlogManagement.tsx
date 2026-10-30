@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UploadCloud, Trash2, Eye, EyeOff, Film, Loader2, Link as LinkIcon, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadVlogVideo } from '@/lib/uploadVlogVideo';
+import { validateVlogVideo } from '@/lib/videoUploadRules';
 
 interface VlogPost {
   id: string;
@@ -73,7 +75,19 @@ const extractVideoMetadata = (file: File): Promise<{
     video.playsInline = true;
     video.src = url;
 
-    const cleanup = () => URL.revokeObjectURL(url);
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve({ duration: 0, width: 0, height: 0, posterBlob: null });
+    }, 15000);
+    const cleanup = () => {
+      clearTimeout(timeout);
+      video.onloadedmetadata = null;
+      video.onseeked = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(url);
+    };
 
     video.onloadedmetadata = () => {
       const duration = video.duration || 0;
@@ -122,6 +136,9 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const uploadLock = useRef(false);
   const [overrideTitle, setOverrideTitle] = useState('');
   const [overrideDescription, setOverrideDescription] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,38 +173,42 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
   };
 
   const processFile = async (file: File) => {
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please upload a video file');
+    if (uploadLock.current) return;
+    setUploadError('');
+    try {
+      validateVlogVideo(file);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid video file';
+      setUploadError(message);
+      toast.error(message);
       return;
     }
-    const MAX = 200 * 1024 * 1024;
-    if (file.size > MAX) {
-      toast.error('Video is too large (max 200MB)');
-      return;
-    }
-
+    uploadLock.current = true;
     setUploadingFile(file.name);
-    setProgress(5);
+    setProgress(0);
+    setUploadStage('Reading video…');
+    let posterUrl: string | null = null;
+    let published = false;
 
     try {
       const { duration, posterBlob } = await extractVideoMetadata(file);
-      setProgress(25);
-
-      let posterUrl: string | null = null;
+      setUploadStage('Uploading video…');
+      const videoUrl = await uploadVlogVideo(file, setProgress);
+      setUploadStage('Preparing preview…');
       if (posterBlob) {
         try {
           const posterFile = new File([posterBlob], `${slugify(file.name)}-poster.jpg`, {
             type: 'image/jpeg',
           });
-          posterUrl = await onFileUpload(posterFile);
+          posterUrl = await Promise.race([
+            onFileUpload(posterFile),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Preview upload timed out')), 30000)),
+          ]);
         } catch {
           posterUrl = null;
         }
       }
-      setProgress(55);
-
-      const videoUrl = await onFileUpload(file);
-      setProgress(85);
+      setUploadStage('Publishing vlog…');
 
       const title = overrideTitle.trim() || titleFromFilename(file.name);
       const description =
@@ -201,6 +222,7 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
         .from('blog_posts')
         .select('id')
         .eq('slug', slug)
+        .abortSignal(AbortSignal.timeout(30000))
         .maybeSingle();
       if (existing) slug = `${slug}-${Date.now().toString(36)}`;
 
@@ -218,20 +240,25 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
           published_at: new Date().toISOString(),
           read_time_minutes: Math.max(1, Math.ceil(duration / 60)) || 1,
         },
-      ]);
+      ]).abortSignal(AbortSignal.timeout(30000));
       if (insertError) throw insertError;
+      published = true;
 
       setProgress(100);
       toast.success(`Vlog "${title}" published`);
       setOverrideTitle('');
       setOverrideDescription('');
       await loadVlogs();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message || 'Failed to upload vlog');
+      const message = e instanceof Error ? e.message : 'Failed to upload vlog';
+      setUploadError(message);
+      toast.error(message);
     } finally {
+      uploadLock.current = false;
       setUploadingFile(null);
       setProgress(0);
+      setUploadStage('');
     }
   };
 
@@ -413,14 +440,15 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
                   }
                 }}
                 aria-label="Upload vlog video file"
-                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                aria-disabled={!!uploadingFile}
+                className={`relative min-w-0 border-2 border-dashed rounded-lg p-5 sm:p-8 text-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isDragOver ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
                 } ${uploadingFile ? 'pointer-events-none opacity-70' : ''}`}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                  accept="video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.ogg,.ogv,.mov,.m4v"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -429,14 +457,8 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
                     <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
                     <p className="font-medium text-sm truncate">{uploadingFile}</p>
                     <Progress value={progress} className="h-2" />
-                    <p className="text-xs text-muted-foreground">
-                      {progress < 25
-                        ? 'Reading metadata…'
-                        : progress < 55
-                        ? 'Uploading poster…'
-                        : progress < 85
-                        ? 'Uploading video…'
-                        : 'Creating vlog post…'}
+                    <p role="status" className="text-sm text-muted-foreground">
+                      {uploadStage} {uploadStage === 'Uploading video…' ? `${progress}%` : ''}
                     </p>
                   </div>
                 ) : (
@@ -444,11 +466,12 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
                     <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
                     <p className="font-medium">Drag & drop a video, or click to browse</p>
                     <p className="text-xs text-muted-foreground">
-                      MP4, WebM, OGG, or MOV · max 200MB
+                      MP4, WebM, OGG, MOV or M4V · up to 200 MB, subject to your Supabase limit
                     </p>
                   </div>
                 )}
               </div>
+              {uploadError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{uploadError}</p>}
             </TabsContent>
 
             <TabsContent value="url" className="mt-0">
