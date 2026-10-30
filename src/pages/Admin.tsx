@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit2, Upload, Eye, EyeOff, LogOut, Link, Copy, Check, X } from 'lucide-react';
@@ -19,6 +19,7 @@ import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
 import SkillsEditor from '@/components/admin/SkillsEditor';
 import CertificatesManagement from '@/components/admin/CertificatesManagement';
+import AdminNavigation from '@/components/admin/AdminNavigation';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -879,36 +880,21 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Portfolio Admin Dashboard</h1>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+    <div className="admin-workspace min-h-screen bg-background px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:p-8">
+      <div className="mx-auto w-full max-w-7xl min-w-0">
+        <div className="flex items-center justify-between gap-3 mb-4 lg:mb-8">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-muted-foreground mb-1">Justice Ansah</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Portfolio Admin</h1>
+          </div>
+          <Button variant="outline" className="h-12 shrink-0 px-3" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
+            <LogOut className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Sign Out</span>
           </Button>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap h-auto gap-1 p-1.5 bg-muted/60 rounded-xl">
-            <TabsTrigger value="hero" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Hero</TabsTrigger>
-            <TabsTrigger value="about" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">About</TabsTrigger>
-            <TabsTrigger value="impact" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Impact</TabsTrigger>
-            <TabsTrigger value="tech" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Tech Stack</TabsTrigger>
-            <TabsTrigger value="skills" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Skills</TabsTrigger>
-            <TabsTrigger value="certificates" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Certificates</TabsTrigger>
-            <TabsTrigger value="projects" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Projects</TabsTrigger>
-            <TabsTrigger value="blog" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Blog</TabsTrigger>
-            <TabsTrigger value="vlogs" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Vlogs</TabsTrigger>
-            <TabsTrigger value="social" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Social</TabsTrigger>
-            <TabsTrigger value="resume" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Resume</TabsTrigger>
-            <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Testimonials</TabsTrigger>
-            <TabsTrigger value="gallery" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Gallery</TabsTrigger>
-            <TabsTrigger value="wall" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Wall</TabsTrigger>
-            <TabsTrigger value="appointments" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Bookings</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Analytics</TabsTrigger>
-            <TabsTrigger value="logos" className="text-xs sm:text-sm px-3 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Logos</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0">
+          <AdminNavigation value={activeTab} onChange={setActiveTab} />
 
           {/* Hero Images Tab */}
           <TabsContent value="hero" className="space-y-6">

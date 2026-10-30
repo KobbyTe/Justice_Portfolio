@@ -259,3 +259,18 @@ All colors MUST be HSL.
     display: none;
   }
 }
+
+/* Admin-only adaptations keep the public portfolio unchanged. */
+.admin-workspace [role="tabpanel"] { min-width: 0; margin-top: 1.5rem; }
+.admin-workspace input, .admin-workspace textarea { max-width: 100%; min-width: 0; }
+@media (max-width: 767px) {
+  .admin-workspace button { min-height: 48px; min-width: 48px; }
+  .admin-workspace input { min-height: 48px; font-size: 16px; }
+  .admin-workspace [role="tabpanel"] > div { min-width: 0; }
+  .admin-workspace [role="tabpanel"] .flex.items-center.justify-between { flex-wrap: wrap; gap: 12px; }
+  .admin-workspace [role="tabpanel"] .text-2xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .admin-workspace [role="tabpanel"] h3,
+  .admin-workspace [role="tabpanel"] p { overflow-wrap: anywhere; }
+  .admin-workspace [role="tabpanel"] .p-6 { padding: 1rem; }
+  .admin-workspace [role="tabpanel"] form > button[type="submit"] { width: 100%; }
+}
