@@ -1334,12 +1334,13 @@ const Admin = () => {
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 ml-4">
+                          <div className="flex items-center gap-2 sm:ml-4">
                             {!t.is_used && !isExpired && (
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleCopyLink(t.token)}
+                                aria-label="Copy testimonial link"
                               >
                                 {copiedToken === t.token ? (
                                   <Check className="w-4 h-4" />
@@ -1352,6 +1353,7 @@ const Admin = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteToken(t.id)}
+                              aria-label="Delete testimonial link"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
