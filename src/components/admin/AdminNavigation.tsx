@@ -23,7 +23,7 @@ const groups = [
 export default function AdminNavigation({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return <>
     <div className="sticky top-0 z-30 -mx-4 border-b border-border bg-background/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md lg:hidden">
-      <label id="admin-section-label" className="mb-2 block text-xs font-medium uppercase text-muted-foreground">Manage section</label>
+      <span id="admin-section-label" className="mb-2 block text-xs font-medium uppercase text-muted-foreground">Manage section</span>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger aria-labelledby="admin-section-label" className="h-12 w-full bg-card text-base"><SelectValue /></SelectTrigger>
         <SelectContent className="max-h-[65dvh] min-w-[var(--radix-select-trigger-width)]">

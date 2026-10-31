@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { MAX_VLOG_BYTES, VIDEO_CHUNK_BYTES, validateVlogVideo, videoContentType, videoUploadError } from './videoUploadRules';
+import { MAX_VLOG_BYTES, VIDEO_CHUNK_BYTES, validateVlogVideo, videoContentType, videoUploadError } from '../src/lib/videoUploadRules';
 
 describe('vlog video upload rules', () => {
   test('accepts the existing 200 MB boundary', () => {
@@ -17,5 +17,6 @@ describe('vlog video upload rules', () => {
   test('uses the supported 6 MiB chunk size', () => expect(VIDEO_CHUNK_BYTES).toBe(6291456));
   test('explains server file limits without promising a transport bypass', () => {
     expect(videoUploadError(new Error('The object exceeded the maximum allowed size'))).toContain('Settings → Storage');
+    expect(videoUploadError({ message: 'The object exceeded the maximum allowed size' })).toContain('Settings → Storage');
   });
 });

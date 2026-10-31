@@ -14,7 +14,9 @@ export function validateVlogVideo(file: Pick<File, 'size' | 'type' | 'name'>) {
 }
 
 export function videoUploadError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? error.message
+    : error && typeof error === 'object' && 'message' in error ? String(error.message)
+    : String(error);
   if (/maximum.*size|exceed|too large|413|EntityTooLarge/i.test(message)) {
     return 'Supabase rejected this video because of its storage size limit. The project owner needs to raise the maximum file size to 200 MB in Supabase Settings → Storage. Chunked uploads cannot bypass this limit. You can use a smaller video or Add by URL meanwhile.';
   }

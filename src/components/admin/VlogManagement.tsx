@@ -11,7 +11,7 @@ import { UploadCloud, Trash2, Eye, EyeOff, Film, Loader2, Link as LinkIcon, Plus
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadVlogVideo } from '@/lib/uploadVlogVideo';
-import { validateVlogVideo } from '@/lib/videoUploadRules';
+import { validateVlogVideo, videoUploadError } from '@/lib/videoUploadRules';
 
 interface VlogPost {
   id: string;
@@ -161,7 +161,8 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
         .from('blog_posts')
         .select('id, title, excerpt, slug, category, featured_video_url, featured_image_url, is_published, published_at, created_at')
         .not('featured_video_url', 'is', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .abortSignal(AbortSignal.timeout(30000));
       if (error) throw error;
       setVlogs((data || []) as VlogPost[]);
     } catch (e) {
@@ -188,7 +189,6 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
     setProgress(0);
     setUploadStage('Reading video…');
     let posterUrl: string | null = null;
-    let published = false;
 
     try {
       const { duration, posterBlob } = await extractVideoMetadata(file);
@@ -218,12 +218,13 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
           : `Vlog · ${formatBytes(file.size)}`);
 
       let slug = slugify(title);
-      const { data: existing } = await supabase
+      const { data: existing, error: slugError } = await supabase
         .from('blog_posts')
         .select('id')
         .eq('slug', slug)
         .abortSignal(AbortSignal.timeout(30000))
         .maybeSingle();
+      if (slugError) throw slugError;
       if (existing) slug = `${slug}-${Date.now().toString(36)}`;
 
       const { error: insertError } = await supabase.from('blog_posts').insert([
@@ -242,7 +243,6 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
         },
       ]).abortSignal(AbortSignal.timeout(30000));
       if (insertError) throw insertError;
-      published = true;
 
       setProgress(100);
       toast.success(`Vlog "${title}" published`);
@@ -251,7 +251,7 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
       await loadVlogs();
     } catch (e: unknown) {
       console.error(e);
-      const message = e instanceof Error ? e.message : 'Failed to upload vlog';
+      const message = videoUploadError(e);
       setUploadError(message);
       toast.error(message);
     } finally {
