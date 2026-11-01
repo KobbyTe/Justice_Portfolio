@@ -11,7 +11,9 @@ import { UploadCloud, Trash2, Eye, EyeOff, Film, Loader2, Link as LinkIcon, Plus
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadVlogVideo } from '@/lib/uploadVlogVideo';
-import { validateVlogVideo, videoUploadError } from '@/lib/videoUploadRules';
+import { validateVlogVideo, videoUploadError, VideoTooLargeError, MAX_VLOG_BYTES, UPLOAD_LIMIT_MB } from '@/lib/videoUploadRules';
+import { compressVideo, canCompressVideo } from '@/lib/compressVideo';
+import { youTubeThumbnail } from '@/lib/videoUrl';
 
 interface VlogPost {
   id: string;
@@ -149,6 +151,11 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
   const [urlVideo, setUrlVideo] = useState('');
   const [urlPoster, setUrlPoster] = useState('');
   const [urlSubmitting, setUrlSubmitting] = useState(false);
+  const [tab, setTab] = useState('file');
+  // A video over the upload limit, waiting for the person to choose what to do.
+  const [tooLarge, setTooLarge] = useState<File | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [compressProgress, setCompressProgress] = useState(0);
 
   useEffect(() => {
     loadVlogs();
@@ -176,9 +183,15 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
   const processFile = async (file: File) => {
     if (uploadLock.current) return;
     setUploadError('');
+    setTooLarge(null);
     try {
       validateVlogVideo(file);
     } catch (error) {
+      if (error instanceof VideoTooLargeError) {
+        // Don't fail outright: offer compression or a YouTube link instead.
+        setTooLarge(file);
+        return;
+      }
       const message = error instanceof Error ? error.message : 'Invalid video file';
       setUploadError(message);
       toast.error(message);
@@ -260,6 +273,35 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
       setProgress(0);
       setUploadStage('');
     }
+  };
+
+  // Must be called straight from the button tap: browsers only let a video
+  // start playing (which compression needs) in response to a user action.
+  const startCompression = (file: File) => {
+    setCompressing(true);
+    setCompressProgress(0);
+    setUploadError('');
+    compressVideo(file, { targetBytes: MAX_VLOG_BYTES - 512 * 1024, onProgress: setCompressProgress })
+      .then((smaller) => {
+        setCompressing(false);
+        setTooLarge(null);
+        toast.success(`Compressed to ${formatBytes(smaller.size)}. Uploading…`);
+        processFile(smaller);
+      })
+      .catch((e: unknown) => {
+        setCompressing(false);
+        const message = e instanceof Error ? e.message : 'Compression failed';
+        setUploadError(message);
+        toast.error(message);
+      });
+  };
+
+  const useYouTubeInstead = () => {
+    if (overrideTitle.trim() && !urlTitle) setUrlTitle(overrideTitle.trim());
+    if (overrideDescription.trim() && !urlDescription) setUrlDescription(overrideDescription.trim());
+    setTooLarge(null);
+    setUploadError('');
+    setTab('url');
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,7 +387,7 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
           category: 'Vlog',
           tags: ['vlog'],
           featured_video_url: videoUrl,
-          featured_image_url: urlPoster.trim() || null,
+          featured_image_url: urlPoster.trim() || youTubeThumbnail(videoUrl) || null,
           is_published: true,
           published_at: new Date().toISOString(),
           read_time_minutes: 1,
@@ -386,7 +428,7 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
           <CardTitle>Add New Vlog</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="file" className="w-full">
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="file" className="gap-2">
                 <UploadCloud className="w-4 h-4" /> Upload file
@@ -466,11 +508,46 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
                     <UploadCloud className="w-12 h-12 mx-auto text-muted-foreground" />
                     <p className="font-medium">Drag & drop a video, or click to browse</p>
                     <p className="text-xs text-muted-foreground">
-                      MP4, WebM, OGG, MOV or M4V · up to 200 MB, subject to your Supabase limit
+                      MP4, WebM, OGG, MOV or M4V · up to {UPLOAD_LIMIT_MB} MB. Bigger videos can be compressed here or added as a YouTube link.
                     </p>
                   </div>
                 )}
               </div>
+              {tooLarge && !uploadingFile && (
+                <div role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 space-y-3 text-sm">
+                  <p className="font-medium">
+                    “{tooLarge.name}” is {formatBytes(tooLarge.size)}, over the {UPLOAD_LIMIT_MB} MB upload limit.
+                  </p>
+                  {compressing ? (
+                    <div className="space-y-2">
+                      <Progress value={compressProgress} className="h-2" />
+                      <p role="status" className="text-muted-foreground">
+                        Compressing… {compressProgress}%. This takes about as long as the video. Keep this page open and the screen on.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {canCompressVideo() && (
+                          <Button type="button" onClick={() => startCompression(tooLarge)} className="gap-2">
+                            <Film className="w-4 h-4" /> Compress it here (720p)
+                          </Button>
+                        )}
+                        <Button type="button" variant="outline" onClick={useYouTubeInstead} className="gap-2">
+                          <LinkIcon className="w-4 h-4" /> Use a YouTube link instead
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={() => setTooLarge(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        YouTube is best for long videos: upload it there (Unlisted is fine), then paste the link. To keep future
+                        clips small on iPhone: Settings → Camera → Record Video → 1080p at 30 fps.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
               {uploadError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{uploadError}</p>}
             </TabsContent>
 
@@ -495,13 +572,13 @@ const VlogManagement = ({ onFileUpload }: VlogManagementProps) => {
                     type="url"
                     value={urlVideo}
                     onChange={(e) => setUrlVideo(e.target.value)}
-                    placeholder="https://example.com/video.mp4"
+                    placeholder="https://youtu.be/… or https://example.com/video.mp4"
                     maxLength={500}
                     required
                     disabled={urlSubmitting}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Direct video file (.mp4, .webm, .mov) for the TikTok-style feed.
+                    A YouTube link (normal, Shorts or Unlisted) or a direct video file (.mp4, .webm, .mov). YouTube videos get their thumbnail automatically.
                   </p>
                 </div>
                 <div>
