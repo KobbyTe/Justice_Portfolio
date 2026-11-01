@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { youTubeId } from '@/lib/videoUrl';
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -33,6 +34,9 @@ const formatCount = (n: number) => {
 
 export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // YouTube videos play in YouTube's own player; everything else in <video>.
+  const ytId = youTubeId(vlog.videoUrl);
+  const ytFrameRef = useRef<HTMLIFrameElement>(null);
   const [progress, setProgress] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(vlog.likes);
@@ -90,8 +94,12 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
   // Apply muted state
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    video.muted = muted;
+    if (video) video.muted = muted;
+    // Keep the YouTube player's sound in step with the mute button.
+    ytFrameRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: muted ? 'mute' : 'unMute', args: [] }),
+      '*'
+    );
   }, [muted]);
 
   const handleTimeUpdate = useCallback(() => {
@@ -236,6 +244,21 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
     >
       {/* Video frame: full-screen on mobile, 9:16 column on desktop */}
       <div className="relative h-full w-full md:h-auto md:max-h-[calc(100dvh-2rem)] md:aspect-[9/16] md:max-w-[420px] md:rounded-3xl md:overflow-hidden md:shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.35)] md:ring-1 md:ring-white/10 bg-black">
+        {ytId ? (
+          isActive ? (
+            <iframe
+              ref={ytFrameRef}
+              // Only the video on screen loads the player; muted autoplay is what phones allow.
+              src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=${muted ? 1 : 0}&playsinline=1&loop=1&playlist=${ytId}&rel=0&modestbranding=1&enablejsapi=1`}
+              title={vlog.title}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          ) : vlog.posterUrl ? (
+            <img src={vlog.posterUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          ) : null
+        ) : (
         <video
           ref={videoRef}
           src={vlog.videoUrl}
@@ -251,6 +274,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
         />
+        )}
 
         {/* Hairline progress bar at the top — TikTok-style */}
         <div
@@ -311,7 +335,7 @@ export const VlogCard = ({ vlog, isActive, muted, onToggleMuted }: VlogCardProps
         )}
 
         {/* Pause indicator when paused */}
-        {!isPlaying && !showPlayHint && (
+        {!ytId && !isPlaying && !showPlayHint && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10" aria-hidden="true">
             <div className="bg-black/40 backdrop-blur-md rounded-full p-5 animate-in fade-in duration-200">
               <Play className="w-10 h-10 text-white fill-white" />
