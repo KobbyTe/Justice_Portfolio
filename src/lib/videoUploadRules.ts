@@ -1,4 +1,15 @@
-export const MAX_VLOG_BYTES = 200 * 1024 * 1024;
+// Supabase's per-file upload limit. The Free plan is fixed at 50 MB.
+// After upgrading to Supabase Pro, raise the Global file size limit in
+// Supabase → Storage → Settings, then change this number to match (e.g. 500).
+export const UPLOAD_LIMIT_MB = 50;
+export const MAX_VLOG_BYTES = UPLOAD_LIMIT_MB * 1024 * 1024;
+
+/** Thrown when a video is bigger than the upload limit, so the UI can offer alternatives. */
+export class VideoTooLargeError extends Error {
+  constructor(public readonly bytes: number) {
+    super(`This video is ${Math.round(bytes / 1024 / 1024)} MB. Uploads are limited to ${UPLOAD_LIMIT_MB} MB.`);
+  }
+}
 export const VIDEO_CHUNK_BYTES = 6 * 1024 * 1024;
 
 export function videoContentType(file: Pick<File, 'type' | 'name'>): string | null {
@@ -10,7 +21,7 @@ export function videoContentType(file: Pick<File, 'type' | 'name'>): string | nu
 export function validateVlogVideo(file: Pick<File, 'size' | 'type' | 'name'>) {
   if (!videoContentType(file)) throw new Error('Choose an MP4, WebM, OGG, MOV or M4V video.');
   if (file.size === 0) throw new Error('This video is empty. Please choose another file.');
-  if (file.size > MAX_VLOG_BYTES) throw new Error('Video is too large. Maximum size is 200 MB.');
+  if (file.size > MAX_VLOG_BYTES) throw new VideoTooLargeError(file.size);
 }
 
 /** An error whose message is already written for the person uploading. */
@@ -42,7 +53,7 @@ export function videoUploadError(error: unknown): string {
   const all = `${name} ${raw}`;
 
   if (/maximum.*size|exceed|too large|413|EntityTooLarge/i.test(all)) {
-    return 'Supabase rejected this video because of its storage size limit. The project owner needs to raise the maximum file size to 200 MB in Supabase Settings → Storage. Chunked uploads cannot bypass this limit. You can use a smaller video or Add by URL meanwhile.';
+    return `This video is over the ${UPLOAD_LIMIT_MB} MB upload limit. Compress it, or upload it to YouTube and use "Add by URL".`;
   }
   // The device lost access to the file (common with iCloud videos on iPhone).
   if (/NotReadableError|could not be read|NotFoundError/i.test(all)) {
