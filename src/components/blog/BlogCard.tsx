@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { youTubeThumbnail } from '@/lib/videoUrl';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, ExternalLink, Play, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -22,10 +23,7 @@ interface BlogCardProps {
   onClick: (slug: string) => void;
 }
 
-const getYouTubeThumbnail = (url: string): string | null => {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
-};
+const getYouTubeThumbnail = (url: string): string | null => youTubeThumbnail(url);
 
 const isVlog = (post: BlogPost) => !!post.featured_video_url;
 
