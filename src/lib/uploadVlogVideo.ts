@@ -1,10 +1,21 @@
 import { supabase } from '@/integrations/supabase/client';
-import { validateVlogVideo, videoContentType, VIDEO_CHUNK_BYTES, videoUploadError } from './videoUploadRules';
+import { validateVlogVideo, videoContentType, VIDEO_CHUNK_BYTES, videoUploadError, VideoUploadError } from './videoUploadRules';
+
+// Returns a valid access token, refreshing it first if it expires within a minute
+// (long uploads can outlive the token).
+async function freshAccessToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const expiresSoon = !session?.expires_at || session.expires_at * 1000 - Date.now() < 60_000;
+  if (session && !expiresSoon) return session.access_token;
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error || !data.session) throw new VideoUploadError('Your sign-in has expired. Please sign in again, then retry the upload.');
+  return data.session.access_token;
+}
 
 export async function uploadVlogVideo(file: File, onProgress: (percent: number) => void): Promise<string> {
   validateVlogVideo(file);
   const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) throw new Error('Please sign in again before uploading a video.');
+  if (error || !session) throw new VideoUploadError('Please sign in again before uploading a video.');
   const { Upload } = await import('tus-js-client');
   const bucket = 'portfolio-assets';
   const path = `vlogs/${crypto.randomUUID()}.${file.name.split('.').pop()?.toLowerCase()}`;
@@ -24,12 +35,15 @@ export async function uploadVlogVideo(file: File, onProgress: (percent: number) 
       clearTimeout(timer);
       timer = setTimeout(() => {
         void upload.abort();
-        settle(new Error('The connection stalled. Check your connection and retry the video.'));
+        settle(new VideoUploadError('The connection stalled. Check your connection and retry the video.'));
       }, 120000);
     };
     const upload = new Upload(file, {
       endpoint: `https://${host}/storage/v1/upload/resumable`,
-      headers: { authorization: `Bearer ${session.access_token}`, 'x-upsert': 'false' },
+      // Do NOT put Authorization here: it is set in onBeforeRequest, and setting
+      // it in both places makes the browser send "Bearer A, Bearer A", which
+      // storage rejects as an invalid token ("Invalid Compact JWS").
+      headers: { 'x-upsert': 'false' },
       metadata: { bucketName: bucket, objectName: path, contentType: videoContentType(file) || 'video/mp4', cacheControl: '3600' },
       chunkSize: VIDEO_CHUNK_BYTES,
       retryDelays: [0, 1000, 3000, 5000, 10000],
@@ -37,14 +51,13 @@ export async function uploadVlogVideo(file: File, onProgress: (percent: number) 
       removeFingerprintOnSuccess: true,
       storeFingerprintForResuming: false,
       onBeforeRequest: async (request) => {
-        const { data: { session: current } } = await supabase.auth.getSession();
-        if (current) request.setHeader('authorization', `Bearer ${current.access_token}`);
+        request.setHeader('Authorization', `Bearer ${await freshAccessToken()}`);
       },
       onProgress: (sent, total) => {
         armTimeout();
         onProgress(total ? Math.min(100, Math.round(sent / total * 100)) : 0);
       },
-      onError: (failure) => settle(new Error(videoUploadError(failure))),
+      onError: (failure) => settle(new VideoUploadError(videoUploadError(failure))),
       onSuccess: () => settle(),
     });
     armTimeout();
