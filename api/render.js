@@ -98,7 +98,7 @@ const POST_FIELDS =
 
 async function loadData(needs) {
   const want = new Set(needs);
-  const [about, projects, posts, certs, recs, impact, social, skills] = await Promise.all([
+  const [about, projects, posts, certs, recs, impact, social, skills, gallery] = await Promise.all([
     want.has("about") ? q("about_content?select=description,hero_description,about_description,location&limit=1") : [],
     want.has("projects")
       ? q("projects?select=title,description,category,technologies,project_url,github_url,created_at&order=created_at.desc")
@@ -109,6 +109,7 @@ async function loadData(needs) {
     want.has("impact") ? q("impact_metrics?select=*&limit=1") : [],
     q("social_links?select=platform,url&is_active=eq.true&order=sort_order"),
     want.has("skills") ? q("skills?select=name&is_active=eq.true&order=sort_order") : [],
+    want.has("gallery") ? loadGallery() : [],
   ]);
   return {
     about: about[0] || null,
@@ -119,7 +120,19 @@ async function loadData(needs) {
     impact: impact[0] || null,
     social: social.filter((s) => isUrl(s.url)),
     skills,
+    gallery,
   };
+}
+
+const absUrl = (u) => (isUrl(u) ? u : u && u.startsWith("/") ? `${SITE}${u}` : undefined);
+
+async function loadGallery() {
+  const rows = await q(
+    "gallery?select=title,description,category,image_url,webp_url,media_type,video_url,created_at&is_active=eq.true&order=sort_order"
+  );
+  return rows
+    .map((g) => ({ ...g, src: absUrl(g.image_url) || absUrl(g.webp_url) }))
+    .filter((g) => g.src);
 }
 
 // ---------- shared markup ----------
@@ -282,12 +295,42 @@ ${d.certs.length ? `<ul>${d.certs.map((c) => `<li><strong>${esc(c.title)}</stron
     }),
   },
   "/gallery": {
-    needs: [],
-    build: () => ({
-      title: "Gallery | Justice Ansah",
-      description: "Photos of Justice Ansah's robotics workshops, STEM outreach and innovation projects in Ghana.",
-      body: `<h1>Gallery — ${esc(NAME)}</h1><p class="lead">Photos from robotics workshops, STEM outreach and innovation projects across Ghana.</p>`,
-    }),
+    needs: ["gallery"],
+    build: (d) => {
+      const items = d.gallery || [];
+      const caption = (g) => [g.title, g.description].filter(Boolean).map((t) => stripHtml(t)).join(" — ");
+      const cats = [...new Set(items.map((g) => g.category).filter(Boolean))];
+      return {
+        title: "Gallery | Justice Ansah — Robotics Workshops & STEM Outreach in Ghana",
+        description: `Photos${items.length ? ` (${items.length})` : ""} of Justice Ansah's robotics workshops, STEM outreach and innovation projects in Ghana.`,
+        image: items[0]?.src,
+        jsonLd: items.length
+          ? {
+              "@context": "https://schema.org",
+              "@type": "ImageGallery",
+              name: "Justice Ansah — Gallery",
+              url: `${SITE}/gallery`,
+              author: personRef,
+              image: items.slice(0, 100).map((g) => ({
+                "@type": "ImageObject",
+                contentUrl: g.src,
+                name: g.title ? stripHtml(g.title) : `Justice Ansah — ${g.category || "STEM outreach"}`,
+                description: caption(g) || undefined,
+                creator: personRef,
+                creditText: NAME,
+                copyrightNotice: NAME,
+                uploadDate: g.created_at || undefined,
+              })),
+            }
+          : undefined,
+        // Text and links only (no <img>), so visitors don't download every photo
+        // before the real gallery loads; search engines get the images via
+        // structured data and the image sitemap.
+        body: `<h1>Gallery — ${esc(NAME)}</h1>
+<p class="lead">Photos from robotics workshops, STEM outreach and innovation projects across Ghana${cats.length ? `, including ${esc(cats.join(", "))}` : ""}.</p>
+${items.length ? `<ul>${items.map((g) => `<li><a href="${esc(g.src)}">${esc(g.title ? stripHtml(g.title) : "Photo")}</a>${g.category ? ` (${esc(g.category)})` : ""}${g.description ? `: ${esc(truncate(g.description, 200))}` : ""}</li>`).join("\n")}</ul>` : ""}`,
+      };
+    },
   },
   "/booking": {
     needs: [],
@@ -428,19 +471,29 @@ async function sitemap() {
   const posts = (await q(`blog_posts?select=slug,published_at,updated_at,featured_video_url&is_published=eq.true&order=published_at.desc`)).filter(
     (p) => p.slug && /^[a-z0-9-]+$/i.test(p.slug)
   );
+  const gallery = await loadGallery();
   const today = new Date().toISOString().slice(0, 10);
   const urls = [
     ...Object.keys(STATIC_PAGES).map((r) => [r, today, r === "/" ? "1.0" : "0.8"]),
     ...posts.map((p) => [postPath(p), isoDate(p.updated_at || p.published_at) || today, "0.6"]),
   ]
-    .map(([r, d, pri]) => `  <url><loc>${SITE}${r}</loc><lastmod>${d}</lastmod><priority>${pri}</priority></url>`)
+    .map(([r, d, pri]) => {
+      const imgs =
+        r === "/gallery"
+          ? gallery
+              .slice(0, 1000)
+              .map((g) => `<image:image><image:loc>${esc(g.src)}</image:loc></image:image>`)
+              .join("")
+          : "";
+      return `  <url><loc>${SITE}${r}</loc><lastmod>${d}</lastmod><priority>${pri}</priority>${imgs}</url>`;
+    })
     .join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls}\n</urlset>\n`;
 }
 
 async function llmsTxt() {
   const d = await loadData(["projects", "posts"]);
-  const pages = Object.entries(STATIC_PAGES).map(([r, def]) => [r, def.build({ ...d, about: null, impact: null, recs: [], certs: [], skills: [] })]);
+  const pages = Object.entries(STATIC_PAGES).map(([r, def]) => [r, def.build({ ...d, about: null, impact: null, recs: [], certs: [], skills: [], gallery: [] })]);
   const lines = [
     `# ${NAME}`,
     "",
