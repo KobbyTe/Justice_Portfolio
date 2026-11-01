@@ -64,8 +64,8 @@ const isoDate = (d) => {
 const isUrl = (u) => /^https?:\/\//.test(u || "");
 const isVlog = (p) => !!(p && typeof p.featured_video_url === "string" && p.featured_video_url.trim());
 const postPath = (p) => (isVlog(p) ? `/watch/${p.slug}` : `/blog/${p.slug}`);
-const youTubeId = (u = "") =>
-  (u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/) || [])[1];
+const youTubeId = (u) =>
+  (String(u || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/) || [])[1];
 const thumbFor = (p) =>
   isUrl(p.featured_image_url)
     ? p.featured_image_url
