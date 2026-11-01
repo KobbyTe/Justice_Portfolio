@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { youTubeThumbnail } from '@/lib/videoUrl';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import SEO from '@/components/SEO';
@@ -6,10 +7,7 @@ import VlogFeed from '@/components/vlogs/VlogFeed';
 import { Vlog } from '@/components/vlogs/VlogCard';
 import { supabase } from '@/integrations/supabase/client';
 
-const getYouTubeThumbnail = (url: string): string | null => {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
-};
+const getYouTubeThumbnail = (url: string): string | null => youTubeThumbnail(url);
 
 interface VlogPost {
   id: string;
