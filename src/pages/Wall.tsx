@@ -162,7 +162,7 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
     }
   };
 
-  const canSubmit = !isSubmitting && !!value.name.trim() && !!value.message.trim();
+  const canSubmit = !isSubmitting && !!value.name.trim() && !!value.affiliation.trim() && !!value.message.trim();
 
   return (
     <motion.div
@@ -239,10 +239,12 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
                   className="border-0 bg-transparent px-0 h-9 text-[16px] font-semibold text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                 />
                 <div className="h-px bg-border/70 my-1" />
-                <label htmlFor="wall-affiliation" className="sr-only">Who you are (optional)</label>
+                <label htmlFor="wall-affiliation" className="sr-only">Who you are (required)</label>
                 <Input
                   id="wall-affiliation"
-                  placeholder="Who are you? e.g. Student at KNUST, CEO of Kwabs Labs (optional)"
+                  placeholder="Who are you? e.g. Student at KNUST, CEO of Kwabs Labs"
+                  required
+                  aria-required="true"
                   value={value.affiliation}
                   onChange={(e) => onChange({ ...value, affiliation: e.target.value })}
                   maxLength={80}
@@ -330,8 +332,8 @@ const Wall = () => {
 
   const handleWallSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallMessage.name.trim() || !wallMessage.message.trim()) {
-      toast({ title: "Error", description: "Please fill in both fields.", variant: "destructive" });
+    if (!wallMessage.name.trim() || !wallMessage.affiliation.trim() || !wallMessage.message.trim()) {
+      toast({ title: "Error", description: "Please fill in your name, who you are, and your message.", variant: "destructive" });
       return;
     }
 
@@ -347,7 +349,7 @@ const Wall = () => {
         .from('wall_messages')
         .insert([{
           name: wallMessage.name.trim(),
-          affiliation: wallMessage.affiliation.trim() || null,
+          affiliation: wallMessage.affiliation.trim(),
           message: wallMessage.message.trim(),
         }]);
       if (error) throw error;
