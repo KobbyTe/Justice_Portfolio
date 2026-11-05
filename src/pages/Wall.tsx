@@ -162,7 +162,7 @@ const WallComposer = ({ value, onChange, onSubmit, isSubmitting, justPosted }: C
     }
   };
 
-  const canSubmit = !isSubmitting && !!value.name.trim() && !!value.message.trim();
+  const canSubmit = !isSubmitting && !!value.name.trim() && !!value.affiliation.trim() && !!value.message.trim();
 
   return (
     <motion.div
